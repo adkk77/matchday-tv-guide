@@ -281,6 +281,8 @@ const ESPN = {
   Basketball: { path:"basketball", leagues:{ "nba":"NBA","wnba":"WNBA" } },
   "Ice Hockey": { path:"hockey", leagues:{ "nhl":"NHL" } },
 };
+// Safari can't parse ISO times without seconds ("2026-11-03T17:45Z"), so normalise first.
+const parseISO=v=>{let t=String(v||"").trim().replace(" ","T");if(/T\d\d:\d\d(Z|[+-]\d\d:?\d\d)?$/.test(t))t=t.replace(/(T\d\d:\d\d)/,"$1:00");if(!/(Z|[+-]\d\d:?\d\d)$/.test(t))t+="Z";return new Date(t)};
 async function loadESPN(sport,date){
   const cfg=ESPN[sport]; if(!cfg) return [];
   const from=date.replace(/-/g,""), to=addDays(date,1).replace(/-/g,"");
@@ -290,7 +292,7 @@ async function loadESPN(sport,date){
   const out=[];
   for(const r of res){ if(r.status!=="fulfilled") continue;
     for(const e of (r.value.j.events||[])){
-      const kick=new Date(e.date); if(ymd(kick)!==date) continue;
+      const kick=parseISO(e.date); if(ymd(kick)!==date) continue;
       const c=(e.competitions||[])[0]||{}; const cs=c.competitors||[];
       const H=cs.find(x=>x.homeAway==="home")||cs[0]||{}, A=cs.find(x=>x.homeAway==="away")||cs[1]||{};
       const t=(c.status||e.status||{}).type||{}; const clock=(c.status||e.status||{}).displayClock;
