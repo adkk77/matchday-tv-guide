@@ -87,10 +87,14 @@ section.comp{display:grid;gap:0;background:var(--surface);border:1px solid var(-
 .team .sc{font-family:var(--display);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums;min-width:20px;text-align:right}
 .match.ft .team.lose{color:var(--muted)}
 .match.live .sc{color:var(--live)}
-.tv{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.ch{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border-radius:6px;padding:3px 8px;font-size:13px;font-weight:500;max-width:100%}
+.tv{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.ch{display:inline-flex;align-items:center;gap:6px;background:var(--pitch-soft);color:var(--ink);border:1px solid transparent;border-radius:7px;padding:5px 10px;font-size:14.5px;font-weight:600;max-width:100%}
+.ch.rule{background:transparent;border:1px dashed var(--pitch)}
+.ch svg{width:16px!important;height:16px!important}
 .ch small{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
-.ch.none{background:none;color:var(--muted);padding-left:0;font-weight:400}
+.ch.none{background:none;border:0;color:var(--muted);padding-left:0;font-weight:400;font-size:13px}
+.tv{order:-1}
+.rules{width:100%;min-height:180px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:8px 10px}
 .ch svg{width:14px;height:14px;flex:none;color:var(--pitch)}
 .empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:28px 16px;text-align:center;color:var(--muted)}
 .empty b{display:block;font-family:var(--display);font-size:22px;text-transform:uppercase;color:var(--ink);margin-bottom:4px}
@@ -138,6 +142,9 @@ dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border
     <p style="margin-top:12px">TV channels come from TheSportsDB and ESPN. A TheSportsDB premium key adds more channel listings (optional).</p>
     <label for="apiKey" style="font-weight:600;font-size:13px">TheSportsDB key</label>
     <input id="apiKey" placeholder="123 (free key)" autocomplete="off">
+    <p style="margin-top:12px"><b>My channels.</b> One rule per line: <code>competition = channel</code>. Every match in that competition gets the channel, shown with a dashed border, when the data feeds list none. The first matching rule wins.</p>
+    <textarea id="rulesBox" class="rules" spellcheck="false" aria-label="My channel rules"></textarea>
+    <button class="linkbtn" id="rulesReset" type="button">Reset to Middle East (beIN) defaults</button>
     <div class="btns"><button class="btn" value="cancel" type="submit">Cancel</button><button class="btn primary" value="save" type="submit">Save and reload</button></div>
   </form>
 </dialog>
@@ -153,6 +160,33 @@ const SPORTS = [
   { id:"Ice Hockey", label:"Ice hockey", live:"icehockey" },
 ];
 const MATCH_LENGTH = { Soccer:115, Handball:80, Tennis:150, Basketball:140, "Ice Hockey":150 };
+/* Region TV rights (Middle East & North Africa). Edit in the app under Data source. */
+const DEFAULT_RULES = `# Middle East & North Africa
+AFC Champions League = beIN Sports
+UEFA Champions League = beIN Sports
+UEFA Europa League = beIN Sports
+Conference League = beIN Sports
+England · Premier League = beIN Sports
+English Premier League = beIN Sports
+Spain · La Liga = beIN Sports
+Spanish La Liga = beIN Sports
+Italy · Serie A = beIN Sports
+Italian Serie A = beIN Sports
+France · Ligue 1 = beIN Sports
+French Ligue 1 = beIN Sports
+ATP Finals = beIN Sports
+Kuwait · Premier League = KTV Sport`;
+const parseRules = t => String(t||"").split("\n").map(l=>l.trim()).filter(l=>l&&!l.startsWith("#")&&l.includes("=")).map(l=>{const i=l.indexOf("=");return {key:l.slice(0,i).trim().toLowerCase(),channel:l.slice(i+1).trim()}}).filter(r=>r.key&&r.channel);
+function applyRules(list){
+  const rules=parseRules(state.rules);
+  for(const m of list){
+    const lg=String(m.league||"").toLowerCase(); const r=rules.find(r=>lg.includes(r.key)); if(!r) continue;
+    const base=r.channel.toLowerCase();
+    if(m.channels.some(c=>String(c.name).toLowerCase().startsWith(base))) continue;
+    m.channels=[{name:r.channel,country:"My region",rule:true},...m.channels];
+  }
+  return list;
+}
 const REFRESH_MS = 60000, AF_REFRESH_MS = 180000; // API-Football free plan: 100 requests/day
 const store = { get(k,d){try{const v=localStorage.getItem("mtg:"+k);return v==null?d:JSON.parse(v)}catch{return d}}, set(k,v){try{localStorage.setItem("mtg:"+k,JSON.stringify(v))}catch{}} };
 
@@ -161,7 +195,7 @@ const state = {
   date: ymd(new Date()),
   country: store.get("country",""),
   q:"", liveOnly:false, tvOnly:false,
-  key: store.get("key",""), afKey: store.get("afKey",""), afLeft:null, afError:"",
+  key: store.get("key",""), rules: store.get("rules",DEFAULT_RULES), afKey: store.get("afKey",""), afLeft:null, afError:"",
   matches:[], source:"", updated:null, error:""
 };
 const $ = id => document.getElementById(id);
@@ -229,11 +263,11 @@ async function loadTSDB(sport,date){
 const ESPN = {
   Soccer: { path:"soccer", leagues:{
     "uefa.champions":"UEFA Champions League","uefa.europa":"UEFA Europa League","uefa.europa.conf":"UEFA Conference League",
-    "eng.1":"Premier League","eng.2":"EFL Championship","eng.fa":"FA Cup","eng.league_cup":"EFL Cup",
-    "esp.1":"LaLiga","esp.2":"LaLiga 2","esp.copa_del_rey":"Copa del Rey","ita.1":"Serie A","ita.coppa_italia":"Coppa Italia",
-    "ger.1":"Bundesliga","ger.2":"2. Bundesliga","ger.dfb_pokal":"DFB-Pokal","fra.1":"Ligue 1","ned.1":"Eredivisie","por.1":"Primeira Liga",
+    "eng.1":"England · Premier League","eng.2":"EFL Championship","eng.fa":"FA Cup","eng.league_cup":"EFL Cup",
+    "esp.1":"Spain · La Liga","esp.2":"LaLiga 2","esp.copa_del_rey":"Copa del Rey","ita.1":"Italy · Serie A","ita.coppa_italia":"Coppa Italia",
+    "ger.1":"Germany · Bundesliga","ger.2":"2. Bundesliga","ger.dfb_pokal":"DFB-Pokal","fra.1":"France · Ligue 1","ned.1":"Eredivisie","por.1":"Primeira Liga",
     "sco.1":"Scottish Premiership","bel.1":"Belgian Pro League","tur.1":"Süper Lig","gre.1":"Greek Super League",
-    "ksa.1":"Saudi Pro League","uae.1":"UAE Pro League","qat.1":"Qatar Stars League","egy.1":"Egyptian Premier League",
+    "ksa.1":"Saudi Arabia · Pro League","uae.1":"UAE Pro League","qat.1":"Qatar Stars League","egy.1":"Egyptian Premier League",
     "afc.champions":"AFC Champions League Elite","caf.champions":"CAF Champions League",
     "usa.1":"MLS","mex.1":"Liga MX","bra.1":"Brasileirão","arg.1":"Liga Profesional Argentina","conmebol.libertadores":"Copa Libertadores","conmebol.sudamericana":"Copa Sudamericana",
     "jpn.1":"J1 League","aus.1":"A-League","chn.1":"Chinese Super League","fifa.friendly":"International Friendly","uefa.nations":"UEFA Nations League"
@@ -372,7 +406,7 @@ async function load(){
   try{ matches=await loadLive(state.sport,state.date); }
   catch(e){ matches=loadDemo(state.sport,state.date); source="demo"; error=e&&e.name==="AbortError"?"timed out":(e&&e.message)||"blocked"; }
   if(seq!==loadSeq) return;
-  Object.assign(state,{matches,source,error,updated:new Date()});
+  Object.assign(state,{matches:applyRules(matches),source,error,updated:new Date()});
   buildCountries(); render();
   clearTimeout(timer);
   if(state.date===ymd(new Date())) timer=setTimeout(load,state.afKey&&state.sport==="Soccer"?AF_REFRESH_MS:REFRESH_MS);
@@ -421,13 +455,14 @@ function render(){
     return;
   }
   const groups=new Map(); for(const m of list){(groups.get(m.league)||groups.set(m.league,[]).get(m.league)).push(m)}
-  $("list").innerHTML=[...groups].map(([league,ms])=>`<section class="comp"><h2><em>${esc(league)}</em><span>${ms.length} ${ms.length===1?"match":"matches"}</span></h2>${ms.map(row).join("")}</section>`).join("");
+  const gs=[...groups].sort((a,b)=>(b[1].some(m=>m.st==="live"&&m.shown.length)-a[1].some(m=>m.st==="live"&&m.shown.length))||(b[1].some(m=>m.shown.length)-a[1].some(m=>m.shown.length)));
+  $("list").innerHTML=gs.map(([league,ms])=>`<section class="comp"><h2><em>${esc(league)}</em><span>${ms.length} ${ms.length===1?"match":"matches"}</span></h2>${ms.map(row).join("")}</section>`).join("");
 }
 function row(m){
   const has=m.hs!=null&&m.hs!==""&&m.st!=="ns";
   const hw=has&&+m.hs>+m.as, aw=has&&+m.as>+m.hs;
   const pill=m.st==="live"?`<span class="pill live">${esc(m.label||"Live")}</span>`:m.st==="ft"?`<span class="pill ft">FT</span>`:m.st==="off"?`<span class="pill ft">${esc(m.label)}</span>`:`<span class="pill ns">Kick-off</span>`;
-  const tv=m.shown.length?m.shown.map(c=>`<span class="ch">${TV_ICON}${esc(c.name)}${c.country&&!state.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No TV listing yet</span>`;
+  const tv=m.shown.length?m.shown.map(c=>`<span class="ch${c.rule?" rule":""}" title="${c.rule?"From your channel rules (usual rights holder)":"Listed by the data feed"}">${TV_ICON}${esc(c.name)}${c.rule?` <small>usually</small>`:c.country&&!state.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
   return `<article class="match ${m.st}">
     <div class="when">${fmtTime(m.kick)}${pill}</div>
     <div class="teams">
@@ -442,14 +477,15 @@ document.addEventListener("click",e=>{
   const s=e.target.closest("[data-sport]"); if(s){state.sport=s.dataset.sport;store.set("sport",state.sport);load();return}
   const d=e.target.closest("[data-date]"); if(d){state.date=d.dataset.date;load();return}
   if(e.target.id==="refresh") load();
-  if(e.target.id==="keyBtn"){ $("apiKey").value=state.key; $("afKey").value=state.afKey; $("keyDlg").showModal(); }
+  if(e.target.id==="rulesReset") $("rulesBox").value=DEFAULT_RULES;
+  if(e.target.id==="keyBtn"){ $("apiKey").value=state.key; $("afKey").value=state.afKey; $("rulesBox").value=state.rules; $("keyDlg").showModal(); }
 });
 $("datePick").addEventListener("change",e=>{if(e.target.value){state.date=e.target.value;load()}});
 $("country").addEventListener("change",e=>{state.country=e.target.value;store.set("country",state.country);render()});
 $("q").addEventListener("input",e=>{state.q=e.target.value;render()});
 $("liveOnly").addEventListener("change",e=>{state.liveOnly=e.target.checked;render()});
 $("tvOnly").addEventListener("change",e=>{state.tvOnly=e.target.checked;render()});
-$("keyDlg").addEventListener("close",()=>{ if($("keyDlg").returnValue==="save"){state.key=$("apiKey").value.trim();store.set("key",state.key);state.afKey=$("afKey").value.trim();store.set("afKey",state.afKey);afCache.clear();load()} });
+$("keyDlg").addEventListener("close",()=>{ if($("keyDlg").returnValue==="save"){state.key=$("apiKey").value.trim();store.set("key",state.key);state.afKey=$("afKey").value.trim();store.set("afKey",state.afKey);state.rules=$("rulesBox").value;store.set("rules",state.rules);afCache.clear();load()} });
 const tick=()=>{$("clock").textContent=new Date().toLocaleString(undefined,{weekday:"short",hour:"2-digit",minute:"2-digit"})};
 tick(); setInterval(tick,15000);
 render(); load();
