@@ -189,7 +189,7 @@ function statusOf(sport,kick,raw,progress,hs){
   if(mins<(MATCH_LENGTH[sport]||120)) return {st:"live",label:"Live"};
   return {st: hs!=null && hs!=="" ? "ft" : "ft"};
 }
-async function loadLive(sport,date){
+async function loadTSDB(sport,date){
   const enc=encodeURIComponent(sport);
   const [day,tv]=await Promise.all([
     getJSON(`${API()}/eventsday.php?d=${date}&s=${enc}`),
@@ -219,6 +219,65 @@ async function loadLive(sport,date){
     }catch{}
   }
   return [...map.values()];
+}
+
+/* ---------- Second free source: ESPN public scoreboards (many leagues, live minute) ---------- */
+const ESPN = {
+  Soccer: { path:"soccer", leagues:{
+    "uefa.champions":"UEFA Champions League","uefa.europa":"UEFA Europa League","uefa.europa.conf":"UEFA Conference League",
+    "eng.1":"Premier League","eng.2":"EFL Championship","eng.fa":"FA Cup","eng.league_cup":"EFL Cup",
+    "esp.1":"LaLiga","esp.2":"LaLiga 2","esp.copa_del_rey":"Copa del Rey","ita.1":"Serie A","ita.coppa_italia":"Coppa Italia",
+    "ger.1":"Bundesliga","ger.2":"2. Bundesliga","ger.dfb_pokal":"DFB-Pokal","fra.1":"Ligue 1","ned.1":"Eredivisie","por.1":"Primeira Liga",
+    "sco.1":"Scottish Premiership","bel.1":"Belgian Pro League","tur.1":"Süper Lig","gre.1":"Greek Super League",
+    "ksa.1":"Saudi Pro League","uae.1":"UAE Pro League","qat.1":"Qatar Stars League","egy.1":"Egyptian Premier League",
+    "afc.champions":"AFC Champions League Elite","caf.champions":"CAF Champions League",
+    "usa.1":"MLS","mex.1":"Liga MX","bra.1":"Brasileirão","arg.1":"Liga Profesional Argentina","conmebol.libertadores":"Copa Libertadores","conmebol.sudamericana":"Copa Sudamericana",
+    "jpn.1":"J1 League","aus.1":"A-League","chn.1":"Chinese Super League","fifa.friendly":"International Friendly","uefa.nations":"UEFA Nations League"
+  }},
+  Basketball: { path:"basketball", leagues:{ "nba":"NBA","wnba":"WNBA" } },
+  "Ice Hockey": { path:"hockey", leagues:{ "nhl":"NHL" } },
+};
+async function loadESPN(sport,date){
+  const cfg=ESPN[sport]; if(!cfg) return [];
+  const from=date.replace(/-/g,""), to=addDays(date,1).replace(/-/g,"");
+  const res=await Promise.allSettled(Object.entries(cfg.leagues).map(([slug,name])=>
+    getJSON(`https://site.api.espn.com/apis/site/v2/sports/${cfg.path}/${slug}/scoreboard?dates=${from}-${to}&limit=200`).then(j=>({j,name}))));
+  if(!res.some(r=>r.status==="fulfilled")) throw new Error("ESPN unreachable");
+  const out=[];
+  for(const r of res){ if(r.status!=="fulfilled") continue;
+    for(const e of (r.value.j.events||[])){
+      const kick=new Date(e.date); if(ymd(kick)!==date) continue;
+      const c=(e.competitions||[])[0]||{}; const cs=c.competitors||[];
+      const H=cs.find(x=>x.homeAway==="home")||cs[0]||{}, A=cs.find(x=>x.homeAway==="away")||cs[1]||{};
+      const t=(c.status||e.status||{}).type||{}; const clock=(c.status||e.status||{}).displayClock;
+      let st="ns",label;
+      if(/POSTPONED|CANCELED|CANCELLED|SUSPENDED|ABANDONED/.test(t.name||"")){st="off";label=(t.shortDetail||"Off").slice(0,5)}
+      else if(t.state==="in"){st="live";label=t.name==="STATUS_HALFTIME"?"HT":(sport==="Soccer"?(clock||t.shortDetail||"Live"):(t.shortDetail||"Live"))}
+      else if(t.state==="post"){st="ft"}
+      const names=new Set(); for(const b of (c.broadcasts||[])) for(const n of (b.names||[])) names.add(n);
+      out.push({id:"espn"+e.id,league:r.value.name,home:(H.team||{}).displayName||"",away:(A.team||{}).displayName||"",
+        hb:(H.team||{}).logo||"",ab:(A.team||{}).logo||"",kick,hs:st==="ns"?null:H.score,as:st==="ns"?null:A.score,st,label,
+        channels:[...names].map(n=>({name:n,country:"USA"})),espn:true});
+    }
+  }
+  return out;
+}
+const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\b(fc|cf|afc|sc|ac|ssc|club|de|the|calcio|cd|ud|sd|rc|as|us|fk|sk)\b/g,"").replace(/[^a-z0-9]/g,"");
+const sameTeam=(a,b)=>{a=norm(a);b=norm(b);return !!a&&!!b&&(a===b||a.includes(b)||b.includes(a)||(a.length>4&&b.length>4&&a.slice(0,5)===b.slice(0,5)))};
+async function loadLive(sport,date){
+  const [t,e]=await Promise.allSettled([loadTSDB(sport,date),loadESPN(sport,date)]);
+  if(t.status==="rejected"&&e.status==="rejected") throw t.reason;
+  const espn=e.status==="fulfilled"?e.value:[], tsdb=t.status==="fulfilled"?t.value:[];
+  state.sources=[tsdb.length&&"TheSportsDB",espn.length&&"ESPN"].filter(Boolean);
+  const out=[...espn];
+  for(const m of tsdb){
+    const hit=out.find(x=>x.espn&&Math.abs(x.kick-m.kick)<3*3600e3&&sameTeam(x.home,m.home)&&sameTeam(x.away,m.away));
+    if(!hit){out.push(m);continue}
+    const seen=new Set(hit.channels.map(c=>c.name+"|"+c.country));
+    for(const c of m.channels) if(!seen.has(c.name+"|"+c.country)) hit.channels.push(c);
+    hit.hb=hit.hb||m.hb; hit.ab=hit.ab||m.ab;
+  }
+  return out;
 }
 
 /* ---------- Example data (used when the live feed can't be reached) ---------- */
@@ -287,7 +346,7 @@ function buildCountries(){
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const initials=n=>esc(String(n||"?").split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase());
 const TV_ICON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 21h8M9 3l3 3 3-3"/></svg>`;
-function crest(url,name){return url?`<img src="${esc(url)}/tiny" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'crest',textContent:'${initials(name)}'}))">`:`<span class="crest">${initials(name)}</span>`}
+function crest(url,name){return url?`<img src="${esc(/thesportsdb/.test(url)?url+"/tiny":url)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'crest',textContent:'${initials(name)}'}))">`:`<span class="crest">${initials(name)}</span>`}
 
 function render(){
   // sport tabs + day strip
@@ -299,7 +358,7 @@ function render(){
 
   // status line
   const live=state.source==="live";
-  $("status").innerHTML=`<span class="src ${live?"":"demo"}"><i></i>${live?"Live data · TheSportsDB":"Example data"}</span>
+  $("status").innerHTML=`<span class="src ${live?"":"demo"}"><i></i>${live?"Live data · "+esc((state.sources||[]).join(" + ")||"TheSportsDB"):"Example data"}</span>
     <span>Updated ${state.updated?fmtTime(state.updated):"–"}${state.date===today?" · refreshes every minute":""}</span>
     <button class="linkbtn" id="refresh">Refresh</button><button class="linkbtn" id="keyBtn">Data source</button>`;
   $("demoNote").hidden=live;
