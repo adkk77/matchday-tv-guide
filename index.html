@@ -117,6 +117,7 @@ dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border
       <select id="country" aria-label="TV country"><option value="">All countries</option></select>
       <input type="search" id="q" placeholder="Search team, league or channel" aria-label="Search">
       <label class="toggle"><input type="checkbox" id="liveOnly"> Live now</label>
+      <label class="toggle"><input type="checkbox" id="tvOnly"> On TV</label>
     </div>
   </div>
 </header>
@@ -131,8 +132,11 @@ dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border
 <dialog id="keyDlg">
   <form method="dialog" id="keyForm">
     <h3>Data source</h3>
-    <p>Fixtures, scores and TV channels come from TheSportsDB. The free key works out of the box with limited results. A premium key (from thesportsdb.com) adds full listings and minute-by-minute live scores.</p>
-    <label for="apiKey" style="font-weight:600;font-size:13px">API key</label>
+    <p><b>API-Football</b> gives live scores and the match minute for 1,000+ football leagues. Get a free key (100 requests a day) at dashboard.api-football.com and paste it here.</p>
+    <label for="afKey" style="font-weight:600;font-size:13px">API-Football key</label>
+    <input id="afKey" placeholder="Paste your key" autocomplete="off">
+    <p style="margin-top:12px">TV channels come from TheSportsDB and ESPN. A TheSportsDB premium key adds more channel listings (optional).</p>
+    <label for="apiKey" style="font-weight:600;font-size:13px">TheSportsDB key</label>
     <input id="apiKey" placeholder="123 (free key)" autocomplete="off">
     <div class="btns"><button class="btn" value="cancel" type="submit">Cancel</button><button class="btn primary" value="save" type="submit">Save and reload</button></div>
   </form>
@@ -149,15 +153,15 @@ const SPORTS = [
   { id:"Ice Hockey", label:"Ice hockey", live:"icehockey" },
 ];
 const MATCH_LENGTH = { Soccer:115, Handball:80, Tennis:150, Basketball:140, "Ice Hockey":150 };
-const REFRESH_MS = 60000;
+const REFRESH_MS = 60000, AF_REFRESH_MS = 180000; // API-Football free plan: 100 requests/day
 const store = { get(k,d){try{const v=localStorage.getItem("mtg:"+k);return v==null?d:JSON.parse(v)}catch{return d}}, set(k,v){try{localStorage.setItem("mtg:"+k,JSON.stringify(v))}catch{}} };
 
 const state = {
   sport: store.get("sport","Soccer"),
   date: ymd(new Date()),
   country: store.get("country",""),
-  q:"", liveOnly:false,
-  key: store.get("key",""),
+  q:"", liveOnly:false, tvOnly:false,
+  key: store.get("key",""), afKey: store.get("afKey",""), afLeft:null, afError:"",
   matches:[], source:"", updated:null, error:""
 };
 const $ = id => document.getElementById(id);
@@ -264,20 +268,56 @@ async function loadESPN(sport,date){
 }
 const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\b(fc|cf|afc|sc|ac|ssc|club|de|the|calcio|cd|ud|sd|rc|as|us|fk|sk)\b/g,"").replace(/[^a-z0-9]/g,"");
 const sameTeam=(a,b)=>{a=norm(a);b=norm(b);return !!a&&!!b&&(a===b||a.includes(b)||b.includes(a)||(a.length>4&&b.length>4&&a.slice(0,5)===b.slice(0,5)))};
-async function loadLive(sport,date){
-  const [t,e]=await Promise.allSettled([loadTSDB(sport,date),loadESPN(sport,date)]);
-  if(t.status==="rejected"&&e.status==="rejected") throw t.reason;
-  const espn=e.status==="fulfilled"?e.value:[], tsdb=t.status==="fulfilled"?t.value:[];
-  state.sources=[tsdb.length&&"TheSportsDB",espn.length&&"ESPN"].filter(Boolean);
-  const out=[...espn];
-  for(const m of tsdb){
-    const hit=out.find(x=>x.espn&&Math.abs(x.kick-m.kick)<3*3600e3&&sameTeam(x.home,m.home)&&sameTeam(x.away,m.away));
-    if(!hit){out.push(m);continue}
+/* ---------- API-Football (api-sports.io): full football coverage with a free key ---------- */
+const afCache=new Map(); // date -> {at, list}
+async function loadAF(date){
+  const today=date===ymd(new Date()), c=afCache.get(date);
+  if(c && Date.now()-c.at < (today?AF_REFRESH_MS-5000:30*60000)) return c.list;
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
+  const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),12000);
+  let r; try{ r=await fetch(`https://v3.football.api-sports.io/fixtures?date=${date}&timezone=${encodeURIComponent(tz)}`,{headers:{"x-apisports-key":state.afKey},signal:ctl.signal}); } finally{clearTimeout(t)}
+  const left=r.headers.get("x-ratelimit-requests-remaining"); if(left!=null) state.afLeft=+left;
+  const j=await r.json();
+  const errs=j.errors&&(Array.isArray(j.errors)?j.errors:Object.values(j.errors));
+  if(errs&&errs.length) throw new Error(String(errs[0]));
+  const list=(j.response||[]).map(x=>{
+    const sh=(x.fixture.status||{}).short||"NS", el=(x.fixture.status||{}).elapsed, ex=(x.fixture.status||{}).extra;
+    let st="ns",label;
+    if(/^(FT|AET|PEN)$/.test(sh)) st="ft";
+    else if(/^(PST|CANC|ABD|SUSP|INT|AWD|WO)$/.test(sh)){st="off";label=sh}
+    else if(sh==="HT"){st="live";label="HT"}
+    else if(/^(1H|2H|ET|BT|P|LIVE)$/.test(sh)){st="live";label=sh==="P"?"Pens":sh==="BT"?"Break":(el!=null?el+(ex?"+"+ex:"")+"'":"Live")}
+    const lg=x.league||{}; const league=(lg.country&&lg.country!=="World"?lg.country+" · ":"")+(lg.name||"Other");
+    return {id:"af"+x.fixture.id,league,home:x.teams.home.name,away:x.teams.away.name,hb:x.teams.home.logo||"",ab:x.teams.away.logo||"",
+      kick:new Date(x.fixture.date),hs:st==="ns"?null:x.goals.home,as:st==="ns"?null:x.goals.away,st,label,channels:[]};
+  });
+  afCache.set(date,{at:Date.now(),list});
+  return list;
+}
+function mergeChannels(base,others,addMissing){
+  const out=[...base];
+  for(const m of others){
+    const hit=out.find(x=>x!==m&&Math.abs(x.kick-m.kick)<3*3600e3&&sameTeam(x.home,m.home)&&sameTeam(x.away,m.away));
+    if(!hit){ if(addMissing) out.push(m); continue }
     const seen=new Set(hit.channels.map(c=>c.name+"|"+c.country));
-    for(const c of m.channels) if(!seen.has(c.name+"|"+c.country)) hit.channels.push(c);
+    for(const c of m.channels) if(!seen.has(c.name+"|"+c.country)){seen.add(c.name+"|"+c.country);hit.channels.push(c)}
     hit.hb=hit.hb||m.hb; hit.ab=hit.ab||m.ab;
   }
   return out;
+}
+async function loadLive(sport,date){
+  const useAF=sport==="Soccer"&&!!state.afKey;
+  const [f,t,e]=await Promise.allSettled([useAF?loadAF(date):Promise.resolve(null),loadTSDB(sport,date),loadESPN(sport,date)]);
+  const af=f.status==="fulfilled"?f.value:null; state.afError=f.status==="rejected"?String(f.reason&&f.reason.message||f.reason):"";
+  if(!af&&t.status==="rejected"&&e.status==="rejected") throw t.reason;
+  const espn=e.status==="fulfilled"?e.value.map(x=>({...x,channels:[...x.channels]})):[], tsdb=t.status==="fulfilled"?t.value:[];
+  if(af){
+    state.sources=["API-Football"];
+    const base=af.map(x=>({...x,channels:[]}));
+    return mergeChannels(mergeChannels(base,espn,false),tsdb,false);
+  }
+  state.sources=[tsdb.length&&"TheSportsDB",espn.length&&"ESPN"].filter(Boolean);
+  return mergeChannels(espn,tsdb,true);
 }
 
 /* ---------- Example data (used when the live feed can't be reached) ---------- */
@@ -335,7 +375,7 @@ async function load(){
   Object.assign(state,{matches,source,error,updated:new Date()});
   buildCountries(); render();
   clearTimeout(timer);
-  if(state.date===ymd(new Date())) timer=setTimeout(load,REFRESH_MS);
+  if(state.date===ymd(new Date())) timer=setTimeout(load,state.afKey&&state.sport==="Soccer"?AF_REFRESH_MS:REFRESH_MS);
 }
 function buildCountries(){
   const set=new Set(); state.matches.forEach(m=>m.channels.forEach(c=>c.country&&set.add(c.country)));
@@ -359,8 +399,8 @@ function render(){
   // status line
   const live=state.source==="live";
   $("status").innerHTML=`<span class="src ${live?"":"demo"}"><i></i>${live?"Live data · "+esc((state.sources||[]).join(" + ")||"TheSportsDB"):"Example data"}</span>
-    <span>Updated ${state.updated?fmtTime(state.updated):"–"}${state.date===today?" · refreshes every minute":""}</span>
-    <button class="linkbtn" id="refresh">Refresh</button><button class="linkbtn" id="keyBtn">Data source</button>`;
+    <span>Updated ${state.updated?fmtTime(state.updated):"–"}${state.date===today?(state.afKey&&state.sport==="Soccer"?" · refreshes every 3 minutes":" · refreshes every minute"):""}</span>
+    ${state.afKey&&state.sport==="Soccer"?(state.afError?`<span style="color:var(--live)">API-Football: ${esc(state.afError)}</span>`:state.afLeft!=null?`<span>${state.afLeft} API requests left today</span>`:""):""}<button class="linkbtn" id="refresh">Refresh</button><button class="linkbtn" id="keyBtn">Data source</button>${live&&state.sport==="Soccer"&&!state.afKey?`<span>· Add a free API-Football key under Data source to see every league</span>`:""}`;
   $("demoNote").hidden=live;
   if(!live) $("demoNote").innerHTML=`<b>Showing example fixtures.</b> The live feed could not be reached here (${esc(state.error)}). Check your internet connection and press Refresh.`;
 
@@ -369,6 +409,7 @@ function render(){
   let list=state.matches.map(m=>({...m,shown:state.country?m.channels.filter(c=>c.country===state.country):m.channels}));
   if(state.country) list=list.filter(m=>m.shown.length);
   if(state.liveOnly) list=list.filter(m=>m.st==="live");
+  if(state.tvOnly) list=list.filter(m=>m.shown.length);
   if(q) list=list.filter(m=>[m.home,m.away,m.league,...m.channels.map(c=>c.name)].join(" ").toLowerCase().includes(q));
   list.sort((a,b)=>(a.st==="live"?0:1)-(b.st==="live"?0:1)||a.kick-b.kick);
 
@@ -401,13 +442,14 @@ document.addEventListener("click",e=>{
   const s=e.target.closest("[data-sport]"); if(s){state.sport=s.dataset.sport;store.set("sport",state.sport);load();return}
   const d=e.target.closest("[data-date]"); if(d){state.date=d.dataset.date;load();return}
   if(e.target.id==="refresh") load();
-  if(e.target.id==="keyBtn"){ $("apiKey").value=state.key; $("keyDlg").showModal(); }
+  if(e.target.id==="keyBtn"){ $("apiKey").value=state.key; $("afKey").value=state.afKey; $("keyDlg").showModal(); }
 });
 $("datePick").addEventListener("change",e=>{if(e.target.value){state.date=e.target.value;load()}});
 $("country").addEventListener("change",e=>{state.country=e.target.value;store.set("country",state.country);render()});
 $("q").addEventListener("input",e=>{state.q=e.target.value;render()});
 $("liveOnly").addEventListener("change",e=>{state.liveOnly=e.target.checked;render()});
-$("keyDlg").addEventListener("close",()=>{ if($("keyDlg").returnValue==="save"){state.key=$("apiKey").value.trim();store.set("key",state.key);load()} });
+$("tvOnly").addEventListener("change",e=>{state.tvOnly=e.target.checked;render()});
+$("keyDlg").addEventListener("close",()=>{ if($("keyDlg").returnValue==="save"){state.key=$("apiKey").value.trim();store.set("key",state.key);state.afKey=$("afKey").value.trim();store.set("afKey",state.afKey);afCache.clear();load()} });
 const tick=()=>{$("clock").textContent=new Date().toLocaleString(undefined,{weekday:"short",hour:"2-digit",minute:"2-digit"})};
 tick(); setInterval(tick,15000);
 render(); load();

@@ -7,7 +7,8 @@ Football first, with handball, tennis, basketball and ice hockey tabs built in.
 
 ## How it works
 - Single static page (`index.html`), no build step, hosted on GitHub Pages.
-- Data comes from [TheSportsDB](https://www.thesportsdb.com) straight from the browser:
+- **Scores:** [API-Football](https://www.api-football.com) when you add your free key under **Data source** (1,000+ leagues, live minute; free plan = 100 requests/day, the app refreshes every 3 minutes). Without a key it falls back to ESPN's public scoreboards (~40 leagues).
+- **TV channels:** [TheSportsDB](https://www.thesportsdb.com) and ESPN, matched to fixtures by team name and kick-off time. TheSportsDB endpoints:
   `eventsday.php` (fixtures + scores) and `eventstv.php` (TV channels by country).
 - Uses the free key `123` by default. Enter a premium key under **Data source** for full listings and minute-by-minute live scores (v2 `livescore`).
 - Today's view refreshes every minute. If the feed can't be reached, the app shows example data and says so.
