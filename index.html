@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f7a4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Matchday">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>body{margin:0;font:14px system-ui}[hidden]{display:none!important}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+</head><body>
+<title>Matchday TV Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: a broadcast-guide column. Sticky control bar (sport, day strip, filters), then fixtures grouped by competition, each row = clock | teams+score | channels. */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --line:#dfe4dc; --ink:#14201a; --muted:#5d6b62;
+  --pitch:#1f7a4a; --pitch-soft:#e2f1e8; --live:#d6312b; --live-soft:#fde7e5; --chip:#eef1ec;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif; --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1512; --surface:#161e1a; --line:#26322b; --ink:#e7eee9; --muted:#93a39a;
+  --pitch:#4cc283; --pitch-soft:#1a2c22; --live:#ff5b52; --live-soft:#3a1a18; --chip:#1f2a24; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1512; --surface:#161e1a; --line:#26322b; --ink:#e7eee9; --muted:#93a39a;
+  --pitch:#4cc283; --pitch-soft:#1a2c22; --live:#ff5b52; --live-soft:#3a1a18; --chip:#1f2a24; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:880px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+header.top .wrap{padding-block:12px 10px;display:grid;gap:10px}
+header.top .wrap>*{min-width:0}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:.01em;margin:0;text-transform:uppercase;line-height:1}
+h1 span{color:var(--pitch)}
+.clock{font-family:var(--display);font-size:18px;color:var(--muted);font-variant-numeric:tabular-nums}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.scroller{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.scroller::-webkit-scrollbar{display:none}
+button,select,input{font:inherit;color:inherit}
+.tab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;cursor:pointer;white-space:nowrap;font-weight:500}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.day{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:5px 12px;cursor:pointer;display:grid;text-align:center;min-width:64px;line-height:1.15}
+.day b{font-family:var(--display);font-size:17px;text-transform:uppercase;letter-spacing:.03em}
+.day small{color:var(--muted);font-size:12px}
+.day[aria-pressed="true"]{border-color:var(--pitch);background:var(--pitch-soft);box-shadow:inset 0 0 0 1px var(--pitch)}
+.day[aria-pressed="true"] small{color:var(--pitch)}
+.pick{position:relative}
+.pick input{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 10px;height:100%}
+.filters select,.filters input[type=search]{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 10px;min-width:0}
+.filters input[type=search]{flex:1 1 160px}
+.toggle{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-weight:500}
+.toggle input{accent-color:var(--live);width:16px;height:16px}
+:focus-visible{outline:2px solid var(--pitch);outline-offset:2px}
+main .wrap{padding-block:16px 48px;display:grid;gap:18px}
+.status{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:13px}
+.src{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;background:var(--chip);color:var(--ink);font-weight:500}
+.src i{width:8px;height:8px;border-radius:50%;background:var(--pitch);display:inline-block}
+.src.demo i{background:#c9922a}
+.linkbtn{background:none;border:0;color:var(--pitch);cursor:pointer;padding:0;font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.note{background:var(--surface);border:1px solid var(--line);border-left:3px solid #c9922a;border-radius:8px;padding:10px 12px;font-size:13.5px;color:var(--muted)}
+.note b{color:var(--ink)}
+.summary{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--display);font-size:17px;text-transform:uppercase;letter-spacing:.03em}
+.summary span b{font-size:22px;margin-right:4px;font-variant-numeric:tabular-nums}
+.summary .l b{color:var(--live)}
+section.comp{display:grid;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.comp h2{margin:0;font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;color:var(--muted)}
+.comp h2 em{font-style:normal;color:var(--ink)}
+.match{display:grid;grid-template-columns:64px minmax(0,1fr);gap:4px 14px;padding:12px 14px;border-top:1px solid var(--line)}
+.comp h2+.match{border-top:0}
+.match.live{background:linear-gradient(90deg,var(--live-soft),transparent 60%)}
+.when{grid-row:span 2;display:grid;align-content:start;gap:4px;font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums;line-height:1}
+.pill{font-family:var(--display);font-size:13px;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 6px;justify-self:start;font-weight:600}
+.pill.live{background:var(--live);color:#fff;animation:pulse 1.6s ease-in-out infinite}
+.pill.ft{background:var(--chip);color:var(--muted)}
+.pill.ns{color:var(--muted);padding-left:0}
+@keyframes pulse{50%{opacity:.6}}
+@media (prefers-reduced-motion:reduce){.pill.live{animation:none}}
+.teams{display:grid;gap:3px;min-width:0}
+.team{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:8px;align-items:center;font-weight:500}
+.team img,.team .crest{width:20px;height:20px;object-fit:contain;border-radius:50%}
+.team .crest{background:var(--chip);display:grid;place-items:center;font-size:10px;font-weight:700;color:var(--muted)}
+.team .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.team .sc{font-family:var(--display);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums;min-width:20px;text-align:right}
+.match.ft .team.lose{color:var(--muted)}
+.match.live .sc{color:var(--live)}
+.tv{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.ch{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border-radius:6px;padding:3px 8px;font-size:13px;font-weight:500;max-width:100%}
+.ch small{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.ch.none{background:none;color:var(--muted);padding-left:0;font-weight:400}
+.ch svg{width:14px;height:14px;flex:none;color:var(--pitch)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:28px 16px;text-align:center;color:var(--muted)}
+.empty b{display:block;font-family:var(--display);font-size:22px;text-transform:uppercase;color:var(--ink);margin-bottom:4px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);max-width:min(460px,calc(100vw - 32px));padding:18px}
+dialog::backdrop{background:rgb(0 0 0 / .45)}
+dialog h3{font-family:var(--display);text-transform:uppercase;font-size:22px;margin:0 0 8px}
+dialog p{margin:0 0 10px;color:var(--muted);font-size:14px}
+dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px}
+.btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:600}
+.btn.primary{background:var(--pitch);border-color:var(--pitch);color:#fff}
+@media (max-width:520px){h1{font-size:24px}.match{grid-template-columns:52px minmax(0,1fr);gap:4px 10px}.when{font-size:18px}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><h1>Matchday <span>TV Guide</span></h1><div class="clock" id="clock"></div></div>
+    <div class="scroller" id="sports" role="group" aria-label="Sport"></div>
+    <div class="row">
+      <div class="scroller" id="days" role="group" aria-label="Day" style="flex:1 1 auto;min-width:0"></div>
+      <label class="pick" title="Pick any date"><span hidden>Pick a date</span><input type="date" id="datePick" aria-label="Pick a date"></label>
+    </div>
+    <div class="row filters">
+      <select id="country" aria-label="TV country"><option value="">All countries</option></select>
+      <input type="search" id="q" placeholder="Search team, league or channel" aria-label="Search">
+      <label class="toggle"><input type="checkbox" id="liveOnly"> Live now</label>
+    </div>
+  </div>
+</header>
+
+<main><div class="wrap">
+  <div class="status" id="status"></div>
+  <div class="note" id="demoNote" hidden></div>
+  <div class="summary" id="summary"></div>
+  <div id="list" style="display:grid;gap:18px"></div>
+</div></main>
+
+<dialog id="keyDlg">
+  <form method="dialog" id="keyForm">
+    <h3>Data source</h3>
+    <p>Fixtures, scores and TV channels come from TheSportsDB. The free key works out of the box with limited results. A premium key (from thesportsdb.com) adds full listings and minute-by-minute live scores.</p>
+    <label for="apiKey" style="font-weight:600;font-size:13px">API key</label>
+    <input id="apiKey" placeholder="123 (free key)" autocomplete="off">
+    <div class="btns"><button class="btn" value="cancel" type="submit">Cancel</button><button class="btn primary" value="save" type="submit">Save and reload</button></div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+/* ---------- Config: add a sport here and it appears everywhere ---------- */
+const SPORTS = [
+  { id:"Soccer",     label:"Football",   live:"soccer" },
+  { id:"Handball",   label:"Handball",   live:"handball" },
+  { id:"Tennis",     label:"Tennis",     live:"tennis" },
+  { id:"Basketball", label:"Basketball", live:"basketball" },
+  { id:"Ice Hockey", label:"Ice hockey", live:"icehockey" },
+];
+const MATCH_LENGTH = { Soccer:115, Handball:80, Tennis:150, Basketball:140, "Ice Hockey":150 };
+const REFRESH_MS = 60000;
+const store = { get(k,d){try{const v=localStorage.getItem("mtg:"+k);return v==null?d:JSON.parse(v)}catch{return d}}, set(k,v){try{localStorage.setItem("mtg:"+k,JSON.stringify(v))}catch{}} };
+
+const state = {
+  sport: store.get("sport","Soccer"),
+  date: ymd(new Date()),
+  country: store.get("country",""),
+  q:"", liveOnly:false,
+  key: store.get("key",""),
+  matches:[], source:"", updated:null, error:""
+};
+const $ = id => document.getElementById(id);
+
+/* ---------- Dates ---------- */
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function addDays(s,n){const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return ymd(d)}
+function dayLabel(s){const t=ymd(new Date());if(s===t)return"Today";if(s===addDays(t,1))return"Tomorrow";if(s===addDays(t,-1))return"Yesterday";return new Date(s+"T12:00:00").toLocaleDateString(undefined,{weekday:"short"})}
+const fmtTime = d => d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+
+/* ---------- Live data: TheSportsDB ---------- */
+const API = () => "https://www.thesportsdb.com/api/v1/json/"+(state.key||"123");
+async function getJSON(url,opts={}){
+  const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),9000);
+  try{const r=await fetch(url,{...opts,signal:ctl.signal}); if(!r.ok) throw new Error("HTTP "+r.status); return await r.json();}
+  finally{clearTimeout(t)}
+}
+function parseKick(e){
+  if(e.strTimestamp){const s=e.strTimestamp.replace(" ","T");return new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(s)?s:s+"Z")}
+  return new Date((e.dateEvent||state.date)+"T"+((e.strTime||"12:00:00").slice(0,8))+"Z");
+}
+function statusOf(sport,kick,raw,progress,hs){
+  const s=(raw||"").toUpperCase();
+  if(/^(FT|AET|PEN|AP|MATCH FINISHED|FINISHED|ENDED|AFTER|AOT)/.test(s)) return {st:"ft"};
+  if(/^(PST|POSTPONED|CANC|ABD|SUSP)/.test(s)) return {st:"off",label:s.slice(0,4)};
+  if(/^(1H|2H|HT|ET|BT|P|LIVE|IN PLAY|Q\d|OT|S\d|SET)/.test(s) || (progress && /\d/.test(progress))) return {st:"live",label: s==="HT"?"HT":(progress?progress+"'":"Live")};
+  const now=Date.now(), mins=(now-kick)/60000;
+  if(mins<0) return {st:"ns"};
+  if(mins<(MATCH_LENGTH[sport]||120)) return {st:"live",label:"Live"};
+  return {st: hs!=null && hs!=="" ? "ft" : "ft"};
+}
+async function loadLive(sport,date){
+  const enc=encodeURIComponent(sport);
+  const [day,tv]=await Promise.all([
+    getJSON(`${API()}/eventsday.php?d=${date}&s=${enc}`),
+    getJSON(`${API()}/eventstv.php?d=${date}&s=${enc}`).catch(()=>({tvevents:[]}))
+  ]);
+  const events=(day&&day.events)||[]; const tvs=(tv&&(tv.tvevents||tv.tvevent))||[];
+  const chans={};
+  for(const t of tvs){(chans[t.idEvent]??=[]).push({name:t.strChannel,country:t.strCountry||"",logo:t.strLogo||""})}
+  const map=new Map();
+  for(const e of events){
+    const kick=parseKick(e);
+    map.set(e.idEvent,{id:e.idEvent,league:e.strLeague||"Other",home:e.strHomeTeam||e.strEvent,away:e.strAwayTeam||"",
+      hb:e.strHomeTeamBadge||"",ab:e.strAwayTeamBadge||"",kick,hs:e.intHomeScore,as:e.intAwayScore,
+      ...statusOf(sport,kick,e.strStatus,e.strProgress,e.intHomeScore),channels:chans[e.idEvent]||[]});
+  }
+  // TV listings for events missing from the day feed
+  for(const t of tvs){ if(map.has(t.idEvent)) continue;
+    const [h,a]=(t.strEvent||"").split(/\s+vs\.?\s+/i); const kick=parseKick(t);
+    map.set(t.idEvent,{id:t.idEvent,league:t.strLeague||"Other",home:h||t.strEvent,away:a||"",hb:"",ab:"",kick,hs:null,as:null,...statusOf(sport,kick,"",null,null),channels:chans[t.idEvent]});
+  }
+  // Premium key: minute-by-minute live scores
+  if(state.key && state.key!=="123"){
+    try{const sp=SPORTS.find(s=>s.id===sport);
+      const lv=await getJSON(`https://www.thesportsdb.com/api/v2/json/livescore/${sp.live}`,{headers:{"X-API-KEY":state.key}});
+      for(const l of (lv.livescore||[])){const m=map.get(l.idEvent); if(!m) continue;
+        m.hs=l.intHomeScore; m.as=l.intAwayScore; Object.assign(m,statusOf(sport,m.kick,l.strStatus,l.strProgress,l.intHomeScore));}
+    }catch{}
+  }
+  return [...map.values()];
+}
+
+/* ---------- Example data (used when the live feed can't be reached) ---------- */
+function rng(seed){let s=0;for(const c of seed)s=(s*31+c.charCodeAt(0))>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+const DEMO = {
+  Soccer:[
+    ["UEFA Champions League",[["Real Madrid","Liverpool"],["Bayern Munich","Inter"],["Arsenal","PSG"],["Barcelona","Benfica"]],["20:00","20:00","20:00","17:45"],
+      [["beIN Sports 1","MENA"],["TNT Sports 1","UK"],["Paramount+","USA"],["Movistar Liga de Campeones","Spain"],["Canal+","France"],["DAZN","Germany"]]],
+    ["Premier League",[["Manchester City","Chelsea"],["Tottenham","Newcastle"],["Aston Villa","Brighton"]],["12:30","15:00","17:30"],
+      [["Sky Sports Main Event","UK"],["beIN Sports 2","MENA"],["Peacock","USA"],["NBC","USA"]]],
+    ["LaLiga",[["Atlético Madrid","Sevilla"],["Real Sociedad","Villarreal"]],["14:00","21:00"],
+      [["Movistar LaLiga","Spain"],["beIN Sports 3","MENA"],["ESPN+","USA"],["Premier Sports 1","UK"]]],
+    ["Serie A",[["AC Milan","Napoli"],["Juventus","Roma"]],["18:00","20:45"],
+      [["DAZN","Italy"],["Sky Sport Calcio","Italy"],["TNT Sports 2","UK"],["Paramount+","USA"],["beIN Sports 4","MENA"]]],
+    ["Saudi Pro League",[["Al Hilal","Al Nassr"],["Al Ittihad","Al Ahli"]],["16:00","19:00"],
+      [["SSC 1","MENA"],["Shahid","MENA"],["TNT Sports 3","UK"],["Fox Soccer Plus","USA"]]],
+  ],
+  Handball:[["EHF Champions League",[["SC Magdeburg","Barça"],["Veszprém","Füchse Berlin"]],["18:45","20:45"],[["EHFTV","Europe"],["Dyn","Germany"],["beIN Sports 5","MENA"]]]],
+  Tennis:[["ATP Finals",[["J. Sinner","C. Alcaraz"],["A. Zverev","T. Fritz"]],["14:00","20:30"],[["Sky Sports Tennis","UK"],["Tennis Channel","USA"],["beIN Sports 6","MENA"],["SuperTennis","Italy"]]]],
+  Basketball:[["NBA",[["Boston Celtics","Denver Nuggets"],["LA Lakers","Golden State Warriors"]],["01:30","04:00"],[["ESPN","USA"],["Sky Sports Mix","UK"],["NBA League Pass","Global"]]]],
+  "Ice Hockey":[["NHL",[["Toronto Maple Leafs","Edmonton Oilers"]],["00:00"],[["Sportsnet","Canada"],["ESPN+","USA"],["Viaplay","Nordics"]]]],
+};
+function loadDemo(sport,date){
+  const r=rng(sport+date), now=Date.now(), out=[];
+  (DEMO[sport]||[]).forEach(([league,pairs,times,chs],li)=>{
+    pairs.forEach(([h,a],i)=>{
+      if(r()<.25 && li>0) return; // not every fixture every day
+      const kick=new Date(date+"T"+times[i]+":00");
+      const len=MATCH_LENGTH[sport]||120, mins=(now-kick)/60000;
+      let st="ns",label,hs=null,as=null;
+      const fh=Math.floor(r()*4), fa=Math.floor(r()*3);
+      if(mins>=len){st="ft";hs=fh;as=fa}
+      else if(mins>=0){st="live";const p=Math.min(1,mins/len);hs=Math.round(fh*p);as=Math.round(fa*p);
+        label= sport==="Soccer" ? (mins>45&&mins<62?"HT":Math.min(90,Math.round(mins>62?mins-17:mins))+"'") : "Live"}
+      if(sport==="Handball"&&hs!=null){hs=hs*7+18+Math.floor(r()*4);as=as*7+17+Math.floor(r()*4)}
+      if(sport==="Basketball"&&hs!=null){hs=hs*12+88;as=as*12+86}
+      if(sport==="Tennis"&&hs!=null){hs=Math.min(2,hs);as=Math.min(2,as);if(st==="ft"&&hs===as)hs=2}
+      const pick=chs.filter(()=>r()<.8); if(!pick.length) pick.push(chs[0]);
+      out.push({id:sport+li+i,league,home:h,away:a,hb:"",ab:"",kick,hs,as,st,label,
+        channels:pick.map(([name,country])=>({name,country}))});
+    });
+  });
+  return out;
+}
+
+/* ---------- Load + render ---------- */
+let loadSeq=0, timer=null;
+async function load(){
+  const seq=++loadSeq;
+  $("status").innerHTML=`<span class="src"><i></i>Loading…</span>`;
+  let matches, source="live", error="";
+  try{ matches=await loadLive(state.sport,state.date); }
+  catch(e){ matches=loadDemo(state.sport,state.date); source="demo"; error=e&&e.name==="AbortError"?"timed out":(e&&e.message)||"blocked"; }
+  if(seq!==loadSeq) return;
+  Object.assign(state,{matches,source,error,updated:new Date()});
+  buildCountries(); render();
+  clearTimeout(timer);
+  if(state.date===ymd(new Date())) timer=setTimeout(load,REFRESH_MS);
+}
+function buildCountries(){
+  const set=new Set(); state.matches.forEach(m=>m.channels.forEach(c=>c.country&&set.add(c.country)));
+  if(state.country) set.add(state.country);
+  const sel=$("country"); sel.innerHTML=`<option value="">All countries</option>`+[...set].sort().map(c=>`<option>${esc(c)}</option>`).join("");
+  sel.value=state.country;
+}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const initials=n=>esc(String(n||"?").split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase());
+const TV_ICON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 21h8M9 3l3 3 3-3"/></svg>`;
+function crest(url,name){return url?`<img src="${esc(url)}/tiny" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'crest',textContent:'${initials(name)}'}))">`:`<span class="crest">${initials(name)}</span>`}
+
+function render(){
+  // sport tabs + day strip
+  $("sports").innerHTML=SPORTS.map(s=>`<button class="tab" data-sport="${esc(s.id)}" aria-pressed="${s.id===state.sport}">${esc(s.label)}</button>`).join("");
+  const today=ymd(new Date()); const days=[-1,0,1,2,3,4,5,6].map(n=>addDays(today,n));
+  if(!days.includes(state.date)) days.push(state.date);
+  $("days").innerHTML=days.map(d=>`<button class="day" data-date="${d}" aria-pressed="${d===state.date}"><b>${dayLabel(d)}</b><small>${new Date(d+"T12:00:00").toLocaleDateString(undefined,{day:"numeric",month:"short"})}</small></button>`).join("");
+  $("datePick").value=state.date;
+
+  // status line
+  const live=state.source==="live";
+  $("status").innerHTML=`<span class="src ${live?"":"demo"}"><i></i>${live?"Live data · TheSportsDB":"Example data"}</span>
+    <span>Updated ${state.updated?fmtTime(state.updated):"–"}${state.date===today?" · refreshes every minute":""}</span>
+    <button class="linkbtn" id="refresh">Refresh</button><button class="linkbtn" id="keyBtn">Data source</button>`;
+  $("demoNote").hidden=live;
+  if(!live) $("demoNote").innerHTML=`<b>Showing example fixtures.</b> The live feed could not be reached here (${esc(state.error)}). Check your internet connection and press Refresh.`;
+
+  // filter
+  const q=state.q.trim().toLowerCase();
+  let list=state.matches.map(m=>({...m,shown:state.country?m.channels.filter(c=>c.country===state.country):m.channels}));
+  if(state.country) list=list.filter(m=>m.shown.length);
+  if(state.liveOnly) list=list.filter(m=>m.st==="live");
+  if(q) list=list.filter(m=>[m.home,m.away,m.league,...m.channels.map(c=>c.name)].join(" ").toLowerCase().includes(q));
+  list.sort((a,b)=>(a.st==="live"?0:1)-(b.st==="live"?0:1)||a.kick-b.kick);
+
+  const nLive=list.filter(m=>m.st==="live").length, nTv=list.filter(m=>m.shown.length).length;
+  $("summary").innerHTML=`<span><b>${list.length}</b>matches</span><span class="l"><b>${nLive}</b>live now</span><span><b>${nTv}</b>on TV${state.country?" in "+esc(state.country):""}</span>`;
+
+  if(!list.length){
+    $("list").innerHTML=`<div class="empty"><b>No matches found</b>${state.liveOnly?"Nothing is live right now. Turn off “Live now” to see the full day.":state.country?"No listings for "+esc(state.country)+" on this day. Try All countries or another date.":"Try another date or sport."}</div>`;
+    return;
+  }
+  const groups=new Map(); for(const m of list){(groups.get(m.league)||groups.set(m.league,[]).get(m.league)).push(m)}
+  $("list").innerHTML=[...groups].map(([league,ms])=>`<section class="comp"><h2><em>${esc(league)}</em><span>${ms.length} ${ms.length===1?"match":"matches"}</span></h2>${ms.map(row).join("")}</section>`).join("");
+}
+function row(m){
+  const has=m.hs!=null&&m.hs!==""&&m.st!=="ns";
+  const hw=has&&+m.hs>+m.as, aw=has&&+m.as>+m.hs;
+  const pill=m.st==="live"?`<span class="pill live">${esc(m.label||"Live")}</span>`:m.st==="ft"?`<span class="pill ft">FT</span>`:m.st==="off"?`<span class="pill ft">${esc(m.label)}</span>`:`<span class="pill ns">Kick-off</span>`;
+  const tv=m.shown.length?m.shown.map(c=>`<span class="ch">${TV_ICON}${esc(c.name)}${c.country&&!state.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No TV listing yet</span>`;
+  return `<article class="match ${m.st}">
+    <div class="when">${fmtTime(m.kick)}${pill}</div>
+    <div class="teams">
+      <div class="team ${m.st==="ft"&&aw?"lose":""}">${crest(m.hb,m.home)}<span class="nm">${esc(m.home)}</span><span class="sc">${has?esc(m.hs):""}</span></div>
+      ${m.away?`<div class="team ${m.st==="ft"&&hw?"lose":""}">${crest(m.ab,m.away)}<span class="nm">${esc(m.away)}</span><span class="sc">${has?esc(m.as):""}</span></div>`:""}
+      <div class="tv">${tv}</div>
+    </div></article>`;
+}
+
+/* ---------- Events ---------- */
+document.addEventListener("click",e=>{
+  const s=e.target.closest("[data-sport]"); if(s){state.sport=s.dataset.sport;store.set("sport",state.sport);load();return}
+  const d=e.target.closest("[data-date]"); if(d){state.date=d.dataset.date;load();return}
+  if(e.target.id==="refresh") load();
+  if(e.target.id==="keyBtn"){ $("apiKey").value=state.key; $("keyDlg").showModal(); }
+});
+$("datePick").addEventListener("change",e=>{if(e.target.value){state.date=e.target.value;load()}});
+$("country").addEventListener("change",e=>{state.country=e.target.value;store.set("country",state.country);render()});
+$("q").addEventListener("input",e=>{state.q=e.target.value;render()});
+$("liveOnly").addEventListener("change",e=>{state.liveOnly=e.target.checked;render()});
+$("keyDlg").addEventListener("close",()=>{ if($("keyDlg").returnValue==="save"){state.key=$("apiKey").value.trim();store.set("key",state.key);load()} });
+const tick=()=>{$("clock").textContent=new Date().toLocaleString(undefined,{weekday:"short",hour:"2-digit",minute:"2-digit"})};
+tick(); setInterval(tick,15000);
+render(); load();
+})();
+</script>
+<script>if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
+</body></html>
