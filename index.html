@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1f7a4a">
+<meta name="theme-color" content="#0f1512">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Matchday">
+<meta name="apple-mobile-web-app-title" content="KY Matchday">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
 <style>body{margin:0;font:14px system-ui}[hidden]{display:none!important}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
 </head><body>
-<title>Matchday TV Guide</title>
+<title>KY Matchday</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap">
@@ -33,7 +33,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
 header.top .wrap{padding-block:12px 10px;display:grid;gap:10px}
 header.top .wrap>*{min-width:0}
-.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.id{display:flex;align-items:center;gap:12px;min-width:0}
+.ky{width:46px;height:46px;flex:none;border-radius:11px;box-shadow:0 0 0 1px rgb(62 224 138 / .55),0 0 14px rgb(62 224 138 / .55),0 0 30px rgb(62 224 138 / .25);animation:kyglow 2.6s ease-in-out infinite}
+@keyframes kyglow{50%{box-shadow:0 0 0 1px rgb(62 224 138 / .8),0 0 22px rgb(62 224 138 / .8),0 0 44px rgb(62 224 138 / .4)}}
+@media (prefers-reduced-motion:reduce){.ky{animation:none}}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 h1{font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:.01em;margin:0;text-transform:uppercase;line-height:1}
 h1 span{color:var(--pitch)}
 .clock{font-family:var(--display);font-size:18px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -111,7 +115,7 @@ dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border
 
 <header class="top">
   <div class="wrap">
-    <div class="brand"><h1>Matchday <span>TV Guide</span></h1><div class="clock" id="clock"></div></div>
+    <div class="brand"><div class="id"><svg class="ky" role="img" aria-label="KY" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><filter id="kyg" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="kybg" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#173826"/><stop offset="1" stop-color="#0b120e"/></radialGradient></defs><rect width="512" height="512" rx="112" fill="url(#kybg)"/><g fill="none" stroke="#3ee08a" stroke-linecap="round" stroke-linejoin="round" filter="url(#kyg)"><path d="M196 78l60 64 60-64" stroke-width="20"/><rect x="70" y="146" width="372" height="282" rx="48" stroke-width="20"/></g><g fill="none" stroke="#ffffff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" filter="url(#kyg)"><path d="M150 212v154M244 212l-82 80M190 266l58 100"/><path d="M286 212l46 72 46-72M332 284v82"/></g></svg><h1>Matchday <span>TV Guide</span></h1></div><div class="clock" id="clock"></div></div>
     <div class="scroller" id="sports" role="group" aria-label="Sport"></div>
     <div class="row">
       <div class="scroller" id="days" role="group" aria-label="Day" style="flex:1 1 auto;min-width:0"></div>
