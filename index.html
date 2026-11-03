@@ -149,7 +149,7 @@ dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border
     <p style="margin-top:12px"><b>My channels.</b> One rule per line: <code>competition = channel</code>. Every match in that competition gets the channel, shown with a dashed border, when the data feeds list none. The first matching rule wins.</p>
     <textarea id="rulesBox" class="rules" spellcheck="false" aria-label="My channel rules"></textarea>
     <button class="linkbtn" id="rulesReset" type="button">Reset to Middle East (beIN) defaults</button>
-    <p style="margin-top:14px"><b>Use on your phone.</b> Copy this link and open it on your phone (send it to yourself in WhatsApp or Notes). It copies your keys and channel rules there. It contains your API key, so keep it to yourself.</p>
+    <p style="margin-top:14px"><b>Use on your phone.</b> Copy this link and open it on your phone (send it to yourself in WhatsApp or Notes). It copies your keys and channel rules there. It contains your API key, so keep it to yourself. Then use <b>Add to Home Screen</b> from that page: the icon remembers your settings.</p>
     <div style="display:flex;gap:8px"><input id="setupLink" readonly aria-label="Setup link" style="flex:1;min-width:0"><button class="btn" id="copySetup" type="button">Copy</button></div>
     <div class="btns"><button class="btn" value="cancel" type="submit">Cancel</button><button class="btn primary" value="save" type="submit">Save and reload</button></div>
   </form>
@@ -493,7 +493,7 @@ $("country").addEventListener("change",e=>{state.country=e.target.value;store.se
 $("q").addEventListener("input",e=>{state.q=e.target.value;render()});
 $("liveOnly").addEventListener("change",e=>{state.liveOnly=e.target.checked;render()});
 $("tvOnly").addEventListener("change",e=>{state.tvOnly=e.target.checked;render()});
-$("keyDlg").addEventListener("close",()=>{ if($("keyDlg").returnValue==="save"){state.key=$("apiKey").value.trim();store.set("key",state.key);state.afKey=$("afKey").value.trim();store.set("afKey",state.afKey);state.rules=$("rulesBox").value;store.set("rules",state.rules);afCache.clear();load()} });
+$("keyDlg").addEventListener("close",()=>{ if($("keyDlg").returnValue==="save"){state.key=$("apiKey").value.trim();store.set("key",state.key);state.afKey=$("afKey").value.trim();store.set("afKey",state.afKey);state.rules=$("rulesBox").value;store.set("rules",state.rules);try{history.replaceState(null,"",setupLink().replace(location.origin,""))}catch{}afCache.clear();load()} });
 /* ---------- Move settings between devices with a one-time setup link ---------- */
 const b64e=str=>btoa(String.fromCharCode(...new TextEncoder().encode(str))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const b64d=str=>new TextDecoder().decode(Uint8Array.from(atob(str.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0)));
@@ -510,9 +510,8 @@ if(location.hash.startsWith("#setup-")){
     if(typeof d.a==="string"){state.afKey=d.a;store.set("afKey",d.a)}
     if(typeof d.t==="string"){state.key=d.t;store.set("key",d.t)}
     if(typeof d.r==="string"&&d.r.trim()){state.rules=d.r;store.set("rules",d.r)}
-    state.imported=true;
+    state.imported=!sessionStorage.getItem("mtg:seen");try{sessionStorage.setItem("mtg:seen","1")}catch{}
   }catch{}
-  history.replaceState(null,"",location.pathname);
 }
 const tick=()=>{$("clock").textContent=new Date().toLocaleString(undefined,{weekday:"short",hour:"2-digit",minute:"2-digit"})};
 tick(); setInterval(tick,15000);
