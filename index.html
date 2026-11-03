@@ -497,7 +497,8 @@ $("keyDlg").addEventListener("close",()=>{ if($("keyDlg").returnValue==="save"){
 /* ---------- Move settings between devices with a one-time setup link ---------- */
 const b64e=str=>btoa(String.fromCharCode(...new TextEncoder().encode(str))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const b64d=str=>new TextDecoder().decode(Uint8Array.from(atob(str.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0)));
-const setupLink=()=>location.origin+location.pathname+"#setup-"+b64e(JSON.stringify({a:$("afKey").value.trim(),t:$("apiKey").value.trim(),r:$("rulesBox").value}));
+// Query string (not #hash): iPhone home-screen icons keep ?s=… but drop the #part.
+const setupLink=()=>{const r=$("rulesBox").value; const d={a:$("afKey").value.trim(),t:$("apiKey").value.trim()}; if(r.trim()!==DEFAULT_RULES.trim()) d.r=r; return location.origin+location.pathname+"?s="+b64e(JSON.stringify(d));};
 ["afKey","apiKey","rulesBox"].forEach(id=>$(id).addEventListener("input",()=>{$("setupLink").value=setupLink()}));
 document.addEventListener("click",e=>{
   if(e.target.id==="keyBtn") $("setupLink").value=setupLink();
@@ -505,13 +506,19 @@ document.addEventListener("click",e=>{
     const done=()=>{e.target.textContent="Copied"};
     try{navigator.clipboard.writeText(v).then(done,()=>{$("setupLink").select();});}catch{$("setupLink").select()}}
 });
-if(location.hash.startsWith("#setup-")){
-  try{const d=JSON.parse(b64d(location.hash.slice(7)));
+const setupParam=new URLSearchParams(location.search).get("s")||(location.hash.startsWith("#setup-")?location.hash.slice(7):"");
+if(setupParam){
+  try{const d=JSON.parse(b64d(setupParam));
     if(typeof d.a==="string"){state.afKey=d.a;store.set("afKey",d.a)}
     if(typeof d.t==="string"){state.key=d.t;store.set("key",d.t)}
     if(typeof d.r==="string"&&d.r.trim()){state.rules=d.r;store.set("rules",d.r)}
-    state.imported=!sessionStorage.getItem("mtg:seen");try{sessionStorage.setItem("mtg:seen","1")}catch{}
+    try{state.imported=!sessionStorage.getItem("mtg:seen");sessionStorage.setItem("mtg:seen","1")}catch{state.imported=true}
   }catch{}
+  if(location.hash.startsWith("#setup-")) try{history.replaceState(null,"",location.pathname+"?s="+setupParam)}catch{}
+}
+// Home-screen app with no key yet: open the settings once so the key can be entered right here.
+if(!state.afKey && (matchMedia("(display-mode: standalone)").matches||navigator.standalone)){
+  try{ if(!sessionStorage.getItem("mtg:asked")){sessionStorage.setItem("mtg:asked","1"); setTimeout(()=>$("keyBtn")&&$("keyBtn").click(),600)} }catch{}
 }
 const tick=()=>{$("clock").textContent=new Date().toLocaleString(undefined,{weekday:"short",hour:"2-digit",minute:"2-digit"})};
 tick(); setInterval(tick,15000);
