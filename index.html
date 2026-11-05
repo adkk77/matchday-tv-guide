@@ -348,6 +348,14 @@ html,body{overflow-x:hidden}
 .ftag{background:rgb(10 30 14 / .55)!important;border-radius:8px!important;padding:4px 6px!important}
 .fig .nm2{text-shadow:0 1px 2px rgb(0 0 0 / .9),0 0 4px rgb(0 0 0 / .6)!important}
 .fig .nm2 em{color:#e1efe5!important;opacity:.8}
+
+/* 3D: the pitch tilts back, players stand upright (KY approved preview) */
+.pitch3d{perspective:1100px!important;perspective-origin:50% 30%!important;padding:0 4%!important;overflow:visible}
+.pitch-wrap{background:linear-gradient(#0d1a10,#1f4a24)!important;padding:0!important}
+.pitch{transform:rotateX(24deg)!important;transform-origin:50% 100%!important;transform-style:preserve-3d!important;box-shadow:0 30px 40px -16px rgb(0 0 0 / .7)!important;margin-top:-12%!important}
+.fig{transform:translate(-50%,-80%) rotateX(-24deg)!important;transform-origin:50% 100%!important}
+.fig.ov{transform:translate(-50%,-80%) rotateX(-24deg) translateZ(3px)!important}
+.fig .head{box-shadow:0 6px 10px rgb(0 0 0 / .55)!important}
 </style>
 
 <header class="top">
