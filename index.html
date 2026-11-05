@@ -371,7 +371,11 @@ function applyRules(list){
   }
   return list;
 }
-const REFRESH_MS = 60000, AF_REFRESH_MS = 180000; // API-Football free plan: 100 requests/day
+const REFRESH_MS = 60000, AF_REFRESH_MS = 15*60000; // API-Football free plan: 100 requests/day, so its day list is cached 15 min; ESPN keeps live scores fresh every minute
+/* When the daily API-Football allowance runs out, stop calling it until it resets (00:00 UTC) */
+const afResetAt=()=>{const d=new Date();return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+1)};
+const afOut=()=>{try{return +(localStorage.getItem("mtg:afOut")||0)>Date.now()}catch{return false}};
+const afQuota=msg=>{ if(/request limit|requests limit|rate ?limit|too many/i.test(String(msg))) try{localStorage.setItem("mtg:afOut",String(afResetAt()))}catch{} };
 const store = { get(k,d){try{const v=localStorage.getItem("mtg:"+k);return v==null?d:JSON.parse(v)}catch{return d}}, set(k,v){try{localStorage.setItem("mtg:"+k,JSON.stringify(v))}catch{}} };
 
 const state = {
@@ -391,7 +395,8 @@ function dayLabel(s){const t=ymd(new Date());if(s===t)return"Today";if(s===addDa
 const fmtTime = d => d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 
 /* ---------- Live data: TheSportsDB ---------- */
-const API = () => "https://www.thesportsdb.com/api/v1/json/"+(state.key||"123");
+let tsdbBadKey=false;
+const API = () => "https://www.thesportsdb.com/api/v1/json/"+(!tsdbBadKey&&state.key||"123");
 async function getJSON(url,opts={}){
   const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),9000);
   try{const r=await fetch(url,{...opts,signal:ctl.signal}); if(!r.ok) throw new Error("HTTP "+r.status); return await r.json();}
@@ -413,9 +418,10 @@ function statusOf(sport,kick,raw,progress,hs){
 }
 async function loadTSDB(sport,date){
   const enc=encodeURIComponent(sport);
+  const dayP=getJSON(`${API()}/eventsday.php?d=${date}&s=${enc}`).catch(e=>{ if(state.key&&state.key!=="123"&&!tsdbBadKey&&/HTTP 40[013]/.test(e.message)){ tsdbBadKey=true; return getJSON(`${API()}/eventsday.php?d=${date}&s=${enc}`) } throw e });
   const [day,tv]=await Promise.all([
-    getJSON(`${API()}/eventsday.php?d=${date}&s=${enc}`),
-    getJSON(`${API()}/eventstv.php?d=${date}&s=${enc}`).catch(()=>({tvevents:[]}))
+    dayP,
+    dayP.catch(()=>0).then(()=>getJSON(`${API()}/eventstv.php?d=${date}&s=${enc}`)).catch(()=>({tvevents:[]}))
   ]);
   const events=(day&&day.events)||[]; const tvs=(tv&&(tv.tvevents||tv.tvevent))||[];
   const chans={};
@@ -433,7 +439,7 @@ async function loadTSDB(sport,date){
     map.set(t.idEvent,{id:t.idEvent,league:t.strLeague||"Other",home:h||t.strEvent,away:a||"",hb:"",ab:"",kick,hs:null,as:null,...statusOf(sport,kick,"",null,null),channels:chans[t.idEvent]});
   }
   // Premium key: minute-by-minute live scores
-  if(state.key && state.key!=="123"){
+  if(state.key && state.key!=="123" && !tsdbBadKey){
     try{const sp=SPORTS.find(s=>s.id===sport);
       const lv=await getJSON(`https://www.thesportsdb.com/api/v2/json/livescore/${sp.live}`,{headers:{"X-API-KEY":state.key}});
       for(const l of (lv.livescore||[])){const m=map.get(l.idEvent); if(!m) continue;
@@ -463,13 +469,15 @@ const ESPN = {
 const parseISO=v=>{let t=String(v||"").trim().replace(" ","T");if(/T\d\d:\d\d(Z|[+-]\d\d:?\d\d)?$/.test(t))t=t.replace(/(T\d\d:\d\d)/,"$1:00");if(!/(Z|[+-]\d\d:?\d\d)$/.test(t))t+="Z";return new Date(t)};
 async function loadESPN(sport,date){
   const cfg=ESPN[sport]; if(!cfg) return [];
-  const isToday=date===ymd(new Date()); const from=(isToday?addDays(date,-1):date).replace(/-/g,""), to=addDays(date,1).replace(/-/g,"");
-  const res=await Promise.allSettled(Object.entries(cfg.leagues).map(([slug,name])=>
-    getJSON(`https://site.api.espn.com/apis/site/v2/sports/${cfg.path}/${slug}/scoreboard?dates=${from}-${to}&limit=200`).then(j=>({j,name,slug}))));
+  const isToday=date===ymd(new Date());
+  // ESPN no longer accepts date ranges and its dates are US Eastern days, so ask for the two Eastern days that overlap the local day
+  const east=new Date().getTimezoneOffset()<240, eDays=(east?[addDays(date,-1),date]:[date,addDays(date,1)]).map(d=>d.replace(/-/g,""));
+  const res=await Promise.allSettled(Object.entries(cfg.leagues).flatMap(([slug,name])=>eDays.map(d=>
+    getJSON(`https://site.api.espn.com/apis/site/v2/sports/${cfg.path}/${slug}/scoreboard?dates=${d}&limit=200`).then(j=>({j,name,slug})))));
   if(!res.some(r=>r.status==="fulfilled")) throw new Error("ESPN unreachable");
-  const out=[];
+  const out=[], seenE=new Set();
   for(const r of res){ if(r.status!=="fulfilled") continue;
-    for(const e of (r.value.j.events||[])){
+    for(const e of (r.value.j.events||[])){ if(seenE.has(e.id)) continue; seenE.add(e.id);
       const kick=parseISO(e.date); const sameDay=ymd(kick)===date; if(!sameDay&&!(isToday&&ymd(kick)===addDays(date,-1))) continue;
       const c=(e.competitions||[])[0]||{}; const cs=c.competitors||[];
       const H=cs.find(x=>x.homeAway==="home")||cs[0]||{}, A=cs.find(x=>x.homeAway==="away")||cs[1]||{};
@@ -492,15 +500,18 @@ const sameTeam=(a,b)=>{a=norm(a);b=norm(b);return !!a&&!!b&&(a===b||a.includes(b
 /* ---------- API-Football (api-sports.io): full football coverage with a free key ---------- */
 const afCache=new Map(); // date -> {at, list}
 async function loadAF(date,fresh){
-  const today=date===ymd(new Date()), c=afCache.get(date);
-  if(c && Date.now()-c.at < (today||fresh?AF_REFRESH_MS-5000:30*60000)) return c.list;
+  const today=date===ymd(new Date()); let c=afCache.get(date);
+  if(!c) try{c=JSON.parse(localStorage.getItem("mtg:afday:"+date)||"null"); if(c) c.list.forEach(m=>m.kick=new Date(m.kick))}catch{c=null}
+  const ttl=(today||fresh)?AF_REFRESH_MS-5000:date<ymd(new Date())?12*3600e3:3*3600e3;
+  if(c && Date.now()-c.at < ttl) return c.list;
+  if(afOut()){ if(c) return c.list; throw new Error("Daily API-Football limit reached") }
   const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
   const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),12000);
   let r; try{ r=await fetch(`https://v3.football.api-sports.io/fixtures?date=${date}&timezone=${encodeURIComponent(tz)}`,{headers:{"x-apisports-key":state.afKey},signal:ctl.signal}); } finally{clearTimeout(t)}
   const left=r.headers.get("x-ratelimit-requests-remaining"); if(left!=null) state.afLeft=+left;
   const j=await r.json();
   const errs=j.errors&&(Array.isArray(j.errors)?j.errors:Object.values(j.errors));
-  if(errs&&errs.length) throw new Error(String(errs[0]));
+  if(errs&&errs.length){ afQuota(errs[0]); if(c) return c.list; throw new Error(String(errs[0])) }
   const list=(j.response||[]).map(x=>{
     const sh=(x.fixture.status||{}).short||"NS", el=(x.fixture.status||{}).elapsed, ex=(x.fixture.status||{}).extra;
     let st="ns",label;
@@ -513,6 +524,8 @@ async function loadAF(date,fresh){
       kick:new Date(x.fixture.date),hs:st==="ns"?null:x.goals.home,as:st==="ns"?null:x.goals.away,st,label,channels:[]};
   });
   afCache.set(date,{at:Date.now(),list});
+  try{ for(const k of Object.keys(localStorage)) if(k.startsWith("mtg:afday:")&&k.slice(10)<addDays(ymd(new Date()),-3)) localStorage.removeItem(k);
+    localStorage.setItem("mtg:afday:"+date,JSON.stringify({at:Date.now(),list})) }catch{}
   return list;
 }
 function mergeChannels(base,others,addMissing){
@@ -541,6 +554,8 @@ async function loadLive(sport,date){
   if(af){
     state.sources=["API-Football"];
     const base=af.map(x=>({...x,channels:[]}));
+    for(const m of espn){ if(m.st==="ns") continue; const hit=base.find(x=>Math.abs(x.kick-m.kick)<3*3600e3&&sameTeam(x.home,m.home)&&sameTeam(x.away,m.away)); if(hit) Object.assign(hit,{st:m.st,label:m.label,hs:m.hs,as:m.as}); }
+    if(espn.length) state.sources.push("ESPN live");
     return mergeChannels(mergeChannels(base,espn,false),tsdb,false);
   }
   state.sources=[tsdb.length&&"TheSportsDB",espn.length&&"ESPN"].filter(Boolean);
@@ -633,7 +648,7 @@ async function load(){
   buildCountries(); render();
   if(pendingOpen){ const id=pendingOpen; pendingOpen=null; if(state.matches.some(m=>m.id===id)) openMatch(id); }
   clearTimeout(timer);
-  if(state.date===ymd(new Date())) timer=setTimeout(load,state.afKey&&state.sport==="Soccer"?AF_REFRESH_MS:REFRESH_MS);
+  if(state.date===ymd(new Date())) timer=setTimeout(load,REFRESH_MS);
 }
 function buildCountries(){
   const set=new Set(); state.matches.forEach(m=>m.channels.forEach(c=>c.country&&set.add(c.country)));
@@ -657,8 +672,8 @@ function render(){
   // status line
   const live=state.source==="live";
   $("status").innerHTML=`<span class="src ${live?"":"demo"}"><i></i>${live?"Live data · "+esc((state.sources||[]).join(" + ")||"TheSportsDB"):"Example data"}</span>
-    <span>Updated ${state.updated?fmtTime(state.updated):"–"}${state.date===today?(state.afKey&&state.sport==="Soccer"?" · refreshes every 3 minutes":" · refreshes every minute"):""}</span>
-    ${state.afKey&&state.sport==="Soccer"?(state.afError?`<span style="color:var(--live)">API-Football: ${esc(state.afError)}</span>`:state.afLeft!=null?`<span>${state.afLeft} API requests left today</span>`:""):""}<button class="linkbtn" id="refresh">Refresh</button><button class="linkbtn" id="keyBtn">Data source</button>${state.imported?`<span style="color:var(--pitch);font-weight:600">· Settings copied to this device</span>`:""}${live&&state.sport==="Soccer"&&!state.afKey?`<span>· Add a free API-Football key under Data source to see every league</span>`:""}`;
+    <span>Updated ${state.updated?fmtTime(state.updated):"–"}${state.date===today?" · refreshes every minute":""}</span>
+    ${state.afKey&&state.sport==="Soccer"?(afOut()?`<span style="color:#d08b16">API-Football daily limit used up, back at ${fmtTime(new Date(afResetAt()))}. Using ESPN + TheSportsDB meanwhile.</span>`:state.afError?`<span style="color:var(--live)">API-Football: ${esc(state.afError)}</span>`:state.afLeft!=null?`<span>${state.afLeft} API requests left today</span>`:""):""}<button class="linkbtn" id="refresh">Refresh</button><button class="linkbtn" id="keyBtn">Data source</button>${state.imported?`<span style="color:var(--pitch);font-weight:600">· Settings copied to this device</span>`:""}${live&&state.sport==="Soccer"&&!state.afKey?`<span>· Add a free API-Football key under Data source to see every league</span>`:""}`;
   $("demoNote").hidden=live;
   if(!live) $("demoNote").innerHTML=`<b>Showing example fixtures.</b> The live feed could not be reached here (${esc(state.error)}). Check your internet connection and press Refresh.`;
 
@@ -786,8 +801,9 @@ async function afDetails(m){
 /* AF helpers with caching (free plan: 100 requests/day) */
 function afGet(path,ttl){
   const k="mtg:af:"+path; try{const c=JSON.parse(localStorage.getItem(k)||"null"); if(c&&Date.now()-c.at<ttl) return Promise.resolve(c.d)}catch{}
+  if(afOut()) return Promise.reject(new Error("Daily API-Football limit reached. It resets at "+fmtTime(new Date(afResetAt()))+"."));
   return getJSON("https://v3.football.api-sports.io/"+path,{headers:{"x-apisports-key":state.afKey}}).then(j=>{
-    const errs=j.errors&&(Array.isArray(j.errors)?j.errors:Object.values(j.errors)); if(errs&&errs.length) throw new Error(String(errs[0]));
+    const errs=j.errors&&(Array.isArray(j.errors)?j.errors:Object.values(j.errors)); if(errs&&errs.length){ afQuota(errs[0]); throw new Error(String(errs[0])) }
     try{localStorage.setItem(k,JSON.stringify({at:Date.now(),d:j.response}))}catch{} return j.response});
 }
 const rtClass=r=>{r=+r;return !r?"":r>=8?"top":r>=7?"hi":r>=6?"mid":"lo"};
