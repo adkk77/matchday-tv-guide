@@ -52,8 +52,21 @@ button,select,input{font:inherit;color:inherit}
 .day small{color:var(--muted);font-size:12px}
 .day[aria-pressed="true"]{border-color:var(--pitch);background:var(--pitch-soft);box-shadow:inset 0 0 0 1px var(--pitch)}
 .day[aria-pressed="true"] small{color:var(--pitch)}
-.pick{position:relative}
-.pick input{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 10px;height:100%}
+.dayrow{flex-wrap:nowrap;gap:5px}
+.day{min-width:46px;padding:3px 8px;flex:0 0 auto;white-space:nowrap}
+.day b{font-size:14px}
+.day small{font-size:11px}
+.pick{position:relative;flex:0 0 auto;overflow:hidden}
+.pick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0;padding:0}
+.chips{flex-wrap:nowrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap;font-weight:500;font-size:14px;user-select:none;flex:0 0 auto}
+.chip input{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+.chip b{font-variant-numeric:tabular-nums;font-weight:700}
+.chip.live b{color:var(--live)}
+.chip .ld{width:7px;height:7px;border-radius:50%;background:var(--live)}
+.chip:has(input:checked),.chip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip:has(input:checked) b{color:inherit}
+.chip:has(input:focus-visible){outline:2px solid var(--pitch);outline-offset:2px}
 .filters select,.filters input[type=search]{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 10px;min-width:0}
 .filters input[type=search]{flex:1 1 160px}
 .toggle{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-weight:500}
@@ -193,20 +206,23 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .tick.on{background:var(--pitch);border-color:var(--pitch);color:#fff}
 .top-sec{border-color:var(--pitch)}.top-sec h2 .flag{color:var(--pitch);font-size:18px}
 .match .dtag{display:block;font-family:var(--body);font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase}
-.pitch-wrap{margin:0 -16px;padding:4px 0 8px;background:linear-gradient(#0d2a1a,#0b1f14);overflow:hidden}
+.pitch-wrap{margin:0 -16px;padding:4px 0 8px;overflow:hidden;background:radial-gradient(120% 60% at 50% 0%,rgb(255 255 255 / .10),transparent 60%),radial-gradient(3px 3px at 20% 30%,rgb(255 255 255 / .05),transparent),linear-gradient(#0a0f12,#111a16 40%,#0b1a10)}
+.boards{display:flex;justify-content:center;gap:2px;margin:0 auto 2px;max-width:440px;width:88%;height:12px;font:700 8px/12px var(--display);letter-spacing:.2em;color:#d7ffe6;text-transform:uppercase;background:linear-gradient(90deg,#0f3d26,#156b3f 50%,#0f3d26);border-radius:2px;box-shadow:0 0 12px rgb(62 224 138 / .35)}
 .pitch-lbl{color:#e8f3ec;font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:14px;text-align:center;padding:6px 0;font-weight:700}
 .pitch-lbl small{color:#9cc2aa;font-weight:600;margin-left:6px}
 .pitch3d{perspective:820px;perspective-origin:50% 0%;padding:6px 6% 0}
 .pitch{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:68/105;transform:rotateX(28deg);transform-origin:50% 100%;transform-style:preserve-3d;margin-top:-6%;
-  background:repeating-linear-gradient(180deg,#2f8f4e 0 7.14%,#2a8247 7.14% 14.28%);border-radius:4px;box-shadow:0 30px 40px -20px rgb(0 0 0 / .6),inset 0 0 40px rgb(0 0 0 / .25)}
+  background:radial-gradient(70% 40% at 30% 20%,rgb(255 255 255 / .10),transparent 70%),radial-gradient(70% 40% at 70% 80%,rgb(255 255 255 / .08),transparent 70%),radial-gradient(120% 90% at 50% 50%,transparent 55%,rgb(0 0 0 / .28)),repeating-linear-gradient(180deg,#3a9a52 0 5.4%,#2f8645 5.4% 10.8%);
+  border-radius:3px;box-shadow:0 0 0 6px #2b7a40,0 0 0 7px rgb(0 0 0 / .3),0 30px 40px -20px rgb(0 0 0 / .7)}
+.pitch:before{content:"";position:absolute;inset:0;opacity:.35;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 .3 0 0 0 0 0 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
 .pitch>svg{position:absolute;inset:0;width:100%;height:100%}
-.goal{position:absolute;left:41%;width:18%;height:5%;border:1.5px solid #f4f4f4;border-bottom:0;transform-origin:50% 100%;background:repeating-linear-gradient(90deg,rgb(255 255 255 / .25) 0 2px,transparent 2px 5px)}
+.goal{position:absolute;left:44.6%;width:10.8%;height:4%;border:2px solid #fff;border-bottom:0;border-radius:1px 1px 0 0;transform-origin:50% 100%;background:repeating-linear-gradient(90deg,rgb(255 255 255 / .35) 0 1px,transparent 1px 4px),repeating-linear-gradient(0deg,rgb(255 255 255 / .3) 0 1px,transparent 1px 4px);box-shadow:0 0 4px rgb(255 255 255 / .4)}
 .goal.g1{top:-3.5%;transform:translateY(0) rotateX(-70deg)}.goal.g2{bottom:-1.5%;height:4%;border-top:0;border-bottom:1.5px solid #f4f4f4;transform:rotateX(70deg)}
 .fig{all:unset;position:absolute;width:11.5%;max-width:48px;transform:translate(-50%,-100%) rotateX(-28deg);transform-origin:50% 100%;cursor:pointer;display:block}
 .fig-in{position:relative;display:flex;flex-direction:column;align-items:center}
-.fig .head{width:46%;aspect-ratio:1;border-radius:50%;background:#d9c2a6;overflow:hidden;border:1.5px solid #fff;display:grid;place-items:center;margin-bottom:-6%;position:relative;z-index:1;box-shadow:0 1px 3px rgb(0 0 0 / .4)}
+.fig .head{width:38%;aspect-ratio:1;border-radius:50%;background:#d9c2a6;overflow:hidden;border:1.5px solid #fff;display:grid;place-items:center;margin-bottom:-6%;position:relative;z-index:1;box-shadow:0 1px 3px rgb(0 0 0 / .4)}
 .fig .head img{width:100%;height:100%;object-fit:cover}.fig .head i{font-style:normal;font-weight:800;font-size:11px;color:#333}
-.fig .body{width:78%;display:block;filter:drop-shadow(0 2px 1px rgb(0 0 0 / .35))}
+.fig .body{width:72%;display:block;filter:drop-shadow(0 2px 1px rgb(0 0 0 / .35))}
 .fig .nm2{margin-top:1px;background:rgb(10 14 12 / .82);color:#fff;font-size:9.5px;font-weight:700;border-radius:3px;padding:0 4px;white-space:nowrap;max-width:130%;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
 .fig .shadow{position:absolute;left:50%;bottom:9px;width:60%;height:5px;background:rgb(0 0 0 / .35);border-radius:50%;transform:translateX(-50%);filter:blur(1.5px);z-index:-1}
 .fig .rt.mini{position:absolute;right:-8%;top:0;font-size:10px;min-width:0;padding:0 3px;line-height:1.4;z-index:2}
@@ -236,17 +252,20 @@ button.pl{cursor:pointer}button.pl:hover{background:var(--chip)}
   <div class="wrap">
     <div class="brand"><div class="id"><svg class="ky" role="img" aria-label="KY" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><filter id="kyg" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="kybg" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#173826"/><stop offset="1" stop-color="#0b120e"/></radialGradient></defs><rect width="512" height="512" rx="112" fill="url(#kybg)"/><g fill="none" stroke="#3ee08a" stroke-linecap="round" stroke-linejoin="round" filter="url(#kyg)"><path d="M196 78l60 64 60-64" stroke-width="20"/><rect x="70" y="146" width="372" height="282" rx="48" stroke-width="20"/></g><g fill="none" stroke="#ffffff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" filter="url(#kyg)"><path d="M150 212v154M244 212l-82 80M190 266l58 100"/><path d="M286 212l46 72 46-72M332 284v82"/></g></svg><h1>Matchday <span>TV Guide</span></h1></div><div class="clock" id="clock"></div></div>
     <div class="scroller" id="sports" role="group" aria-label="Sport"></div>
-    <div class="row">
+    <div class="row dayrow">
       <div class="scroller" id="days" role="group" aria-label="Day" style="flex:1 1 auto;min-width:0"></div>
-      <label class="pick" title="Pick any date"><span hidden>Pick a date</span><input type="date" id="datePick" aria-label="Pick a date"></label>
+      <label class="day pick" title="Pick any date"><b>📅</b><small>Pick</small><input type="date" id="datePick" aria-label="Pick a date"></label>
     </div>
     <div class="row filters">
       <select id="country" aria-label="TV country"><option value="">All countries</option></select>
       <div class="qwrap"><input type="search" id="q" placeholder="Search country, competition, team or player" aria-label="Search" autocomplete="off"><div class="sugg" id="sugg" hidden></div></div>
-      <label class="toggle"><input type="checkbox" id="liveOnly"> Live now</label>
-      <label class="toggle"><input type="checkbox" id="tvOnly"> On TV</label>
-      <label class="toggle"><input type="checkbox" id="favOnly"> ★ Favourites</label>
-      <button class="tab" id="compBtn" type="button">Competitions</button>
+    </div>
+    <div class="scroller chips">
+      <button class="chip all" id="allBtn" type="button"><b id="cAll">0</b> <span id="cAllL">matches</span></button>
+      <label class="chip live"><input type="checkbox" id="liveOnly"><i class="ld"></i>Live <b id="cLive">0</b></label>
+      <label class="chip"><input type="checkbox" id="tvOnly">On TV <b id="cTv">0</b></label>
+      <label class="chip"><input type="checkbox" id="favOnly">★ <b id="cFav">0</b></label>
+      <button class="chip" id="compBtn" type="button">Competitions</button>
     </div>
   </div>
 </header>
@@ -254,7 +273,6 @@ button.pl{cursor:pointer}button.pl:hover{background:var(--chip)}
 <main><div class="wrap">
   <div class="status" id="status"></div>
   <div class="note" id="demoNote" hidden></div>
-  <div class="summary" id="summary"></div>
   <div id="list" style="display:grid;gap:18px"></div>
 </div></main>
 
@@ -615,6 +633,7 @@ function render(){
   const q=state.q.trim().toLowerCase();
   let list=state.matches.map(m=>({...m,shown:state.country?m.channels.filter(c=>c.country===state.country):m.channels}));
   if(state.country) list=list.filter(m=>m.shown.length);
+  const base=list.filter(m=>!state.hidden.has(m.league));
   if(state.liveOnly) list=list.filter(m=>m.st==="live");
   if(state.tvOnly) list=list.filter(m=>m.shown.length);
   const nHidden=list.filter(m=>state.hidden.has(m.league)).length;
@@ -623,9 +642,9 @@ function render(){
   if(q) list=list.filter(m=>[m.home,m.away,m.league,...m.channels.map(c=>c.name)].join(" ").toLowerCase().includes(q));
   list.sort((a,b)=>(a.st==="live"?0:1)-(b.st==="live"?0:1)||a.kick-b.kick);
 
-  const nLive=list.filter(m=>m.st==="live").length, nTv=list.filter(m=>m.shown.length).length;
-  const nHT=list.filter(m=>m.st==="live"&&m.label==="HT").length, nPlay=nLive-nHT, nFT=list.filter(m=>m.st==="ft").length, nNS=list.filter(m=>m.st==="ns").length;
-  $("summary").innerHTML=[[list.length,"matches"],[nTv,"on TV"],[nPlay,"playing","l"],[nHT,"half-time","h"],[nNS,"to come"],[nFT,"finished"]].filter(([n],i)=>i<2||n).map(([n,l,c])=>`<span class="${c||""}"><b>${n}</b>${l}</span>`).join('<i class="dot">·</i>');
+  $("cAll").textContent=base.length; $("cAllL").textContent=base.length===1?"match":"matches"; $("cLive").textContent=base.filter(m=>m.st==="live").length;
+  $("cTv").textContent=base.filter(m=>m.shown.length).length; $("cFav").textContent=base.filter(isFav).length;
+  $("allBtn").classList.toggle("on",!state.liveOnly&&!state.tvOnly&&!state.favOnly);
 
   let emptyHtml="";
   if(!list.length){
@@ -778,7 +797,7 @@ function vStats(){
   return `<section class="md-sec"><h4>Match stats</h4>${d.stats.map(x=>{const h=num(x.h),a=num(x.a),t=h+a||1;return `<div class="stat"><div class="l">${esc(x.l)}</div><div class="v">${esc(x.h)}${x.u}</div><div class="bar"><i style="width:${h/t*100}%"></i><i style="width:${a/t*100}%"></i></div><div class="v">${esc(x.a)}${x.u}</div></div>`}).join("")}</section>`;
 }
 /* ---------- 3D pitch line-up ---------- */
-const PITCH_SVG=`<svg viewBox="0 0 68 105" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".45"><rect x="1.5" y="1.5" width="65" height="102"/><line x1="1.5" y1="52.5" x2="66.5" y2="52.5"/><circle cx="34" cy="52.5" r="9.15"/><circle cx="34" cy="52.5" r=".5" fill="#fff"/><rect x="13.85" y="1.5" width="40.3" height="16.5"/><rect x="24.85" y="1.5" width="18.3" height="5.5"/><rect x="13.85" y="87" width="40.3" height="16.5"/><rect x="24.85" y="98" width="18.3" height="5.5"/><path d="M26.7 18a9.15 9.15 0 0 0 14.6 0M26.7 87a9.15 9.15 0 0 1 14.6 0"/></g></svg>`;
+const PITCH_SVG=`<svg viewBox="0 0 68 105" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="rgba(255,255,255,.85)" stroke-width=".35"><circle cx="34" cy="12.5" r=".35" fill="#fff"/><circle cx="34" cy="92.5" r=".35" fill="#fff"/><path d="M1.5 2.5a1 1 0 0 0 1-1M65.5 1.5a1 1 0 0 0 1 1M1.5 102.5a1 1 0 0 1 1 1M66.5 102.5a1 1 0 0 0-1 1"/><rect x="1.5" y="1.5" width="65" height="102"/><line x1="1.5" y1="52.5" x2="66.5" y2="52.5"/><circle cx="34" cy="52.5" r="9.15"/><circle cx="34" cy="52.5" r=".5" fill="#fff"/><rect x="13.85" y="1.5" width="40.3" height="16.5"/><rect x="24.85" y="1.5" width="18.3" height="5.5"/><rect x="13.85" y="87" width="40.3" height="16.5"/><rect x="24.85" y="98" width="18.3" height="5.5"/><path d="M26.7 18a9.15 9.15 0 0 0 14.6 0M26.7 87a9.15 9.15 0 0 1 14.6 0"/></g></svg>`;
 function rowsFromFormation(f,n){const r=String(f||"").split("-").map(x=>+x).filter(Boolean);const out=[1,...r];return out.reduce((a,b)=>a+b,0)===n?out:null}
 function placeTeam(players,formation,home){
   // returns [{p,x,y}] in % of the pitch; home attacks upwards (bottom half), away downwards (top half)
@@ -795,11 +814,13 @@ function placeTeam(players,formation,home){
 }
 function figure(o,team,home,gk){
   const p=o.p, col=(gk?team.gkColors:team.colors)||{}, prim="#"+(col.primary||(home?"e0393e":"1f6fd1")).replace("#",""), num="#"+(col.number||"ffffff").replace("#",""), bord="#"+(col.border||col.primary||"222").replace("#","");
+  const lum=h=>{h=h.replace("#","");if(h.length<6)return .5;const v=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255);return .3*v[0]+.59*v[1]+.11*v[2]};
+  const shorts=lum(prim)>.55?"#1d2430":"#f2f2f2", skin=["#e8c2a0","#c99b78","#a8754f","#7a4e33"][(+p.id||String(p.name||"").length)%4], boot=["#3ee08a","#ff6b2c","#f2f2f2","#ffd400"][(+p.id||1)%4];
   const r=p.rating?(+p.rating).toFixed(1):"", last=String(p.name||"").split(" ").slice(-1)[0];
   const head=p.id?`<img src="https://media.api-sports.io/football/players/${p.id}.png" alt="" loading="lazy" onerror="this.remove()">`:"";
   return `<button class="fig" style="left:${o.x}%;top:${o.y}%" ${p.id?`data-player="${p.id}"`:""} type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
     <span class="fig-in"><span class="head">${head||`<i>${esc((last||"?").slice(0,1))}</i>`}</span>
-    <svg class="body" viewBox="0 0 40 46" aria-hidden="true"><path d="M7 4 13 0h14l6 4 5 10-6 3-2-5v17H10V12l-2 5-6-3Z" fill="${prim}" stroke="${bord}" stroke-width="1.2"/><text x="20" y="21" text-anchor="middle" font-size="11" font-weight="800" fill="${num}" font-family="Barlow Condensed,Arial Narrow,sans-serif">${esc(p.number??p.n??"")}</text><path d="M10 29h20l1 7h-9l-2-3-2 3H9Z" fill="#1d2430"/><rect x="12" y="36" width="5" height="8" rx="1" fill="${prim}"/><rect x="23" y="36" width="5" height="8" rx="1" fill="${prim}"/><rect x="11" y="43" width="7" height="3" rx="1.2" fill="#111"/><rect x="22" y="43" width="7" height="3" rx="1.2" fill="#111"/></svg>
+    <svg class="body" viewBox="0 0 40 62" aria-hidden="true"><path d="M8 7 3 25l3.5 1.3L11 13Z M32 7l5 18-3.5 1.3L29 13Z" fill="${skin}"/><path d="M8 7 4 15l5 2 1.5-3 M32 7l4 8-5 2-1.5-3" fill="${prim}" stroke="${bord}" stroke-width=".8"/><path d="M14 2 20 4l6-2 6 5-2 6v19H10V13L8 7Z" fill="${prim}" stroke="${bord}" stroke-width=".8"/><path d="M17 2.6 20 6l3-3.4" fill="none" stroke="${bord==prim?"rgba(0,0,0,.35)":bord}" stroke-width="1"/><path d="M10 13v19h4.5C12 26 12 18 13 9Z" fill="rgba(0,0,0,.18)"/><path d="M27 5c2 6 2 18 1 27h2V13l2-6Z" fill="rgba(255,255,255,.14)"/><text x="20" y="22" text-anchor="middle" font-size="10" font-weight="800" fill="${num}" font-family="Barlow Condensed,Arial Narrow,sans-serif">${esc(p.number??p.n??"")}</text><path d="M10 32h20l1.2 9.5H21.5L20 38.5l-1.5 3H8.8Z" fill="${shorts}"/><path d="M12 41.5h5.5v4H12Zm10.5 0H28v4h-5.5Z" fill="${skin}"/><path d="M11.8 45h5.9l-.4 10.5H12.2ZM22.3 45h5.9l-.4 10.5h-5.1Z" fill="${prim}"/><path d="M11.8 46.5h5.9M22.3 46.5h5.9" stroke="${bord==prim?"rgba(255,255,255,.6)":bord}" stroke-width="1"/><path d="M11.5 55.5h6.2l1.6 3.4c.3 1-.3 1.6-1.3 1.6h-6.6ZM22 55.5h6.2l.1 5h-6.6c-1 0-1.6-.6-1.3-1.6Z" fill="#111"/><path d="M12 57.5h6M22 57.5h6" stroke="${boot}" stroke-width=".9"/></svg>
     ${r?`<span class="rt mini ${rtClass(r)}">${r}</span>`:""}${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
     <span class="nm2">${esc(last)}</span></span><span class="shadow"></span></button>`;
 }
@@ -808,8 +829,8 @@ function pitchHtml(teams){
   const [h,a]=teams; const figs=[];
   [[h,true],[a,false]].forEach(([t,home])=>{ if(!t.xi||!t.xi.length) return; placeTeam(t.xi,t.formation,home).forEach(o=>figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK"))) });
   if(!figs.length) return "";
-  return `<div class="pitch-wrap"><div class="pitch-lbl top">${esc(a.name)} <small>${esc(a.formation||"")}</small></div>
-    <div class="pitch3d"><div class="pitch">${PITCH_SVG}<span class="goal g1"></span>${figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1])).join("")}</div></div>
+  return `<div class="pitch-wrap"><div class="pitch-lbl top">${esc(a.name)} <small>${esc(a.formation||"")}</small></div><div class="boards">KY Matchday · KY Matchday</div>
+    <div class="pitch3d"><div class="pitch">${PITCH_SVG}<span class="goal g1"></span><span class="goal g2"></span>${figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1])).join("")}</div></div>
     <div class="pitch-lbl">${esc(h.name)} <small>${esc(h.formation||"")}</small></div></div>`;
 }
 function vLineups(){
@@ -991,6 +1012,7 @@ $("sugg").addEventListener("click",async e=>{
     }catch(err){ b.textContent="Couldn't search: "+(err.message||err) } }
 });
 function openPlayerAlone(id){ Object.assign(md,{m:null,tab:"summary",player:null}); if(!$("matchDlg").open) $("matchDlg").showModal(); openPlayer(id); }
+$("allBtn").addEventListener("click",()=>{state.liveOnly=state.tvOnly=state.favOnly=false;["liveOnly","tvOnly","favOnly"].forEach(id=>$(id).checked=false);render()});
 $("liveOnly").addEventListener("change",e=>{state.liveOnly=e.target.checked;render()});
 $("tvOnly").addEventListener("change",e=>{state.tvOnly=e.target.checked;render()});
 $("favOnly").addEventListener("change",e=>{state.favOnly=e.target.checked;render()});
