@@ -305,6 +305,32 @@ html,body{overflow-x:hidden}
 .ftag img{width:18px;height:18px;object-fit:contain;grid-row:span 2}
 .ftag b{font-family:var(--display);font-size:16px;letter-spacing:.04em}
 .ftag small{font-size:9.5px;color:#cfe6d6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Flat, dark pitch with plain round photos (KY's reference style) */
+.pitch-wrap{background:#0f2416!important;margin:0 -16px!important;padding:0!important}
+.pitch3d{perspective:none!important;padding:0!important}
+.pitch{transform:none!important;animation:none!important;border-radius:0!important;box-shadow:none!important;
+  background:repeating-linear-gradient(180deg,#1f4a2b 0 6.25%,#1c4428 6.25% 12.5%)!important}
+.pitch:before{opacity:.5!important}
+.pitch>svg g{stroke:rgba(255,255,255,.28)!important;stroke-width:.3px}
+.goal{display:none}
+.wm{position:absolute;left:50%;width:62%;transform:translate(-50%,-50%);opacity:.07;pointer-events:none;filter:grayscale(1) brightness(2)}
+.wm.top{top:25%}.wm.bot{top:75%}
+.ftag{background:none!important;display:grid!important;grid-template-columns:auto!important;justify-items:center;row-gap:3px;padding:0!important}
+.ftag.tl{top:1.5%;left:3%}.ftag.br{bottom:1.5%;right:3%;left:auto}
+.ftag img{width:30px!important;height:30px!important;grid-row:auto!important}
+.ftag b{font-family:var(--body)!important;font-style:italic;font-size:12px!important;font-weight:700;color:#e9f1ec;letter-spacing:.02em!important}
+.fig{width:19%!important;max-width:96px!important;transform:translate(-50%,-38%)!important}
+.fig .head{width:66%!important;border:0!important;box-shadow:0 2px 6px rgb(0 0 0 / .45)!important;background:#2a3a30!important}
+.fig .head.nohead{background:transparent!important;border:2px solid rgb(255 255 255 / .85)!important;box-shadow:none!important}
+.fig .head.nohead i{font-family:var(--body);font-size:15px!important;font-weight:700;color:#fff;text-shadow:none}
+.fig .head img{background:#cfd8d3!important}
+.fig .shadow{display:none}
+.fig .nm2{background:none!important;color:#fff!important;font-size:10.5px!important;font-weight:700;padding:0!important;margin-top:4px!important;max-width:112%!important;text-shadow:0 1px 2px rgb(0 0 0 / .7);display:block!important;text-align:center}
+.fig .nm2 em{font-style:normal;color:#9fb3a7;font-weight:600;margin-right:3px}
+.fig .fmeta{margin-top:2px!important}
+.fig .gl{left:4%!important;top:-4%!important;font-size:12px!important}.fig .rc{left:10%!important;top:30%!important}
+.fig:hover .nm2,.fig:focus-visible .nm2{color:var(--pitch)!important}
 </style>
 
 <header class="top">
@@ -886,6 +912,7 @@ function placeTeam(players,formation,home){
     out.push({p:o.p,x:home?100-x:x,y,ri,R});});});
   return out;
 }
+const shortName=n=>{n=String(n||"").trim();const w=n.split(/\s+/);return n.length>13&&w.length>1&&!/\./.test(w[0])?w[0][0]+". "+w.slice(1).join(" "):n};
 function figure(o,team,home,gk){
   const p=o.p, col=(gk?team.gkColors:team.colors)||{}, prim="#"+(col.primary||(home?"e0393e":"1f6fd1")).replace("#",""), num="#"+(col.number||"ffffff").replace("#",""), bord="#"+(col.border||col.primary||"222").replace("#","");
   const lum=h=>{h=h.replace("#","");if(h.length<6)return .5;const v=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255);return .3*v[0]+.59*v[1]+.11*v[2]};
@@ -893,9 +920,9 @@ function figure(o,team,home,gk){
   const r=p.rating?(+p.rating).toFixed(1):"", last=String(p.name||"").split(" ").slice(-1)[0];
   const head=p.id?`<img src="https://media.api-sports.io/football/players/${p.id}.png" alt="" loading="lazy" onerror="this.remove()">`:"";
   return `<button class="fig" style="left:${o.x}%;top:${o.y}%" ${p.id?`data-player="${p.id}"`:""} type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
-    <span class="fig-in"><span class="head" style="border-color:${prim};background:${prim}">${head||`<i>${esc((last||"?").slice(0,1))}</i>`}</span>
+    <span class="fig-in"><span class="head${head?"":" nohead"}">${head||`<i>${esc(p.number??p.n??(last||"?").slice(0,1))}</i>`}</span>
     ${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
-    <span class="nm2">${esc(last)}</span><span class="fmeta"><b class="fno" style="background:${prim};color:${num}">${esc(p.number??p.n??"")}</b>${r?`<span class="rt mini ${rtClass(r)}">${r}</span>`:""}</span></span><span class="shadow"></span></button>`;
+    <span class="nm2">${head?`<em>${esc(p.number??p.n??"")}</em>`:""}${esc(shortName(p.name))}</span>${r?`<span class="fmeta"><span class="rt mini ${rtClass(r)}">${r}</span></span>`:""}</span><span class="shadow"></span></button>`;
 }
 function outIcon(o){const r=(o.reason||"")+" "+(o.type||"");return /red card|suspen/i.test(r)?'<i class="card r"></i>':/yellow/i.test(r)?'<i class="card"></i>':/questionable|doubt/i.test(r)?'<b class="q">?</b>':'<b class="inj">+</b>'}
 function benchParts(t){
@@ -922,12 +949,13 @@ function pitchHtml(teams){
   const [h,a]=teams; const figs=[];
   // Every row of both teams gets the same spacing from goal line to goal line, so a 5-row team is as roomy as a 4-row one
   const placed=[[h,true],[a,false]].map(([t,home])=>[t,home,t.xi&&t.xi.length?placeTeam(t.xi,t.formation,home):[]]);
-  const rowsOf=l=>l.length?l[0].R:0, total=rowsOf(placed[0][2])+rowsOf(placed[1][2]), gap=total>1?90/(total-1):0;
-  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(total>1&&list.length) o.y=home?95-o.ri*gap:5+o.ri*gap; figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
+  const rowsOf=l=>l.length?l[0].R:0, total=rowsOf(placed[0][2])+rowsOf(placed[1][2]), gap=total>1?87/(total-1):0;
+  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(total>1&&list.length) o.y=home?91.5-o.ri*gap:4.5+o.ri*gap; figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
   if(!figs.length) return "";
-  const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:""}<b>${esc(t.formation||"")}</b><small>${esc(t.name)}</small></span>`;
+  const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:`<small>${esc(t.name)}</small>`}<b>${esc(t.formation||"")}</b></span>`;
+  const wm=(t,pos)=>t.logo?`<img class="wm ${pos}" src="${esc(t.logo)}" alt="">`:"";
   return `<div class="pitch-wrap">
-    <div class="pitch-grid"><div class="pitch3d"><div class="pitch">${PITCH_SVG}${tag(a,"tl")}${tag(h,"bl")}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
+    <div class="pitch-grid"><div class="pitch3d"><div class="pitch">${PITCH_SVG}${wm(a,"top")}${wm(h,"bot")}${tag(a,"tl")}${tag(h,"br")}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
     ${outHtml(h,a)}</div>`;
 }
 function vLineups(){
