@@ -145,6 +145,42 @@ dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:600}
 .btn.primary{background:var(--pitch);border-color:var(--pitch);color:#fff}
 @media (max-width:520px){h1{font-size:24px}.match{grid-template-columns:52px minmax(0,1fr);gap:4px 10px}.when{font-size:18px}}
+/* Compact two-line rows */
+.match{grid-template-columns:50px minmax(0,1fr) 58px minmax(0,1fr);gap:5px 8px;padding:9px 12px;align-items:center}
+.match .when{grid-row:auto;font-size:16px;align-content:center}
+.match .when .t{font-family:var(--display);font-size:16px}
+.match .pill{font-size:12px;padding:1px 5px}
+.hn,.an{display:flex;align-items:center;gap:6px;min-width:0;font-weight:600;font-size:14.5px}
+.hn{justify-content:flex-end;text-align:right}
+.hn .nm,.an .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hn img,.an img,.hn .crest,.an .crest{width:20px;height:20px;flex:none;object-fit:contain;border-radius:50%}
+.hn .crest,.an .crest{background:var(--chip);display:grid;place-items:center;font-size:9px;font-weight:700;color:var(--muted)}
+.hn.lose,.an.lose{color:var(--muted);font-weight:500}
+.match .sc{font-family:var(--display);font-weight:700;font-size:19px;text-align:center;font-variant-numeric:tabular-nums;min-width:0;display:flex;justify-content:center;gap:5px}
+.match .sc i{font-style:normal;color:var(--muted);font-weight:500}
+.match.live .sc{color:var(--live)}
+.tv.sm{grid-column:2/-1;margin:0;order:0;gap:4px;justify-content:center}
+.tv.sm .ch{font-size:12px;padding:2px 7px;border-radius:5px;gap:4px}
+.tv.sm .ch svg{width:12px!important;height:12px!important}
+.tv.sm .ch.none{font-size:11.5px;padding:2px 0}
+@media (max-width:520px){.match{grid-template-columns:44px minmax(0,1fr) 50px minmax(0,1fr);gap:4px 6px;padding:8px 10px}.hn,.an{font-size:13.5px}.tv.sm{grid-column:1/-1}}
+/* Match centre */
+.md-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--line);margin:4px -16px -12px;padding:0 12px}
+.md-tab{border:0;background:none;padding:10px 10px 9px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.md-tab[aria-selected="true"]{color:var(--ink);border-color:var(--pitch)}
+.info{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px}.info dt{color:var(--muted)}.info dd{margin:0;font-weight:500}
+.pl{display:grid;grid-template-columns:34px 22px minmax(0,1fr) auto;gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line);font-size:14px;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;color:inherit}
+button.pl{cursor:pointer}button.pl:hover{background:var(--chip)}
+.pl img,.pl .ph{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--chip)}
+.pl .no{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;font-size:13px}
+.pl .pn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pl .pn small{color:var(--muted);margin-left:6px;font-size:12px}
+.rt{font-family:var(--display);font-weight:700;font-size:14px;min-width:34px;text-align:center;border-radius:5px;padding:2px 4px;color:#fff;background:#8a958e}
+.rt.hi{background:#1f9d55}.rt.mid{background:#d08b16}.rt.lo{background:#d6312b}.rt.top{background:#1565c0}
+.lu-team{display:flex;align-items:center;gap:8px;font-weight:700;margin:10px 0 2px}.lu-team img{width:22px;height:22px;object-fit:contain}.lu-team small{color:var(--muted);font-weight:500}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}.tbl th,.tbl td{padding:5px 4px;text-align:center;border-top:1px solid var(--line)}.tbl th{color:var(--muted);font-weight:600}.tbl td.tm{text-align:left;display:flex;gap:6px;align-items:center;max-width:180px}.tbl td.tm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tbl td.tm img{width:16px;height:16px;object-fit:contain}.tbl tr.me td{background:var(--pitch-soft);font-weight:700}
+.pc-head{display:grid;grid-template-columns:84px 1fr;gap:14px;align-items:center}.pc-head img{width:84px;height:84px;border-radius:50%;object-fit:cover;background:var(--chip)}.pc-head h3{margin:0;font-size:24px}
+.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.kv div{background:var(--chip);border-radius:8px;padding:8px;text-align:center}.kv b{display:block;font-family:var(--display);font-size:20px}.kv span{color:var(--muted);font-size:12px}
+.back{border:0;background:none;color:var(--pitch);font-weight:600;cursor:pointer;padding:0}
 </style>
 
 <header class="top">
@@ -365,7 +401,7 @@ async function loadAF(date){
     else if(sh==="HT"){st="live";label="HT"}
     else if(/^(1H|2H|ET|BT|P|LIVE)$/.test(sh)){st="live";label=sh==="P"?"Pens":sh==="BT"?"Break":(el!=null?el+(ex?"+"+ex:"")+"'":"Live")}
     const lg=x.league||{}; const league=(lg.country&&lg.country!=="World"?lg.country+" · ":"")+(lg.name||"Other");
-    return {id:"af"+x.fixture.id,afId:x.fixture.id,homeId:x.teams.home.id,league,home:x.teams.home.name,away:x.teams.away.name,hb:x.teams.home.logo||"",ab:x.teams.away.logo||"",
+    return {id:"af"+x.fixture.id,afId:x.fixture.id,homeId:x.teams.home.id,awayId:x.teams.away.id,leagueId:lg.id,season:lg.season,referee:x.fixture.referee||"",venue:((x.fixture.venue||{}).name||"")+((x.fixture.venue||{}).city?", "+x.fixture.venue.city:""),league,home:x.teams.home.name,away:x.teams.away.name,hb:x.teams.home.logo||"",ab:x.teams.away.logo||"",
       kick:new Date(x.fixture.date),hs:st==="ns"?null:x.goals.home,as:st==="ns"?null:x.goals.away,st,label,channels:[]};
   });
   afCache.set(date,{at:Date.now(),list});
@@ -379,6 +415,7 @@ function mergeChannels(base,others,addMissing){
     const seen=new Set(hit.channels.map(c=>c.name+"|"+c.country));
     for(const c of m.channels) if(!seen.has(c.name+"|"+c.country)){seen.add(c.name+"|"+c.country);hit.channels.push(c)}
     hit.hb=hit.hb||m.hb; hit.ab=hit.ab||m.ab; if(m.espnId&&!hit.espnId){hit.espnId=m.espnId;hit.slug=m.slug;hit.path=m.path}
+    if(m.goals&&!hit.goals) hit.goals=m.goals;
   }
   return out;
 }
@@ -534,15 +571,15 @@ function render(){
 function row(m){
   const has=m.hs!=null&&m.hs!==""&&m.st!=="ns";
   const hw=has&&+m.hs>+m.as, aw=has&&+m.as>+m.hs;
-  const pill=m.st==="live"?`<span class="pill live">${esc(m.label||"Live")}</span>`:m.st==="ft"?`<span class="pill ft">FT</span>`:m.st==="off"?`<span class="pill ft">${esc(m.label)}</span>`:`<span class="pill ns">Kick-off</span>`;
-  const tv=m.shown.length?m.shown.map(c=>`<span class="ch${c.rule?" rule":""}" title="${c.rule?"From your channel rules (usual rights holder)":"Listed by the data feed"}">${TV_ICON}${esc(c.name)}${c.rule?` <small>usually</small>`:c.guide?"":c.country&&!state.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
+  const when=m.st==="live"?`<span class="pill live">${esc(m.label||"Live")}</span>`:m.st==="ft"?`<span class="pill ft">FT</span>`:m.st==="off"?`<span class="pill ft">${esc(m.label)}</span>`:`<span class="t">${fmtTime(m.kick)}</span>`;
+  const tv=m.shown.length?m.shown.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?` <small>usually</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
   return `<article class="match ${m.st} tap" data-mid="${esc(m.id)}" tabindex="0" role="button" aria-label="Match details: ${esc(m.home)} v ${esc(m.away)}">
-    <div class="when">${fmtTime(m.kick)}${pill}</div>
-    <div class="teams">
-      <div class="team ${m.st==="ft"&&aw?"lose":""}">${crest(m.hb,m.home)}<span class="nm">${esc(m.home)}</span><span class="sc">${has?esc(m.hs):""}</span></div>
-      ${m.away?`<div class="team ${m.st==="ft"&&hw?"lose":""}">${crest(m.ab,m.away)}<span class="nm">${esc(m.away)}</span><span class="sc">${has?esc(m.as):""}</span></div>`:""}
-      <div class="tv">${tv}</div>
-    </div></article>`;
+    <div class="when">${when}</div>
+    <div class="hn ${m.st==="ft"&&aw?"lose":""}"><span class="nm">${esc(m.home)}</span>${crest(m.hb,m.home)}</div>
+    <div class="sc">${has?`${esc(m.hs)}<i>–</i>${esc(m.as)}`:`<i>v</i>`}</div>
+    <div class="an ${m.st==="ft"&&hw?"lose":""}">${crest(m.ab,m.away)}<span class="nm">${esc(m.away)}</span></div>
+    <div class="tv sm">${tv}</div>
+  </article>`;
 }
 
 /* ---------- Match details (365-style): ESPN summary first (free), API-Football only if needed ---------- */
@@ -570,7 +607,8 @@ async function espnDetails(m){
   const stats=STAT.map(([n,l,u])=>({l,h:sv(hT,n),a:sv(aT,n),u:u||""})).filter(x=>x.h!=null&&x.a!=null);
   const ros=(j.rosters||[]); const lu=["home","away"].map(side=>{const r=ros.find(x=>x.homeAway===side)||{};return {formation:r.formation||"",players:(r.roster||[]).filter(p=>p.starter).map(p=>({n:p.jersey||"",name:(p.athlete||{}).displayName||""}))}});
   const tv=new Set(); for(const b of (comp.broadcasts||[])) { const n=(b.media||{}).shortName||(b.names||[])[0]; if(n) tv.add(n) }
-  return {events,stats,lineups:lu[0].players.length?lu:null,tv:[...tv],src:"ESPN"};
+  const gi=j.gameInfo||{}; const ofc=(gi.officials||[])[0];
+  return {events,stats,lineups:lu[0].players.length?lu:null,tv:[...tv],src:"ESPN",referee:ofc?(ofc.fullName||ofc.displayName||""):"",venue:((gi.venue||{}).fullName||"")+(((gi.venue||{}).address||{}).city?", "+gi.venue.address.city:""),attendance:gi.attendance?Number(gi.attendance).toLocaleString():""};
 }
 async function afDetails(m){
   const c=afDetailCache.get(m.afId); if(c&&(m.st!=="live"||Date.now()-c.at<120000)) return c.d;
@@ -590,10 +628,23 @@ async function afDetails(m){
   const stats=MAP.map(([n,l])=>({l,h:sv(hT,n),a:sv(aT,n),u:""})).filter(x=>x.h!=null&&x.a!=null);
   const d={events,stats,lineups:null,tv:[],src:"API-Football"}; afDetailCache.set(m.afId,{at:Date.now(),d}); return d;
 }
+/* AF helpers with caching (free plan: 100 requests/day) */
+function afGet(path,ttl){
+  const k="mtg:af:"+path; try{const c=JSON.parse(localStorage.getItem(k)||"null"); if(c&&Date.now()-c.at<ttl) return Promise.resolve(c.d)}catch{}
+  return getJSON("https://v3.football.api-sports.io/"+path,{headers:{"x-apisports-key":state.afKey}}).then(j=>{
+    const errs=j.errors&&(Array.isArray(j.errors)?j.errors:Object.values(j.errors)); if(errs&&errs.length) throw new Error(String(errs[0]));
+    try{localStorage.setItem(k,JSON.stringify({at:Date.now(),d:j.response}))}catch{} return j.response});
+}
+const rtClass=r=>{r=+r;return !r?"":r>=8?"top":r>=7?"hi":r>=6?"mid":"lo"};
+const photo=id=>id?`<img src="https://media.api-sports.io/football/players/${id}.png" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'ph'}))">`:`<span class="ph"></span>`;
+const ageFrom=d=>{if(!d)return"";const b=new Date(d);const n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a};
+const md={m:null,d:null,err:"",tab:"summary",lineups:null,table:null,player:null,loading:""};
+
 function mdShell(m,body){
   const has=m.hs!=null&&m.hs!==""&&m.st!=="ns";
   const status=m.st==="live"?(m.label||"Live"):m.st==="ft"?"Full time":m.st==="off"?(m.label||"Off"):fmtTime(m.kick);
-  const tv=m.channels.length?m.channels.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?" <small>usually</small>":c.guide?"":c.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
+  const tv=m.channels.length?m.channels.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?" <small>usually</small>":""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
+  const tabs=[["summary","Summary"],["lineups","Line-ups"],["stats","Stats"],["table","Table"]];
   return `<div class="md-head">
     <div class="md-top"><b>${esc(m.league)}</b><button class="md-x" id="mdClose" aria-label="Close">×</button></div>
     <div class="md-score">
@@ -602,26 +653,118 @@ function mdShell(m,body){
       <div class="md-team">${crest(m.ab,m.away)}<span class="n">${esc(m.away)}</span></div>
     </div>
     <div class="tv" style="justify-content:center;margin:0">${tv}</div>
+    <div class="md-tabs" role="tablist">${tabs.map(([k,l])=>`<button class="md-tab" role="tab" data-tab="${k}" aria-selected="${md.tab===k}">${l}</button>`).join("")}</div>
   </div><div class="md-body">${body}</div>`;
 }
-function mdRender(m,d,err){
-  if(!d){ $("matchBody").innerHTML=mdShell(m, err?`<p class="md-note">${esc(err)}</p>`:`<p class="md-note">Loading match details…</p>`); return }
+function vSummary(){
+  const {m,d,err}=md; if(!d) return `<p class="md-note">${esc(err||"Loading match details…")}</p>`;
   const ico=k=>k==="goal"?"⚽":k==="miss"?"✕":k==="red"?'<i class="card r"></i>':k==="yellow"?'<i class="card"></i>':k==="sub"?"⇄":"";
   const evs=d.events.length?d.events.map(e=>{const cell=`<span class="who">${e.home?"":`<span class="ic">${ico(e.kind)}</span>`}${esc(e.main)}${e.home?`<span class="ic">${ico(e.kind)}</span>`:""}</span>${e.sub?`<span class="sub">${esc(e.sub)}</span>`:""}`;
       return `<div class="ev"><div class="h">${e.home?cell:""}</div><div class="min">${esc(e.min)}</div><div>${e.home?"":cell}</div></div>`}).join("")
     :`<p class="md-note">${m.st==="ns"?"The match hasn't started yet.":"No goals or cards reported yet."}</p>`;
+  const ref=d.referee||m.referee, ven=d.venue||m.venue;
+  const info=[["Kick-off",m.kick.toLocaleString(undefined,{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})],["Competition",m.league],ref&&["Referee",ref],ven&&["Stadium",ven],d.attendance&&["Attendance",d.attendance]].filter(Boolean);
+  return `<section class="md-sec"><h4>Goals, cards & subs</h4>${evs}</section>
+    <section class="md-sec"><h4>Match info</h4><dl class="info">${info.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></section>
+    <p class="md-note">Details from ${esc(d.src)}${m.st==="live"&&m.espnId?" · updates every minute while open":""}.</p>`;
+}
+function vStats(){
+  const d=md.d; if(!d) return `<p class="md-note">Loading…</p>`;
+  if(!d.stats.length) return `<p class="md-note">${md.m.st==="ns"?"Stats appear once the match starts.":"No statistics available for this match."}</p>`;
   const num=v=>parseFloat(String(v).replace("%",""))||0;
-  const sts=d.stats.length?d.stats.map(x=>{const h=num(x.h),a=num(x.a),t=h+a||1;return `<div class="stat"><div class="l">${esc(x.l)}</div><div class="v">${esc(x.h)}${x.u}</div><div class="bar"><i style="width:${h/t*100}%"></i><i style="width:${a/t*100}%"></i></div><div class="v">${esc(x.a)}${x.u}</div></div>`}).join(""):"";
-  const lus=d.lineups?`<div class="lu">${d.lineups.map(l=>`<div><div class="fm">${esc(l.formation)}</div><ol>${l.players.map(p=>`<li><b>${esc(p.n)}</b>${esc(p.name)}</li>`).join("")}</ol></div>`).join("")}</div>`:"";
-  $("matchBody").innerHTML=mdShell(m,`
-    <section class="md-sec"><h4>Goals, cards & subs</h4>${evs}</section>
-    ${sts?`<section class="md-sec"><h4>Match stats</h4>${sts}</section>`:""}
-    ${lus?`<section class="md-sec"><h4>Starting line-ups</h4>${lus}</section>`:""}
-    <p class="md-note">Details from ${esc(d.src)}${m.st==="live"?" · updates every minute while open":""}.</p>`);
+  return `<section class="md-sec"><h4>Match stats</h4>${d.stats.map(x=>{const h=num(x.h),a=num(x.a),t=h+a||1;return `<div class="stat"><div class="l">${esc(x.l)}</div><div class="v">${esc(x.h)}${x.u}</div><div class="bar"><i style="width:${h/t*100}%"></i><i style="width:${a/t*100}%"></i></div><div class="v">${esc(x.a)}${x.u}</div></div>`}).join("")}</section>`;
+}
+function vLineups(){
+  const {m}=md, L=md.lineups;
+  if(md.loading==="lineups") return `<p class="md-note">Loading line-ups…</p>`;
+  if(L&&L.af&&L.teams.length){
+    const plRow=p=>{const r=p.rating?(+p.rating).toFixed(1):"";const extra=(p.goals?" ⚽".repeat(Math.min(p.goals,3)):"")+(p.assists?" 🅰".repeat(Math.min(p.assists,3)):"")+(p.yellow?' <i class="card"></i>':"")+(p.red?' <i class="card r"></i>':"");
+      return `<button class="pl" data-player="${p.id}" type="button">${photo(p.id)}<span class="no">${esc(p.number??"")}</span><span class="pn">${esc(p.name)}${extra}<small>${esc(p.pos||"")}</small></span><span class="rt ${rtClass(r)}">${r||"–"}</span></button>`};
+    return L.teams.map(t=>`<section class="md-sec"><div class="lu-team">${t.logo?`<img src="${esc(t.logo)}" alt="">`:""}${esc(t.name)} <small>${esc(t.formation||"")}${t.coach?" · Coach: "+esc(t.coach):""}</small></div>
+      ${t.xi.map(plRow).join("")}${t.subs.length?`<h4 style="margin-top:12px">Substitutes</h4>${t.subs.map(plRow).join("")}`:""}</section>`).join("")+
+      `<p class="md-note">Ratings from API-Football${m.st==="live"?", refreshed every minute while this tab is open (cached for 2 minutes to save requests)":""}. Tap a player for their profile.</p>`;
+  }
+  const el=md.d&&md.d.lineups;
+  if(el) return `<div class="lu">${el.map(l=>`<div><div class="fm">${esc(l.formation)}</div><ol>${l.players.map(p=>`<li><b>${esc(p.n)}</b>${esc(p.name)}</li>`).join("")}</ol></div>`).join("")}</div>
+    <p class="md-note">${state.afKey?"":"Add your API-Football key under Data source to see player photos, live ratings and profiles."}</p>`;
+  return `<p class="md-note">${m.st==="ns"?"Line-ups are usually announced about an hour before kick-off.":"No line-ups available for this match."}${state.afKey?"":" Add your API-Football key under Data source for line-ups with photos and ratings."}</p>`;
+}
+function vTable(){
+  if(md.loading==="table") return `<p class="md-note">Loading table…</p>`;
+  const T=md.table; if(!T||!T.rows.length) return `<p class="md-note">No league table for this competition.</p>`;
+  const mine=r=>sameTeam(r.team,md.m.home)||sameTeam(r.team,md.m.away);
+  return `<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th style="text-align:left">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>
+    ${T.rows.map(r=>`<tr class="${mine(r)?"me":""}"><td>${esc(r.rank)}</td><td class="tm">${r.logo?`<img src="${esc(r.logo)}" alt="">`:""}<span>${esc(r.team)}</span></td><td>${esc(r.p)}</td><td>${esc(r.w)}</td><td>${esc(r.d)}</td><td>${esc(r.l)}</td><td>${esc(r.gd)}</td><td><b>${esc(r.pts)}</b></td></tr>`).join("")}</tbody></table></div>
+    ${T.group?`<p class="md-note">${esc(T.group)}</p>`:""}`;
+}
+function vPlayer(){
+  const P=md.player; if(!P) return "";
+  if(P.loading) return `<button class="back" data-back>‹ Back to line-ups</button><p class="md-note">Loading player…</p>`;
+  if(P.err) return `<button class="back" data-back>‹ Back to line-ups</button><p class="md-note">${esc(P.err)}</p>`;
+  const p=P.p.player, st=P.p.statistics||[];
+  const sum=f=>st.reduce((a,x)=>a+(+f(x)||0),0);
+  const apps=sum(x=>x.games.appearences), goals=sum(x=>x.goals.total), ast=sum(x=>x.goals.assists), yc=sum(x=>x.cards.yellow), rc=sum(x=>x.cards.red), mins=sum(x=>x.games.minutes);
+  const rated=st.filter(x=>x.games.rating); const w=x=>(+x.games.appearences||1);
+  const avg=rated.length?(rated.reduce((a,x)=>a+ +x.games.rating*w(x),0)/rated.reduce((a,x)=>a+w(x),0)).toFixed(2):"–";
+  const team=(st[0]||{}).team||{}, pos=((st[0]||{}).games||{}).position||"";
+  return `<button class="back" data-back>‹ Back to line-ups</button>
+   <div class="pc-head"><img src="${esc(p.photo)}" alt=""><div><h3>${esc(p.name)}</h3><div class="md-note">${team.logo?`<img src="${esc(team.logo)}" alt="" style="width:16px;height:16px;vertical-align:-3px"> `:""}${esc(team.name||"")}${pos?" · "+esc(pos):""}</div></div></div>
+   <dl class="info"><dt>Age</dt><dd>${esc(p.age??ageFrom((p.birth||{}).date))}${(p.birth||{}).date?` (born ${esc(p.birth.date)})`:""}</dd><dt>Nationality</dt><dd>${esc(p.nationality||"–")}</dd><dt>Height</dt><dd>${esc(p.height||"–")}</dd><dt>Weight</dt><dd>${esc(p.weight||"–")}</dd>${(p.birth||{}).place?`<dt>Birthplace</dt><dd>${esc(p.birth.place)}${p.birth.country?", "+esc(p.birth.country):""}</dd>`:""}</dl>
+   <section class="md-sec"><h4>Season ${esc(P.season)} · all competitions</h4><div class="kv">
+     <div><b>${apps}</b><span>Matches</span></div><div><b>${goals}</b><span>Goals</span></div><div><b>${ast}</b><span>Assists</span></div>
+     <div><b>${yc}</b><span>Yellow cards</span></div><div><b>${rc}</b><span>Red cards</span></div><div><b>${avg}</b><span>Avg rating</span></div></div>
+     <p class="md-note" style="margin-top:8px">${mins} minutes played.</p></section>
+   ${st.length?`<section class="md-sec"><h4>By competition</h4><div style="overflow-x:auto"><table class="tbl"><thead><tr><th style="text-align:left">Competition</th><th>Apps</th><th>G</th><th>A</th><th>YC</th><th>Rating</th></tr></thead><tbody>${st.filter(x=>x.games.appearences).map(x=>`<tr><td class="tm"><span>${esc(x.league.name)}</span></td><td>${x.games.appearences||0}</td><td>${x.goals.total||0}</td><td>${x.goals.assists||0}</td><td>${x.cards.yellow||0}</td><td>${x.games.rating?(+x.games.rating).toFixed(1):"–"}</td></tr>`).join("")}</tbody></table></div></section>`:""}`;
+}
+function mdPaint(){
+  const m=md.m; if(!m) return;
+  const body=md.player?vPlayer():md.tab==="lineups"?vLineups():md.tab==="stats"?vStats():md.tab==="table"?vTable():vSummary();
+  const sc=$("matchDlg").scrollTop; $("matchBody").innerHTML=mdShell(m,body); $("matchDlg").scrollTop=sc;
+}
+async function loadLineups(force){
+  const m=md.m; if(!m||!m.afId||!state.afKey) return;
+  if(md.lineups&&!force&&md.lineups.id===m.afId) return;
+  if(!md.lineups) { md.loading="lineups"; mdPaint(); }
+  try{
+    const live=m.st==="live";
+    const [lu,pl]=await Promise.all([afGet(`fixtures/lineups?fixture=${m.afId}`,m.st==="ns"?10*60000:12*3600e3),m.st==="ns"?Promise.resolve([]):afGet(`fixtures/players?fixture=${m.afId}`,live?120000:12*3600e3).catch(()=>[])]);
+    const stats={}; for(const t of pl||[]) for(const x of t.players||[]){const g=(x.statistics||[])[0]||{};stats[x.player.id]={rating:(g.games||{}).rating,goals:(g.goals||{}).total,assists:(g.goals||{}).assists,yellow:(g.cards||{}).yellow,red:(g.cards||{}).red}}
+    const mk=e=>{const p=e.player||{};return {id:p.id,name:p.name,number:p.number,pos:p.pos,...(stats[p.id]||{})}};
+    md.lineups={af:true,id:m.afId,teams:(lu||[]).map(t=>({name:t.team.name,logo:t.team.logo,formation:t.formation,coach:(t.coach||{}).name,xi:(t.startXI||[]).map(mk),subs:(t.substitutes||[]).map(mk)}))};
+  }catch(e){ if(!md.lineups) md.lineups={af:false,teams:[]}; }
+  md.loading=""; if(md.tab==="lineups"&&!md.player) mdPaint();
+}
+async function loadTable(){
+  const m=md.m; if(md.table&&md.table.for===m.id) return;
+  md.loading="table"; mdPaint(); let rows=[],group="";
+  try{
+    if(m.leagueId&&m.season&&state.afKey){
+      const r=await afGet(`standings?league=${m.leagueId}&season=${m.season}`,30*60000);
+      const groups=(((r||[])[0]||{}).league||{}).standings||[];
+      const g=groups.find(g=>g.some(x=>sameTeam(x.team.name,m.home)||sameTeam(x.team.name,m.away)))||groups[0]||[];
+      group=(g[0]||{}).group||"";
+      rows=g.map(x=>({rank:x.rank,team:x.team.name,logo:x.team.logo,p:x.all.played,w:x.all.win,d:x.all.draw,l:x.all.lose,gd:x.goalsDiff,pts:x.points}));
+    } else if(m.slug){
+      const j=await getJSON(`https://site.api.espn.com/apis/v2/sports/${m.path||"soccer"}/${m.slug}/standings`);
+      const ch=(j.children||[]); const grp=ch.find(c=>((c.standings||{}).entries||[]).some(e=>sameTeam(e.team.displayName,m.home)))||ch[0]||j;
+      const st=(e,n)=>{const x=(e.stats||[]).find(s=>s.name===n||s.type===n);return x?(x.displayValue??x.value):""};
+      rows=((grp.standings||{}).entries||[]).map(e=>({rank:st(e,"rank"),team:e.team.displayName,logo:((e.team.logos||[])[0]||{}).href,p:st(e,"gamesPlayed"),w:st(e,"wins"),d:st(e,"ties"),l:st(e,"losses"),gd:st(e,"pointDifferential"),pts:st(e,"points")})).sort((a,b)=>(+a.rank||99)-(+b.rank||99));
+      group=grp.name&&ch.length>1?grp.name:"";
+    }
+  }catch{}
+  md.table={for:m.id,rows,group}; md.loading=""; if(md.tab==="table") mdPaint();
+}
+async function openPlayer(id){
+  const m=md.m; const season=m.season||new Date().getFullYear();
+  md.player={loading:true,season}; mdPaint(); $("matchDlg").scrollTop=0;
+  try{ const r=await afGet(`players?id=${id}&season=${season}`,24*3600e3); if(!r||!r.length) throw new Error("No profile found for this player.");
+    md.player={p:r[0],season}; }catch(e){ md.player={err:String(e.message||e),season} }
+  mdPaint();
 }
 async function openMatch(id){
   const m=state.matches.find(x=>x.id===id); if(!m) return;
-  mdId=id; mdRender(m,null); if(!$("matchDlg").open) $("matchDlg").showModal();
+  mdId=id; Object.assign(md,{m,d:null,err:"",tab:"summary",lineups:null,table:null,player:null,loading:""});
+  mdPaint(); if(!$("matchDlg").open) $("matchDlg").showModal(); $("matchDlg").scrollTop=0;
   const go=async()=>{
     const cur=state.matches.find(x=>x.id===mdId)||m; let d=null, err="";
     try{
@@ -630,11 +773,16 @@ async function openMatch(id){
       else err="Goal scorers and stats aren't available for this match from the free sources.";
     }catch(e){ try{ if(cur.afId&&state.afKey) d=await afDetails(cur); else throw e }catch(e2){ err="Couldn't load match details. Check your connection and try again." } }
     if(d&&d.tv.length){const seen=new Set(cur.channels.map(c=>c.name));d.tv.forEach(n=>{if(!seen.has(n))cur.channels.push({name:n,country:"USA"})})}
-    if(mdId===id) mdRender(cur,d,err);
+    if(mdId===id){ md.m=cur; md.d=d; md.err=err; mdPaint(); }
   };
   await go(); clearInterval(mdTimer);
-  if(m.st==="live"&&m.espnId) mdTimer=setInterval(()=>{ if($("matchDlg").open) go(); else clearInterval(mdTimer) },60000);
+  if(m.st==="live") mdTimer=setInterval(()=>{ if(!$("matchDlg").open) return clearInterval(mdTimer); if(m.espnId) go(); if(md.tab==="lineups"&&!md.player) loadLineups(true); },60000);
 }
+$("matchBody").addEventListener("click",e=>{
+  const t=e.target.closest("[data-tab]"); if(t){ md.tab=t.dataset.tab; md.player=null; mdPaint(); if(md.tab==="lineups") loadLineups(); if(md.tab==="table") loadTable(); return }
+  const p=e.target.closest("[data-player]"); if(p&&state.afKey){ openPlayer(p.dataset.player); return }
+  if(e.target.closest("[data-back]")){ md.player=null; mdPaint(); }
+});
 $("matchDlg").addEventListener("close",()=>{clearInterval(mdTimer);mdId=null});
 $("matchDlg").addEventListener("click",e=>{ if(e.target.id==="mdClose"||e.target===$("matchDlg")) $("matchDlg").close() });
 document.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches(".match.tap")){e.preventDefault();openMatch(e.target.dataset.mid)} });
