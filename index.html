@@ -178,6 +178,17 @@ dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border
 .news{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;padding:8px 0;border-top:1px solid var(--line);color:inherit;text-decoration:none}
 .news img{width:84px;height:56px;object-fit:cover;border-radius:6px;background:var(--chip)}
 .news span{display:grid;gap:2px;min-width:0}.news b{font-size:14px;line-height:1.3}.news small{color:var(--muted);font-size:12px}
+.comp h2 em{display:flex;align-items:center;gap:8px;min-width:0}
+.flag{width:20px;height:15px;flex:none;object-fit:cover;border-radius:2px;font-size:16px;line-height:15px;text-align:center;display:inline-block}
+img.flag{box-shadow:0 0 0 1px var(--line)}
+.fav-sec{border-color:#f2b600}.fav-sec h2 .flag{color:#f2b600;font-size:18px}
+.sugg{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgb(0 0 0 / .25);z-index:20;max-height:60vh;overflow:auto;padding:6px 0}
+.sugg h5{margin:6px 12px 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sugg button{all:unset;box-sizing:border-box;display:flex;gap:8px;align-items:center;width:100%;padding:7px 12px;cursor:pointer;font-size:14px}
+.sugg button:hover,.sugg button:focus-visible{background:var(--chip)}
+.sugg img{width:24px;height:24px;border-radius:50%;object-fit:cover}
+.sugg small{color:var(--muted);margin-left:auto;font-size:12px}
+.qwrap{position:relative;flex:1 1 160px;min-width:0;display:flex}.qwrap input{flex:1;min-width:0}
 /* Match centre */
 .md-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--line);margin:4px -16px -12px;padding:0 12px}
 .md-tab{border:0;background:none;padding:10px 10px 9px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
@@ -207,7 +218,7 @@ button.pl{cursor:pointer}button.pl:hover{background:var(--chip)}
     </div>
     <div class="row filters">
       <select id="country" aria-label="TV country"><option value="">All countries</option></select>
-      <input type="search" id="q" placeholder="Search team, league or channel" aria-label="Search">
+      <div class="qwrap"><input type="search" id="q" placeholder="Search country, competition, team or player" aria-label="Search" autocomplete="off"><div class="sugg" id="sugg" hidden></div></div>
       <label class="toggle"><input type="checkbox" id="liveOnly"> Live now</label>
       <label class="toggle"><input type="checkbox" id="tvOnly"> On TV</label>
       <label class="toggle"><input type="checkbox" id="favOnly"> ★ Favourites</label>
@@ -292,7 +303,7 @@ const state = {
   sport: store.get("sport","Soccer"),
   date: ymd(new Date()),
   country: store.get("country",""),
-  q:"", liveOnly:false, tvOnly:false, favOnly:false, hidden:new Set(store.get("hiddenComps",[])), collapsed:new Set(store.get("collapsed",[])), fav:Object.assign({teams:[],matches:[],players:[]},store.get("fav",{})),
+  q:"", liveOnly:false, tvOnly:false, favOnly:false, hidden:new Set(store.get("hiddenComps",[])), expanded:new Set(store.get("expanded",[])), fav:Object.assign({teams:[],matches:[],players:[]},store.get("fav",{})),
   key: store.get("key",""), rules: store.get("rules",DEFAULT_RULES), afKey: store.get("afKey",""), afLeft:null, afError:"",
   matches:[], source:"", updated:null, error:""
 };
@@ -422,7 +433,7 @@ async function loadAF(date){
     else if(sh==="HT"){st="live";label="HT"}
     else if(/^(1H|2H|ET|BT|P|LIVE)$/.test(sh)){st="live";label=sh==="P"?"Pens":sh==="BT"?"Break":(el!=null?el+(ex?"+"+ex:"")+"'":"Live")}
     const lg=x.league||{}; const league=(lg.country&&lg.country!=="World"?lg.country+" · ":"")+(lg.name||"Other");
-    return {id:"af"+x.fixture.id,afId:x.fixture.id,homeId:x.teams.home.id,awayId:x.teams.away.id,leagueId:lg.id,season:lg.season,referee:x.fixture.referee||"",venue:((x.fixture.venue||{}).name||"")+((x.fixture.venue||{}).city?", "+x.fixture.venue.city:""),league,home:x.teams.home.name,away:x.teams.away.name,hb:x.teams.home.logo||"",ab:x.teams.away.logo||"",
+    return {id:"af"+x.fixture.id,afId:x.fixture.id,homeId:x.teams.home.id,awayId:x.teams.away.id,leagueId:lg.id,season:lg.season,flag:lg.country==="World"?(lg.logo||""):(lg.flag||""),referee:x.fixture.referee||"",venue:((x.fixture.venue||{}).name||"")+((x.fixture.venue||{}).city?", "+x.fixture.venue.city:""),league,home:x.teams.home.name,away:x.teams.away.name,hb:x.teams.home.logo||"",ab:x.teams.away.logo||"",
       kick:new Date(x.fixture.date),hs:st==="ns"?null:x.goals.home,as:st==="ns"?null:x.goals.away,st,label,channels:[]};
   });
   afCache.set(date,{at:Date.now(),list});
@@ -591,11 +602,23 @@ function render(){
   }
   const groups=new Map(); for(const m of list){(groups.get(m.league)||groups.set(m.league,[]).get(m.league)).push(m)}
   const gs=[...groups].sort((a,b)=>(b[1].some(m=>m.st==="live"&&m.shown.length)-a[1].some(m=>m.st==="live"&&m.shown.length))||(b[1].some(m=>m.shown.length)-a[1].some(m=>m.shown.length)));
-  const favs=list.filter(isFav);
-  if(favs.length&&!state.favOnly) gs.unshift(["★ Favourites",favs]);
-  $("list").innerHTML=gs.map(([league,ms])=>{const col=state.collapsed.has(league);const nLive=ms.filter(m=>m.st==="live").length;
-    return `<section class="comp${col?" collapsed":""}"><h2><button class="comp-h" data-comp="${esc(league)}" aria-expanded="${!col}"><em>${esc(league)}</em><span>${nLive?`<b class="lv">${nLive} live</b> · `:""}${ms.length} ${ms.length===1?"match":"matches"} <i class="chev">▾</i></span></button></h2>${col?"":ms.map(row).join("")}</section>`}).join("")
+  const searching=!!q||state.liveOnly||state.favOnly||state.tvOnly;
+  const favs=state.matches.filter(isFav).filter(m=>m.st==="live"||m.st==="ns").sort((a,b)=>(a.st==="live"?0:1)-(b.st==="live"?0:1)||a.kick-b.kick).map(m=>({...m,shown:state.country?m.channels.filter(c=>c.country===state.country):m.channels}));
+  const favOpen=!state.expanded.has("!fav");
+  const nFollow=state.fav.teams.length+state.fav.matches.length+state.fav.players.length;
+  const favHtml=`<section class="comp fav-sec${favOpen?"":" collapsed"}"><h2><button class="comp-h" data-comp="!fav" aria-expanded="${favOpen}"><em><span class="flag">★</span>My favourites</em><span>${favs.filter(m=>m.st==="live").length?`<b class="lv">${favs.filter(m=>m.st==="live").length} live</b> · `:""}${favs.length} today <i class="chev">▾</i></span></button></h2>${favOpen?(favs.length?favs.map(row).join(""):`<p class="md-note" style="padding:10px 14px;margin:0">${nFollow?"None of your teams play again today.":"Open any match and tap ☆ Follow on a team or player to see their live and upcoming games here."}</p>`):""}</section>`;
+  $("list").innerHTML=favHtml+gs.map(([league,ms])=>{const open=searching||state.expanded.has(league);const nLive=ms.filter(m=>m.st==="live").length;
+    return `<section class="comp${open?"":" collapsed"}"><h2><button class="comp-h" data-comp="${esc(league)}" aria-expanded="${open}"><em>${flagFor(ms[0])}${esc(league)}</em><span>${nLive?`<b class="lv">${nLive} live</b> · `:""}${ms.length} ${ms.length===1?"match":"matches"} <i class="chev">▾</i></span></button></h2>${open?ms.map(row).join(""):""}</section>`}).join("")
     +(nHidden?`<p class="md-note" style="text-align:center">${nHidden} match${nHidden===1?"":"es"} hidden by your competition choice. <button class="linkbtn" id="compBtn2">Change</button></p>`:"");
+}
+const ISO={England:"GB-ENG",Scotland:"GB-SCT",Wales:"GB-WLS","Northern Ireland":"GB",Spain:"ES",Italy:"IT",Germany:"DE",France:"FR",Netherlands:"NL",Portugal:"PT",Belgium:"BE",Turkey:"TR","Türkiye":"TR",Greece:"GR","Saudi Arabia":"SA",UAE:"AE","United Arab Emirates":"AE",Qatar:"QA",Kuwait:"KW",Bahrain:"BH",Oman:"OM",Egypt:"EG",Morocco:"MA",Algeria:"DZ",Tunisia:"TN",Jordan:"JO",Iraq:"IQ",Lebanon:"LB",USA:"US","United States":"US",Mexico:"MX",Brazil:"BR",Argentina:"AR",Japan:"JP",Australia:"AU",China:"CN","South Korea":"KR","Korea Republic":"KR",Austria:"AT",Switzerland:"CH",Denmark:"DK",Sweden:"SE",Norway:"NO",Poland:"PL",Czechia:"CZ","Czech Republic":"CZ",Croatia:"HR",Serbia:"RS",Romania:"RO",Ukraine:"UA",Russia:"RU",Scotland2:"",Ireland:"IE",Colombia:"CO",Chile:"CL",Uruguay:"UY",Peru:"PE",Ecuador:"EC",Canada:"CA",India:"IN",Iran:"IR",Israel:"IL",Cyprus:"CY",Hungary:"HU",Slovakia:"SK",Slovenia:"SI",Bulgaria:"BG",Finland:"FI",Iceland:"IS","South Africa":"ZA",Nigeria:"NG",Ghana:"GH",Senegal:"SN",Libya:"LY",Sudan:"SD",Syria:"SY",Palestine:"PS",Yemen:"YE"};
+function flagEmoji(code){if(!code)return"";if(code.startsWith("GB-")){const t=code.slice(3).toLowerCase();return "🏴"+[..."gb"+t].map(c=>String.fromCodePoint(0xE0000+c.charCodeAt(0))).join("")+String.fromCodePoint(0xE007F)}return [...code].map(c=>String.fromCodePoint(0x1F1E6+c.charCodeAt(0)-65)).join("")}
+function countryOf(league){const i=String(league).indexOf(" · ");return i>0?league.slice(0,i):""}
+function flagFor(m){
+  if(m&&m.flag) return `<img class="flag" src="${esc(m.flag)}" alt="" loading="lazy">`;
+  const c=countryOf(m&&m.league||""); const code=ISO[c];
+  const e=code?flagEmoji(code):/UEFA|Europa|Champions League|Conference/i.test(m&&m.league||"")?"🇪🇺":/AFC|Asian/i.test(m&&m.league||"")?"🌏":/CAF|Africa/i.test(m&&m.league||"")?"🌍":/CONMEBOL|Libertadores|Sudamericana/i.test(m&&m.league||"")?"🌎":"🏳️";
+  return `<span class="flag">${e}</span>`;
 }
 function isFav(m){const f=state.fav;return f.matches.includes(m.id)||f.teams.some(t=>sameTeam(t,m.home)||sameTeam(t,m.away))}
 function toggleFav(kind,val){const a=state.fav[kind];const key=kind==="players"?val.id:val;const i=a.findIndex(x=>(kind==="players"?x.id:x)===key);if(i>=0)a.splice(i,1);else a.push(val);store.set("fav",state.fav)}
@@ -731,15 +754,15 @@ function vTable(){
 }
 function vPlayer(){
   const P=md.player; if(!P) return "";
-  if(P.loading) return `<button class="back" data-back>‹ Back to line-ups</button><p class="md-note">Loading player…</p>`;
-  if(P.err) return `<button class="back" data-back>‹ Back to line-ups</button><p class="md-note">${esc(P.err)}</p>`;
+  if(P.loading) return `${md.m?'<button class="back" data-back>‹ Back to line-ups</button>':""}<p class="md-note">Loading player…</p>`;
+  if(P.err) return `${md.m?'<button class="back" data-back>‹ Back to line-ups</button>':""}<p class="md-note">${esc(P.err)}</p>`;
   const p=P.p.player, st=P.p.statistics||[];
   const sum=f=>st.reduce((a,x)=>a+(+f(x)||0),0);
   const apps=sum(x=>x.games.appearences), goals=sum(x=>x.goals.total), ast=sum(x=>x.goals.assists), yc=sum(x=>x.cards.yellow), rc=sum(x=>x.cards.red), mins=sum(x=>x.games.minutes);
   const rated=st.filter(x=>x.games.rating); const w=x=>(+x.games.appearences||1);
   const avg=rated.length?(rated.reduce((a,x)=>a+ +x.games.rating*w(x),0)/rated.reduce((a,x)=>a+w(x),0)).toFixed(2):"–";
   const team=(st[0]||{}).team||{}, pos=((st[0]||{}).games||{}).position||"";
-  return `<button class="back" data-back>‹ Back to line-ups</button>
+  return `${md.m?'<button class="back" data-back>‹ Back to line-ups</button>':""}
    <div class="pc-head"><img src="${esc(p.photo)}" alt=""><div><h3>${esc(p.name)}</h3><button class="fav ${favHas("players",P.id)?"on":""}" data-fav-player="${esc(P.id)}" data-pname="${esc(p.name)}" data-pteam="${esc(team.name||"")}">${favHas("players",P.id)?"★ Following":"☆ Follow player"}</button><div class="md-note">${team.logo?`<img src="${esc(team.logo)}" alt="" style="width:16px;height:16px;vertical-align:-3px"> `:""}${esc(team.name||"")}${pos?" · "+esc(pos):""}</div></div></div>
    <dl class="info"><dt>Age</dt><dd>${esc(p.age??ageFrom((p.birth||{}).date))}${(p.birth||{}).date?` (born ${esc(p.birth.date)})`:""}</dd><dt>Nationality</dt><dd>${esc(p.nationality||"–")}</dd><dt>Height</dt><dd>${esc(p.height||"–")}</dd><dt>Weight</dt><dd>${esc(p.weight||"–")}</dd>${(p.birth||{}).place?`<dt>Birthplace</dt><dd>${esc(p.birth.place)}${p.birth.country?", "+esc(p.birth.country):""}</dd>`:""}</dl>
    <section class="md-sec"><h4>Season ${esc(P.season)} · all competitions</h4><div class="kv">
@@ -749,7 +772,8 @@ function vPlayer(){
    ${st.length?`<section class="md-sec"><h4>By competition</h4><div style="overflow-x:auto"><table class="tbl"><thead><tr><th style="text-align:left">Competition</th><th>Apps</th><th>G</th><th>A</th><th>YC</th><th>Rating</th></tr></thead><tbody>${st.filter(x=>x.games.appearences).map(x=>`<tr><td class="tm"><span>${esc(x.league.name)}</span></td><td>${x.games.appearences||0}</td><td>${x.goals.total||0}</td><td>${x.goals.assists||0}</td><td>${x.cards.yellow||0}</td><td>${x.games.rating?(+x.games.rating).toFixed(1):"–"}</td></tr>`).join("")}</tbody></table></div></section>`:""}`;
 }
 function mdPaint(){
-  const m=md.m; if(!m) return;
+  const m=md.m;
+  if(!m){ if(md.player) $("matchBody").innerHTML=`<div class="md-body"><div style="display:flex;justify-content:flex-end"><button class="md-x" id="mdClose" aria-label="Close">×</button></div>${vPlayer()}</div>`; return }
   const body=md.player?vPlayer():md.tab==="lineups"?vLineups():md.tab==="stats"?vStats():md.tab==="table"?vTable():md.tab==="news"?vNews():vSummary();
   const sc=$("matchDlg").scrollTop; $("matchBody").innerHTML=mdShell(m,body); $("matchDlg").scrollTop=sc;
 }
@@ -807,7 +831,7 @@ async function loadNews(){
   md.news={for:m.id,items,filtered}; md.loading=""; if(md.tab==="news") mdPaint();
 }
 async function openPlayer(id){
-  const m=md.m; const season=m.season||new Date().getFullYear();
+  const m=md.m; const nowD=new Date(); const season=(m&&m.season)||(nowD.getMonth()>=6?nowD.getFullYear():nowD.getFullYear()-1);
   md.player={loading:true,season}; mdPaint(); $("matchDlg").scrollTop=0;
   try{ const r=await afGet(`players?id=${id}&season=${season}`,24*3600e3); if(!r||!r.length) throw new Error("No profile found for this player.");
     md.player={p:r[0],season,id:String(id)}; }catch(e){ md.player={err:String(e.message||e),season} }
@@ -847,7 +871,7 @@ document.addEventListener("click",e=>{
   const s=e.target.closest("[data-sport]"); if(s){state.sport=s.dataset.sport;store.set("sport",state.sport);load();return}
   const d=e.target.closest("[data-date]"); if(d){state.date=d.dataset.date;load();return}
   const mt=e.target.closest(".match.tap"); if(mt){openMatch(mt.dataset.mid);return}
-  const ch=e.target.closest("[data-comp]"); if(ch){const l=ch.dataset.comp;if(state.collapsed.has(l))state.collapsed.delete(l);else state.collapsed.add(l);store.set("collapsed",[...state.collapsed]);render();return}
+  const ch=e.target.closest("[data-comp]"); if(ch){const l=ch.dataset.comp;if(state.expanded.has(l))state.expanded.delete(l);else state.expanded.add(l);store.set("expanded",[...state.expanded]);render();return}
   if(e.target.id==="compBtn"||e.target.id==="compBtn2"){openComps();return}
   if(e.target.id==="refresh") load();
   if(e.target.id==="rulesReset") $("rulesBox").value=DEFAULT_RULES;
@@ -855,7 +879,34 @@ document.addEventListener("click",e=>{
 });
 $("datePick").addEventListener("change",e=>{if(e.target.value){state.date=e.target.value;load()}});
 $("country").addEventListener("change",e=>{state.country=e.target.value;store.set("country",state.country);render()});
-$("q").addEventListener("input",e=>{state.q=e.target.value;render()});
+$("q").addEventListener("input",e=>{state.q=e.target.value;render();suggest()});
+$("q").addEventListener("focus",suggest);
+document.addEventListener("click",e=>{ if(!e.target.closest(".qwrap")) $("sugg").hidden=true });
+function suggest(){
+  const q=$("q").value.trim().toLowerCase(), box=$("sugg"); if(q.length<2){box.hidden=true;return}
+  const L=state.matches, has=t=>String(t).toLowerCase().includes(q);
+  const countries=[...new Set(L.map(m=>countryOf(m.league)).filter(Boolean))].filter(has).slice(0,5);
+  const comps=[...new Map(L.filter(m=>has(m.league)).map(m=>[m.league,m])).values()].slice(0,6);
+  const teams=[...new Set(L.flatMap(m=>[m.home,m.away]).filter(Boolean))].filter(has).slice(0,8);
+  const players=state.fav.players.filter(p=>has(p.name));
+  const sec=(t,items)=>items.length?`<h5>${t}</h5>${items.join("")}`:"";
+  box.innerHTML=sec("Countries",countries.map(c=>`<button data-sq="${esc(c)}">${flagEmoji(ISO[c])||"🏳️"} ${esc(c)}</button>`))
+    +sec("Competitions",comps.map(m=>`<button data-sq="${esc(m.league)}">${flagFor(m)} ${esc(m.league)}</button>`))
+    +sec("Teams",teams.map(t=>`<button data-sq="${esc(t)}">${esc(t)}<small>${favHas("teams",t)?"★ following":""}</small></button>`))
+    +sec("Players",[...players.map(p=>`<button data-pid="${esc(p.id)}">${photo(p.id)} ${esc(p.name)}<small>★ ${esc(p.team||"")}</small></button>`),
+      state.afKey&&q.length>=3?`<button data-psearch="${esc(q)}">🔎 Find players named “${esc(q)}”<small>uses 1 request</small></button>`:""].filter(Boolean));
+  box.hidden=!box.innerHTML;
+}
+$("sugg").addEventListener("click",async e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.sq!=null){ $("q").value=b.dataset.sq; state.q=b.dataset.sq; $("sugg").hidden=true; render(); return }
+  if(b.dataset.pid){ $("sugg").hidden=true; openPlayerAlone(b.dataset.pid); return }
+  if(b.dataset.psearch){ b.textContent="Searching…";
+    try{ const r=await afGet(`players/profiles?search=${encodeURIComponent(b.dataset.psearch)}`,7*24*3600e3);
+      $("sugg").innerHTML=`<h5>Players</h5>`+((r||[]).slice(0,15).map(x=>`<button data-pid="${x.player.id}">${photo(x.player.id)} ${esc(x.player.name)}<small>${esc(x.player.nationality||"")}${x.player.age?" · "+x.player.age:""}</small></button>`).join("")||`<p class="md-note" style="padding:6px 12px">No players found.</p>`);
+    }catch(err){ b.textContent="Couldn't search: "+(err.message||err) } }
+});
+function openPlayerAlone(id){ Object.assign(md,{m:null,tab:"summary",player:null}); if(!$("matchDlg").open) $("matchDlg").showModal(); openPlayer(id); }
 $("liveOnly").addEventListener("change",e=>{state.liveOnly=e.target.checked;render()});
 $("tvOnly").addEventListener("change",e=>{state.tvOnly=e.target.checked;render()});
 $("favOnly").addEventListener("change",e=>{state.favOnly=e.target.checked;render()});
