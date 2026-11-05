@@ -266,6 +266,17 @@ button.pl{cursor:pointer}button.pl:hover{background:var(--chip)}
 .pc-head{display:grid;grid-template-columns:84px 1fr;gap:14px;align-items:center}.pc-head img{width:84px;height:84px;border-radius:50%;object-fit:cover;background:var(--chip)}.pc-head h3{margin:0;font-size:24px}
 .kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.kv div{background:var(--chip);border-radius:8px;padding:8px;text-align:center}.kv b{display:block;font-family:var(--display);font-size:20px}.kv span{color:var(--muted);font-size:12px}
 .back{border:0;background:none;color:var(--pitch);font-weight:600;cursor:pointer;padding:0}
+
+/* Fit every strip to the screen width: no sideways scrolling */
+.scroller,.md-tabs{overflow:visible}
+#sports{gap:4px}#sports .tab{flex:1 1 0;min-width:0;padding:6px 2px;font-size:clamp(11px,3.4vw,15px);text-align:center;overflow:hidden;text-overflow:ellipsis}
+.dayrow{gap:4px}#days{gap:4px}
+.day{flex:1 1 0;min-width:0;padding:3px 1px;overflow:hidden}
+.day b{font-size:clamp(11px,3.3vw,15px)}.day small{font-size:clamp(9px,2.6vw,11px);overflow:hidden;text-overflow:ellipsis}
+.pick{flex:0 0 auto;padding:3px 6px}
+.chips{gap:4px}.chip{flex:1 1 auto;min-width:0;justify-content:center;gap:3px;padding:5px 4px;font-size:clamp(11px,3.4vw,14px)}
+.md-tabs{gap:0;padding:0 4px}.md-tab{flex:1 1 0;min-width:0;padding:10px 2px 9px;font-size:clamp(11px,3.4vw,15px);text-align:center;overflow:hidden;text-overflow:ellipsis}
+html,body{overflow-x:hidden}
 </style>
 
 <header class="top">
@@ -284,7 +295,7 @@ button.pl{cursor:pointer}button.pl:hover{background:var(--chip)}
       <label class="chip live"><input type="checkbox" id="liveOnly"><i class="ld"></i>Live <b id="cLive">0</b></label>
       <label class="chip"><input type="checkbox" id="tvOnly">On TV <b id="cTv">0</b></label>
       <label class="chip"><input type="checkbox" id="favOnly">★ <b id="cFav">0</b></label>
-      <button class="chip" id="compBtn" type="button">Competitions</button>
+      <button class="chip" id="compBtn" type="button">Leagues</button>
     </div>
   </div>
 </header>
@@ -327,7 +338,7 @@ const SPORTS = [
   { id:"Handball",   label:"Handball",   live:"handball" },
   { id:"Tennis",     label:"Tennis",     live:"tennis" },
   { id:"Basketball", label:"Basketball", live:"basketball" },
-  { id:"Ice Hockey", label:"Ice hockey", live:"icehockey" },
+  { id:"Ice Hockey", label:"Hockey", live:"icehockey" },
 ];
 const MATCH_LENGTH = { Soccer:115, Handball:80, Tennis:150, Basketball:140, "Ice Hockey":150 };
 /* Region TV rights (Middle East & North Africa). Edit in the app under Data source. */
@@ -373,7 +384,7 @@ const $ = id => document.getElementById(id);
 /* ---------- Dates ---------- */
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function addDays(s,n){const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return ymd(d)}
-function dayLabel(s){const t=ymd(new Date());if(s===t)return"Today";if(s===addDays(t,1))return"Tomorrow";if(s===addDays(t,-1))return"Yesterday";return new Date(s+"T12:00:00").toLocaleDateString(undefined,{weekday:"short"})}
+function dayLabel(s){const t=ymd(new Date());if(s===t)return"Today";if(s===addDays(t,1))return"Tmrw";if(s===addDays(t,-1))return"Yest";return new Date(s+"T12:00:00").toLocaleDateString(undefined,{weekday:"short"})}
 const fmtTime = d => d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
 
 /* ---------- Live data: TheSportsDB ---------- */
@@ -635,7 +646,7 @@ function crest(url,name){return url?`<img src="${esc(/thesportsdb/.test(url)?url
 function render(){
   // sport tabs + day strip
   $("sports").innerHTML=SPORTS.map(s=>`<button class="tab" data-sport="${esc(s.id)}" aria-pressed="${s.id===state.sport}">${esc(s.label)}</button>`).join("");
-  const today=ymd(new Date()); const days=[-1,0,1,2,3,4,5,6].map(n=>addDays(today,n));
+  const today=ymd(new Date()); const days=[-1,0,1,2,3,4,5].map(n=>addDays(today,n));
   if(!days.includes(state.date)) days.push(state.date);
   $("days").innerHTML=days.map(d=>`<button class="day" data-date="${d}" aria-pressed="${d===state.date}"><b>${dayLabel(d)}</b><small>${new Date(d+"T12:00:00").toLocaleDateString(undefined,{day:"numeric",month:"short"})}</small></button>`).join("");
   $("datePick").value=state.date;
