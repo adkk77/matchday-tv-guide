@@ -193,6 +193,26 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .tick.on{background:var(--pitch);border-color:var(--pitch);color:#fff}
 .top-sec{border-color:var(--pitch)}.top-sec h2 .flag{color:var(--pitch);font-size:18px}
 .match .dtag{display:block;font-family:var(--body);font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase}
+.pitch-wrap{margin:0 -16px;padding:4px 0 8px;background:linear-gradient(#0d2a1a,#0b1f14);overflow:hidden}
+.pitch-lbl{color:#e8f3ec;font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:14px;text-align:center;padding:6px 0;font-weight:700}
+.pitch-lbl small{color:#9cc2aa;font-weight:600;margin-left:6px}
+.pitch3d{perspective:820px;perspective-origin:50% 0%;padding:6px 6% 0}
+.pitch{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:68/105;transform:rotateX(28deg);transform-origin:50% 100%;transform-style:preserve-3d;margin-top:-6%;
+  background:repeating-linear-gradient(180deg,#2f8f4e 0 7.14%,#2a8247 7.14% 14.28%);border-radius:4px;box-shadow:0 30px 40px -20px rgb(0 0 0 / .6),inset 0 0 40px rgb(0 0 0 / .25)}
+.pitch>svg{position:absolute;inset:0;width:100%;height:100%}
+.goal{position:absolute;left:41%;width:18%;height:5%;border:1.5px solid #f4f4f4;border-bottom:0;transform-origin:50% 100%;background:repeating-linear-gradient(90deg,rgb(255 255 255 / .25) 0 2px,transparent 2px 5px)}
+.goal.g1{top:-3.5%;transform:translateY(0) rotateX(-70deg)}.goal.g2{bottom:-1.5%;height:4%;border-top:0;border-bottom:1.5px solid #f4f4f4;transform:rotateX(70deg)}
+.fig{all:unset;position:absolute;width:11.5%;max-width:48px;transform:translate(-50%,-100%) rotateX(-28deg);transform-origin:50% 100%;cursor:pointer;display:block}
+.fig-in{position:relative;display:flex;flex-direction:column;align-items:center}
+.fig .head{width:46%;aspect-ratio:1;border-radius:50%;background:#d9c2a6;overflow:hidden;border:1.5px solid #fff;display:grid;place-items:center;margin-bottom:-6%;position:relative;z-index:1;box-shadow:0 1px 3px rgb(0 0 0 / .4)}
+.fig .head img{width:100%;height:100%;object-fit:cover}.fig .head i{font-style:normal;font-weight:800;font-size:11px;color:#333}
+.fig .body{width:78%;display:block;filter:drop-shadow(0 2px 1px rgb(0 0 0 / .35))}
+.fig .nm2{margin-top:1px;background:rgb(10 14 12 / .82);color:#fff;font-size:9.5px;font-weight:700;border-radius:3px;padding:0 4px;white-space:nowrap;max-width:130%;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
+.fig .shadow{position:absolute;left:50%;bottom:9px;width:60%;height:5px;background:rgb(0 0 0 / .35);border-radius:50%;transform:translateX(-50%);filter:blur(1.5px);z-index:-1}
+.fig .rt.mini{position:absolute;right:-8%;top:0;font-size:10px;min-width:0;padding:0 3px;line-height:1.4;z-index:2}
+.fig .gl{position:absolute;left:-10%;top:6%;font-size:9px;z-index:2}.fig .rc{position:absolute;left:-4%;top:30%;z-index:2}
+.fig:hover .nm2,.fig:focus-visible .nm2{background:var(--pitch)}
+@media (prefers-reduced-motion:no-preference){.pitch{animation:tilt .7s ease-out}}@keyframes tilt{from{transform:rotateX(0)}}
 /* Match centre */
 .md-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--line);margin:4px -16px -12px;padding:0 12px}
 .md-tab{border:0;background:none;padding:10px 10px 9px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
@@ -688,7 +708,7 @@ async function espnDetails(m){
   const bt=((j.boxscore||{}).teams||[]); const hT=bt.find(t=>String((t.team||{}).id)===homeId)||bt[0], aT=bt.find(t=>t!==hT);
   const sv=(t,n)=>{const x=((t||{}).statistics||[]).find(s=>s.name===n);return x?x.displayValue:null};
   const stats=STAT.map(([n,l,u])=>({l,h:sv(hT,n),a:sv(aT,n),u:u||""})).filter(x=>x.h!=null&&x.a!=null);
-  const ros=(j.rosters||[]); const lu=["home","away"].map(side=>{const r=ros.find(x=>x.homeAway===side)||{};return {formation:r.formation||"",players:(r.roster||[]).filter(p=>p.starter).map(p=>({n:p.jersey||"",name:(p.athlete||{}).displayName||""}))}});
+  const ros=(j.rosters||[]); const lu=["home","away"].map(side=>{const r=ros.find(x=>x.homeAway===side)||{};return {formation:r.formation||"",players:(r.roster||[]).filter(p=>p.starter).map(p=>({n:p.jersey||"",name:(p.athlete||{}).displayName||"",place:+p.formationPlace||0,pos:((p.position||{}).abbreviation||"")})),color:((r.team||{}).color||"")}});
   const tv=new Set(); for(const b of (comp.broadcasts||[])) { const n=(b.media||{}).shortName||(b.names||[])[0]; if(n) tv.add(n) }
   const gi=j.gameInfo||{}; const ofc=(gi.officials||[])[0];
   return {events,stats,lineups:lu[0].players.length?lu:null,tv:[...tv],src:"ESPN",referee:ofc?(ofc.fullName||ofc.displayName||""):"",venue:((gi.venue||{}).fullName||"")+(((gi.venue||{}).address||{}).city?", "+gi.venue.address.city:""),attendance:gi.attendance?Number(gi.attendance).toLocaleString():""};
@@ -757,18 +777,53 @@ function vStats(){
   const num=v=>parseFloat(String(v).replace("%",""))||0;
   return `<section class="md-sec"><h4>Match stats</h4>${d.stats.map(x=>{const h=num(x.h),a=num(x.a),t=h+a||1;return `<div class="stat"><div class="l">${esc(x.l)}</div><div class="v">${esc(x.h)}${x.u}</div><div class="bar"><i style="width:${h/t*100}%"></i><i style="width:${a/t*100}%"></i></div><div class="v">${esc(x.a)}${x.u}</div></div>`}).join("")}</section>`;
 }
+/* ---------- 3D pitch line-up ---------- */
+const PITCH_SVG=`<svg viewBox="0 0 68 105" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".45"><rect x="1.5" y="1.5" width="65" height="102"/><line x1="1.5" y1="52.5" x2="66.5" y2="52.5"/><circle cx="34" cy="52.5" r="9.15"/><circle cx="34" cy="52.5" r=".5" fill="#fff"/><rect x="13.85" y="1.5" width="40.3" height="16.5"/><rect x="24.85" y="1.5" width="18.3" height="5.5"/><rect x="13.85" y="87" width="40.3" height="16.5"/><rect x="24.85" y="98" width="18.3" height="5.5"/><path d="M26.7 18a9.15 9.15 0 0 0 14.6 0M26.7 87a9.15 9.15 0 0 1 14.6 0"/></g></svg>`;
+function rowsFromFormation(f,n){const r=String(f||"").split("-").map(x=>+x).filter(Boolean);const out=[1,...r];return out.reduce((a,b)=>a+b,0)===n?out:null}
+function placeTeam(players,formation,home){
+  // returns [{p,x,y}] in % of the pitch; home attacks upwards (bottom half), away downwards (top half)
+  let rows={};
+  const hasGrid=players.every(p=>p.grid&&/^\d+:\d+$/.test(p.grid));
+  if(hasGrid){ for(const p of players){const [r,c]=p.grid.split(":").map(Number);(rows[r]=rows[r]||[]).push({p,c})} for(const r in rows) rows[r].sort((a,b)=>a.c-b.c); }
+  else{ const sizes=rowsFromFormation(formation,players.length)||[1,4,4,2].slice(0,players.length?4:0);
+    const ord=[...players].sort((a,b)=>(a.place||99)-(b.place||99)); let i=0; sizes.forEach((n,ri)=>{rows[ri+1]=ord.slice(i,i+n).map((p,c)=>({p,c:c+1}));i+=n}); }
+  const keys=Object.keys(rows).map(Number).sort((a,b)=>a-b), R=keys.length||1, out=[];
+  keys.forEach((r,ri)=>{const list=rows[r],n=list.length;list.forEach((o,ci)=>{
+    const x=(ci+1)/(n+1)*100, depth=R>1?ri/(R-1):0, y=home?95-depth*36:9+depth*35;
+    out.push({p:o.p,x:home?100-x:x,y});});});
+  return out;
+}
+function figure(o,team,home,gk){
+  const p=o.p, col=(gk?team.gkColors:team.colors)||{}, prim="#"+(col.primary||(home?"e0393e":"1f6fd1")).replace("#",""), num="#"+(col.number||"ffffff").replace("#",""), bord="#"+(col.border||col.primary||"222").replace("#","");
+  const r=p.rating?(+p.rating).toFixed(1):"", last=String(p.name||"").split(" ").slice(-1)[0];
+  const head=p.id?`<img src="https://media.api-sports.io/football/players/${p.id}.png" alt="" loading="lazy" onerror="this.remove()">`:"";
+  return `<button class="fig" style="left:${o.x}%;top:${o.y}%" ${p.id?`data-player="${p.id}"`:""} type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
+    <span class="fig-in"><span class="head">${head||`<i>${esc((last||"?").slice(0,1))}</i>`}</span>
+    <svg class="body" viewBox="0 0 40 46" aria-hidden="true"><path d="M7 4 13 0h14l6 4 5 10-6 3-2-5v17H10V12l-2 5-6-3Z" fill="${prim}" stroke="${bord}" stroke-width="1.2"/><text x="20" y="21" text-anchor="middle" font-size="11" font-weight="800" fill="${num}" font-family="Barlow Condensed,Arial Narrow,sans-serif">${esc(p.number??p.n??"")}</text><path d="M10 29h20l1 7h-9l-2-3-2 3H9Z" fill="#1d2430"/><rect x="12" y="36" width="5" height="8" rx="1" fill="${prim}"/><rect x="23" y="36" width="5" height="8" rx="1" fill="${prim}"/><rect x="11" y="43" width="7" height="3" rx="1.2" fill="#111"/><rect x="22" y="43" width="7" height="3" rx="1.2" fill="#111"/></svg>
+    ${r?`<span class="rt mini ${rtClass(r)}">${r}</span>`:""}${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
+    <span class="nm2">${esc(last)}</span></span><span class="shadow"></span></button>`;
+}
+function pitchHtml(teams){
+  if(!teams||teams.length<2) return "";
+  const [h,a]=teams; const figs=[];
+  [[h,true],[a,false]].forEach(([t,home])=>{ if(!t.xi||!t.xi.length) return; placeTeam(t.xi,t.formation,home).forEach(o=>figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK"))) });
+  if(!figs.length) return "";
+  return `<div class="pitch-wrap"><div class="pitch-lbl top">${esc(a.name)} <small>${esc(a.formation||"")}</small></div>
+    <div class="pitch3d"><div class="pitch">${PITCH_SVG}<span class="goal g1"></span>${figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1])).join("")}</div></div>
+    <div class="pitch-lbl">${esc(h.name)} <small>${esc(h.formation||"")}</small></div></div>`;
+}
 function vLineups(){
   const {m}=md, L=md.lineups;
   if(md.loading==="lineups") return `<p class="md-note">Loading line-ups…</p>`;
   if(L&&L.af&&L.teams.length){
     const plRow=p=>{const r=p.rating?(+p.rating).toFixed(1):"";const extra=(p.goals?" ⚽".repeat(Math.min(p.goals,3)):"")+(p.assists?" 🅰".repeat(Math.min(p.assists,3)):"")+(p.yellow?' <i class="card"></i>':"")+(p.red?' <i class="card r"></i>':"");
       return `<button class="pl" data-player="${p.id}" type="button">${photo(p.id)}<span class="no">${esc(p.number??"")}</span><span class="pn">${esc(p.name)}${extra}<small>${esc(p.pos||"")}</small></span><span class="rt ${rtClass(r)}">${r||"–"}</span></button>`};
-    return L.teams.map(t=>`<section class="md-sec"><div class="lu-team">${t.logo?`<img src="${esc(t.logo)}" alt="">`:""}${esc(t.name)} <small>${esc(t.formation||"")}${t.coach?" · Coach: "+esc(t.coach):""}</small></div>
+    return pitchHtml(L.teams)+L.teams.map(t=>`<section class="md-sec"><div class="lu-team">${t.logo?`<img src="${esc(t.logo)}" alt="">`:""}${esc(t.name)} <small>${esc(t.formation||"")}${t.coach?" · Coach: "+esc(t.coach):""}</small></div>
       ${t.xi.map(plRow).join("")}${t.subs.length?`<h4 style="margin-top:12px">Substitutes</h4>${t.subs.map(plRow).join("")}`:""}</section>`).join("")+
       `<p class="md-note">Ratings from API-Football${m.st==="live"?", refreshed every minute while this tab is open (cached for 2 minutes to save requests)":""}. Tap a player for their profile.</p>`;
   }
   const el=md.d&&md.d.lineups;
-  if(el) return `<div class="lu">${el.map(l=>`<div><div class="fm">${esc(l.formation)}</div><ol>${l.players.map(p=>`<li><b>${esc(p.n)}</b>${esc(p.name)}</li>`).join("")}</ol></div>`).join("")}</div>
+  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos}))})))+`<div class="lu">${el.map(l=>`<div><div class="fm">${esc(l.formation)}</div><ol>${l.players.map(p=>`<li><b>${esc(p.n)}</b>${esc(p.name)}</li>`).join("")}</ol></div>`).join("")}</div>
     <p class="md-note">${state.afKey?"":"Add your API-Football key under Data source to see player photos, live ratings and profiles."}</p>`;
   return `<p class="md-note">${m.st==="ns"?"Line-ups are usually announced about an hour before kick-off.":"No line-ups available for this match."}${state.afKey?"":" Add your API-Football key under Data source for line-ups with photos and ratings."}</p>`;
 }
@@ -813,8 +868,8 @@ async function loadLineups(force){
     const live=m.st==="live";
     const [lu,pl]=await Promise.all([afGet(`fixtures/lineups?fixture=${m.afId}`,m.st==="ns"?10*60000:12*3600e3),m.st==="ns"?Promise.resolve([]):afGet(`fixtures/players?fixture=${m.afId}`,live?120000:12*3600e3).catch(()=>[])]);
     const stats={}; for(const t of pl||[]) for(const x of t.players||[]){const g=(x.statistics||[])[0]||{};stats[x.player.id]={rating:(g.games||{}).rating,goals:(g.goals||{}).total,assists:(g.goals||{}).assists,yellow:(g.cards||{}).yellow,red:(g.cards||{}).red}}
-    const mk=e=>{const p=e.player||{};return {id:p.id,name:p.name,number:p.number,pos:p.pos,...(stats[p.id]||{})}};
-    md.lineups={af:true,id:m.afId,teams:(lu||[]).map(t=>({name:t.team.name,logo:t.team.logo,formation:t.formation,coach:(t.coach||{}).name,xi:(t.startXI||[]).map(mk),subs:(t.substitutes||[]).map(mk)}))};
+    const mk=e=>{const p=e.player||{};return {id:p.id,name:p.name,number:p.number,pos:p.pos,grid:p.grid,...(stats[p.id]||{})}};
+    md.lineups={af:true,id:m.afId,teams:(lu||[]).map(t=>({name:t.team.name,logo:t.team.logo,colors:(t.team.colors||{}).player||null,gkColors:(t.team.colors||{}).goalkeeper||null,formation:t.formation,coach:(t.coach||{}).name,xi:(t.startXI||[]).map(mk),subs:(t.substitutes||[]).map(mk)}))};
   }catch(e){ if(!md.lineups) md.lineups={af:false,teams:[]}; }
   md.loading=""; if(md.tab==="lineups"&&!md.player) mdPaint();
 }
