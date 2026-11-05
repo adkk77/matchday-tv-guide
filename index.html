@@ -1047,6 +1047,11 @@ document.addEventListener("click",e=>{
   if(e.target.id==="rulesReset") $("rulesBox").value=DEFAULT_RULES;
   if(e.target.id==="keyBtn"){ $("apiKey").value=state.key; $("afKey").value=state.afKey; $("rulesBox").value=state.rules; $("keyDlg").showModal(); }
 });
+/* Coming back to the app (iPhone keeps it paused in the background): jump to today's games if the day changed or it was away a while */
+let lastToday=ymd(new Date()), hiddenAt=0;
+function backToToday(){ const t=ymd(new Date()); if(t!==lastToday||(hiddenAt&&Date.now()-hiddenAt>20*60000)){ lastToday=t; state.date=t; load() } else if(hiddenAt&&Date.now()-hiddenAt>60000) load(); hiddenAt=0 }
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) hiddenAt=Date.now(); else backToToday() });
+addEventListener("pageshow",e=>{ if(e.persisted){ hiddenAt=hiddenAt||1; backToToday() } });
 $("datePick").addEventListener("change",e=>{if(e.target.value){state.date=e.target.value;load()}});
 $("country")&&$("country").addEventListener("change",e=>{state.country=e.target.value;store.set("country",state.country);render()});
 $("q").addEventListener("input",e=>{state.q=e.target.value;render();suggest();clearTimeout(pTimer);const v=e.target.value.trim();if(v.length>=3)pTimer=setTimeout(()=>findPlayers(v),700)});
