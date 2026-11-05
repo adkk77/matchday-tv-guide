@@ -211,7 +211,7 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .pitch-lbl{color:#e8f3ec;font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:14px;text-align:center;padding:6px 0;font-weight:700}
 .pitch-lbl small{color:#9cc2aa;font-weight:600;margin-left:6px}
 .pitch3d{perspective:820px;perspective-origin:50% 0%;padding:6px 2% 0;min-width:0}
-.pitch-grid{display:grid;grid-template-columns:62px minmax(0,1fr) 62px;gap:2px;align-items:start;padding:0 4px}
+.pitch-grid{display:grid;grid-template-columns:56px minmax(0,1fr) 56px;gap:2px;align-items:start;padding:0 4px}
 .bench{display:grid;gap:2px;color:#e8f3ec;font-size:10px;padding-top:4px;min-width:0}
 .bench .bh{display:flex;align-items:center;gap:3px;font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.03em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .bench .bh img{width:14px;height:14px;object-fit:contain}
@@ -230,17 +230,17 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .outs{margin:6px 10px 0;padding-top:6px;border-top:1px solid rgb(255 255 255 / .12)}
 .outs .bsec2{color:#9cc2aa;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin-bottom:4px}
 .outs-g{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.outs .bench .card{width:8px!important;height:11px!important;flex:0 0 8px}.outs .bench{font-size:11px}.outs .bnm small{font-size:9.5px}
-.pitch{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:68/105;transform:rotateX(28deg);transform-origin:50% 100%;transform-style:preserve-3d;margin-top:-6%;
+.pitch{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:68/122;transform:rotateX(16deg);transform-origin:50% 100%;margin-top:-6%;
   background:radial-gradient(70% 40% at 30% 20%,rgb(255 255 255 / .10),transparent 70%),radial-gradient(70% 40% at 70% 80%,rgb(255 255 255 / .08),transparent 70%),radial-gradient(120% 90% at 50% 50%,transparent 55%,rgb(0 0 0 / .28)),repeating-linear-gradient(180deg,#3a9a52 0 5.4%,#2f8645 5.4% 10.8%);
   border-radius:3px;box-shadow:0 0 0 6px #2b7a40,0 0 0 7px rgb(0 0 0 / .3),0 30px 40px -20px rgb(0 0 0 / .7)}
 .pitch:before{content:"";position:absolute;inset:0;opacity:.35;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 .3 0 0 0 0 0 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
 .pitch>svg{position:absolute;inset:0;width:100%;height:100%}
 .goal{position:absolute;left:44.6%;width:10.8%;height:4%;border:2px solid #fff;border-bottom:0;border-radius:1px 1px 0 0;transform-origin:50% 100%;background:repeating-linear-gradient(90deg,rgb(255 255 255 / .35) 0 1px,transparent 1px 4px),repeating-linear-gradient(0deg,rgb(255 255 255 / .3) 0 1px,transparent 1px 4px);box-shadow:0 0 4px rgb(255 255 255 / .4)}
 .goal.g1{top:-3.5%;transform:translateY(0) rotateX(-70deg)}.goal.g2{bottom:-1.5%;height:4%;border-top:0;border-bottom:1.5px solid #f4f4f4;transform:rotateX(70deg)}
-.fig{all:unset;position:absolute;width:12.5%;max-width:52px;transform:translate(-50%,-100%) rotateX(-28deg);transform-origin:50% 100%;cursor:pointer;display:block}
+.fig{all:unset;position:absolute;width:15.5%;max-width:66px;transform:translate(-50%,-60%) rotateX(-16deg);transform-origin:50% 100%;cursor:pointer;display:block}
 .fig-in{position:relative;display:flex;flex-direction:column;align-items:center}
-.fig .head{width:72%;aspect-ratio:1;border-radius:50%;overflow:hidden;border:2.5px solid #fff;display:grid;place-items:center;position:relative;z-index:1;box-shadow:0 2px 5px rgb(0 0 0 / .5)}
-.fig .fno{display:inline-block;flex:0 0 auto;border-radius:2px;padding:0 2px;margin-right:2px;font-size:8.5px}
+.fig .head{width:86%;aspect-ratio:1;border-radius:50%;overflow:hidden;border:2.5px solid #fff;display:grid;place-items:center;position:relative;z-index:1;box-shadow:0 2px 5px rgb(0 0 0 / .5)}
+.fig .fno{position:relative;z-index:2;margin-top:-7px;min-width:16px;text-align:center;border-radius:8px;padding:0 4px;font-size:10px;line-height:14px;font-weight:800;border:1.5px solid #fff;box-shadow:0 1px 2px rgb(0 0 0 / .4)}
 .fig .head img{width:100%;height:100%;object-fit:cover;object-position:50% 15%;background:#dfe6e1}.fig .head i{font-style:normal;font-weight:800;font-size:13px;color:#fff;text-shadow:0 1px 2px rgb(0 0 0 / .5)}
 .fig .body{width:72%;display:block;filter:drop-shadow(0 2px 1px rgb(0 0 0 / .35))}
 .fig .nm2{margin-top:1px;background:rgb(10 14 12 / .82);color:#fff;font-size:9px;font-weight:700;border-radius:3px;padding:0 3px;white-space:nowrap;max-width:200%;overflow:hidden;text-overflow:ellipsis;line-height:1.5;display:flex;align-items:center}
@@ -248,6 +248,8 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .fig .rt.mini{position:absolute;right:-8%;top:0;font-size:10px;min-width:0;padding:0 3px;line-height:1.4;z-index:2}
 .fig .gl{position:absolute;left:-10%;top:6%;font-size:9px;z-index:2}.fig .rc{position:absolute;left:-4%;top:30%;z-index:2}
 .fig:hover .nm2,.fig:focus-visible .nm2{background:var(--pitch)}
+.fig.ov{pointer-events:none}.fig.ov .head,.fig.ov .shadow{visibility:hidden}
+.fig:not(.ov) .nm2,.fig:not(.ov) .fno,.fig:not(.ov) .rt,.fig:not(.ov) .gl,.fig:not(.ov) .rc{visibility:hidden}
 @media (prefers-reduced-motion:no-preference){.pitch{animation:tilt .7s ease-out}}@keyframes tilt{from{transform:rotateX(0)}}
 /* Match centre */
 .md-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--line);margin:4px -16px -12px;padding:0 12px}
@@ -838,7 +840,7 @@ function placeTeam(players,formation,home){
     const ord=[...players].sort((a,b)=>(a.place||99)-(b.place||99)); let i=0; sizes.forEach((n,ri)=>{rows[ri+1]=ord.slice(i,i+n).map((p,c)=>({p,c:c+1}));i+=n}); }
   const keys=Object.keys(rows).map(Number).sort((a,b)=>a-b), R=keys.length||1, out=[];
   keys.forEach((r,ri)=>{const list=rows[r],n=list.length;list.forEach((o,ci)=>{
-    const x=(ci+1)/(n+1)*100, depth=R>1?ri/(R-1):0, y=home?95-depth*36:9+depth*35;
+    const x=(ci+1)/(n+1)*100, depth=R>1?ri/(R-1):0, y=home?94-depth*39:5+depth*39;
     out.push({p:o.p,x:home?100-x:x,y});});});
   return out;
 }
@@ -851,7 +853,7 @@ function figure(o,team,home,gk){
   return `<button class="fig" style="left:${o.x}%;top:${o.y}%" ${p.id?`data-player="${p.id}"`:""} type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
     <span class="fig-in"><span class="head" style="border-color:${prim};background:${prim}">${head||`<i>${esc((last||"?").slice(0,1))}</i>`}</span>
     ${r?`<span class="rt mini ${rtClass(r)}">${r}</span>`:""}${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
-    <span class="nm2"><b class="fno" style="background:${prim};color:${num}">${esc(p.number??p.n??"")}</b>${esc(last)}</span></span><span class="shadow"></span></button>`;
+    <b class="fno" style="background:${prim};color:${num}">${esc(p.number??p.n??"")}</b><span class="nm2">${esc(last)}</span></span><span class="shadow"></span></button>`;
 }
 function outIcon(o){const r=(o.reason||"")+" "+(o.type||"");return /red card|suspen/i.test(r)?'<i class="card r"></i>':/yellow/i.test(r)?'<i class="card"></i>':/questionable|doubt/i.test(r)?'<b class="q">?</b>':'<b class="inj">+</b>'}
 function benchParts(t){
@@ -876,7 +878,7 @@ function pitchHtml(teams){
   [[h,true],[a,false]].forEach(([t,home])=>{ if(!t.xi||!t.xi.length) return; placeTeam(t.xi,t.formation,home).forEach(o=>figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK"))) });
   if(!figs.length) return "";
   return `<div class="pitch-wrap"><div class="pitch-lbl top">${esc(a.name)} <small>${esc(a.formation||"")}</small></div><div class="boards">KY Matchday · KY Matchday</div>
-    <div class="pitch-grid">${bench(h,true)}<div class="pitch3d"><div class="pitch">${PITCH_SVG}<span class="goal g1"></span><span class="goal g2"></span>${figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1])).join("")}</div></div>${bench(a,false)}</div>
+    <div class="pitch-grid">${bench(h,true)}<div class="pitch3d"><div class="pitch">${PITCH_SVG}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div>${bench(a,false)}</div>
     <div class="pitch-lbl">${esc(h.name)} <small>${esc(h.formation||"")}</small></div>${outHtml(h,a)}</div>`;
 }
 function vLineups(){
