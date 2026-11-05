@@ -227,7 +227,7 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .bench .inj{flex:0 0 11px;height:11px;border-radius:2px;background:#d33;color:#fff;font-size:10px;line-height:11px;text-align:center}
 .bench .q{flex:0 0 11px;height:11px;border-radius:50%;background:#d08b16;color:#fff;font-size:9px;line-height:11px;text-align:center}
 .bench .bp:hover .bnm{color:#3ee08a}
-.outs{margin:6px 10px 0;padding-top:6px;border-top:1px solid rgb(255 255 255 / .12)}
+.outs{margin:0 -16px;padding:10px 12px 12px;background:#14201a}
 .outs .bsec2{color:#9cc2aa;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin-bottom:4px}
 .outs-g{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.outs .bench .card{width:8px!important;height:11px!important;flex:0 0 8px}.outs .bench{font-size:11px}.outs .bnm small{font-size:9.5px}
 .pitch{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:68/158;transform:rotateX(16deg);transform-origin:50% 100%;margin-top:-6%;
@@ -331,6 +331,25 @@ html,body{overflow-x:hidden}
 .fig .fmeta{margin-top:2px!important}
 .fig .gl{left:4%!important;top:-4%!important;font-size:12px!important}.fig .rc{left:10%!important;top:30%!important}
 .fig:hover .nm2,.fig:focus-visible .nm2{color:var(--pitch)!important}
+
+/* Real-pitch look: mown grass texture, bright white markings, run-off and stands at each end */
+.pitch-wrap{background:
+  repeating-linear-gradient(90deg,transparent 0 23%,#d9b21c 23% 24.2%,transparent 24.2% 25%) top/100% 26px no-repeat,
+  repeating-linear-gradient(180deg,#5a2f2f 0 3px,#3a2224 3px 6px) top/100% 26px no-repeat,
+  repeating-linear-gradient(90deg,transparent 0 23%,#d9b21c 23% 24.2%,transparent 24.2% 25%) bottom/100% 26px no-repeat,
+  repeating-linear-gradient(180deg,#5a2f2f 0 3px,#3a2224 3px 6px) bottom/100% 26px no-repeat,
+  #2c3330!important;padding:26px 0!important}
+.pitch3d{padding:0!important;background:#2f7a33;box-shadow:inset 0 0 0 10px #2f7a33}
+.pitch{background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.6 .55' numOctaves='3' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .12 0 0 0 0 .45 0 0 0 0 .1 0 0 0 1.1 -.35'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E"),
+  radial-gradient(90% 60% at 50% 50%,rgb(255 255 255 / .06),transparent 70%),
+  repeating-linear-gradient(180deg,#3e9b3b 0 5.5%,#348832 5.5% 11%)!important}
+.pitch:before{display:none}
+.pitch>svg g{stroke:#fff!important;stroke-width:.42px!important;opacity:.95}
+.wm{display:none}
+.ftag{background:rgb(10 30 14 / .55)!important;border-radius:8px!important;padding:4px 6px!important}
+.fig .nm2{text-shadow:0 1px 2px rgb(0 0 0 / .9),0 0 4px rgb(0 0 0 / .6)!important}
+.fig .nm2 em{color:#e1efe5!important;opacity:.8}
 </style>
 
 <header class="top">
@@ -955,8 +974,8 @@ function pitchHtml(teams){
   const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:`<small>${esc(t.name)}</small>`}<b>${esc(t.formation||"")}</b></span>`;
   const wm=(t,pos)=>t.logo?`<img class="wm ${pos}" src="${esc(t.logo)}" alt="">`:"";
   return `<div class="pitch-wrap">
-    <div class="pitch-grid"><div class="pitch3d"><div class="pitch">${PITCH_SVG}${wm(a,"top")}${wm(h,"bot")}${tag(a,"tl")}${tag(h,"br")}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
-    ${outHtml(h,a)}</div>`;
+    <div class="pitch-grid"><div class="pitch3d"><div class="pitch">${PITCH_SVG}${tag(a,"tl")}${tag(h,"br")}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
+    </div>${outHtml(h,a)}`;
 }
 function vLineups(){
   const {m}=md, L=md.lineups;
