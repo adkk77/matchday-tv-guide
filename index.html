@@ -211,7 +211,7 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .pitch-lbl{color:#e8f3ec;font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:14px;text-align:center;padding:6px 0;font-weight:700}
 .pitch-lbl small{color:#9cc2aa;font-weight:600;margin-left:6px}
 .pitch3d{perspective:820px;perspective-origin:50% 0%;padding:6px 2% 0;min-width:0}
-.pitch-grid{display:grid;grid-template-columns:56px minmax(0,1fr) 56px;gap:2px;align-items:start;padding:0 4px}
+.pitch-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;align-items:start;padding:0 4px}
 .bench{display:grid;gap:2px;color:#e8f3ec;font-size:10px;padding-top:4px;min-width:0}
 .bench .bh{display:flex;align-items:center;gap:3px;font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.03em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .bench .bh img{width:14px;height:14px;object-fit:contain}
@@ -888,7 +888,7 @@ function figure(o,team,home,gk){
 function outIcon(o){const r=(o.reason||"")+" "+(o.type||"");return /red card|suspen/i.test(r)?'<i class="card r"></i>':/yellow/i.test(r)?'<i class="card"></i>':/questionable|doubt/i.test(r)?'<b class="q">?</b>':'<b class="inj">+</b>'}
 function benchParts(t){
   const last=n=>String(n||"").split(" ").slice(-1)[0];
-  const subs=(t.subs||[]).map(p=>`<button class="bp${p.min?" on":""}" ${p.id?`data-player="${p.id}"`:""} type="button"><span class="bn">${esc(p.number??"")}</span><span class="bnm">${p.min?'<em>▲</em>':""}${esc(last(p.name))}</span>${p.rating?`<span class="rt mini ${rtClass(p.rating)}">${(+p.rating).toFixed(1)}</span>`:""}</button>`).join("");
+  const subs=(t.subs||[]).map(p=>`<button class="bp${p.min?" on":""}" ${p.id?`data-player="${p.id}"`:""} type="button"><span class="bn">${esc(p.number??"")}</span><span class="bnm">${p.min?'<em>▲</em>':""}${esc(p.name)}</span>${p.rating?`<span class="rt mini ${rtClass(p.rating)}">${(+p.rating).toFixed(1)}</span>`:""}</button>`).join("");
   return {subs,out:(t.out||[]).map(o=>`<button class="bp out" ${o.id?`data-player="${o.id}"`:""} type="button" title="${esc(o.reason||o.type||"")}">${outIcon(o)}<span class="bnm">${esc(last(o.name))}<small>${esc(o.reason||o.type||"")}</small></span></button>`).join("")};
 }
 function bench(t,home){
@@ -898,9 +898,12 @@ function bench(t,home){
     ${subs?`<div class="bsec">Subs</div>${subs}`:""}</aside>`;
 }
 function outHtml(h,a){
-  const H=benchParts(h).out, A=benchParts(a).out; if(!H&&!A) return "";
-  const col=t=>`<div class="bench"><div class="bh">${t.logo?`<img src="${esc(t.logo)}" alt="">`:""}${esc(t.name)}</div>${benchParts(t).out||'<span class="bnm" style="opacity:.6">None</span>'}</div>`;
-  return `<div class="outs"><div class="bsec2">Missing / injured</div><div class="outs-g">${col(h)}${col(a)}</div></div>`;
+  const last=n=>String(n||"").split(" ").slice(-1)[0];
+  const col=t=>{const {subs,out}=benchParts(t);return `<div class="bench"><div class="bh">${t.logo?`<img src="${esc(t.logo)}" alt="">`:""}${esc(t.name)}</div>
+    ${t.coach?`<div class="bsec">Coach</div><div class="bp coach">${t.coachPhoto?`<img src="${esc(t.coachPhoto)}" alt="" onerror="this.remove()">`:""}<span class="bnm">${esc(t.coach)}</span></div>`:""}
+    <div class="bsec">Substitutes</div>${subs||'<span class="bnm" style="opacity:.6">Not announced</span>'}
+    <div class="bsec">Missing / injured</div>${out||'<span class="bnm" style="opacity:.6">None reported</span>'}</div>`};
+  return `<div class="outs"><div class="outs-g">${col(h)}${col(a)}</div></div>`;
 }
 function pitchHtml(teams){
   if(!teams||teams.length<2) return "";
@@ -908,7 +911,7 @@ function pitchHtml(teams){
   [[h,true],[a,false]].forEach(([t,home])=>{ if(!t.xi||!t.xi.length) return; placeTeam(t.xi,t.formation,home).forEach(o=>figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK"))) });
   if(!figs.length) return "";
   return `<div class="pitch-wrap"><div class="pitch-lbl top">${esc(a.name)} <small>${esc(a.formation||"")}</small></div><div class="boards">KY Matchday · KY Matchday</div>
-    <div class="pitch-grid">${bench(h,true)}<div class="pitch3d"><div class="pitch">${PITCH_SVG}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div>${bench(a,false)}</div>
+    <div class="pitch-grid">${""}<div class="pitch3d"><div class="pitch">${PITCH_SVG}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
     <div class="pitch-lbl">${esc(h.name)} <small>${esc(h.formation||"")}</small></div>${outHtml(h,a)}</div>`;
 }
 function vLineups(){
