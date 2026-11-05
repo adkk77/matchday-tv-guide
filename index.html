@@ -224,7 +224,7 @@ function applyRules(list){
     const lg=String(m.league||"").toLowerCase(); const r=rules.find(r=>lg.includes(r.key)); if(!r) continue;
     const base=r.channel.toLowerCase();
     if(m.channels.some(c=>String(c.name).toLowerCase().startsWith(base))) continue;
-    m.channels=[{name:r.channel,country:"My region",rule:true},...m.channels];
+    m.channels=[{name:r.channel,country:"Middle East",rule:true},...m.channels];
   }
   return list;
 }
@@ -440,6 +440,35 @@ function loadDemo(sport,date){
   return out;
 }
 
+/* ---------- Middle East TV guide (data/tv.json, built every 2 hours by a GitHub Action) ---------- */
+let tvGuide=null, tvGuideAt=0;
+async function loadTvGuide(){
+  if(tvGuide&&Date.now()-tvGuideAt<15*60000) return tvGuide;
+  try{ const r=await fetch("data/tv.json",{cache:"no-cache"}); if(r.ok){tvGuide=await r.json();tvGuideAt=Date.now()} }catch{}
+  return tvGuide;
+}
+function splitTitle(t){
+  const x=String(t).replace(/^.*?\b([A-Z][^:|]*?\s(?:vs?\.?|×|x|-)\s.*)$/,"$1");
+  const parts=x.split(/\s(?:vs?\.?|×|x|-)\s/i); return parts.length>=2?[parts[0],parts[1].split(/\s[-|(]/)[0]]:null;
+}
+const titleHas=(title,team)=>{const t=norm(title),n=norm(team);if(!n)return false;if(t.includes(n))return true;
+  const w=String(team).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>3&&!/^(club|united|city|real|sporting|athletic|football)$/.test(x));
+  return w.length>0&&w.some(x=>t.includes(x)||(x.length>=7&&t.includes(x.slice(0,6))))};
+function applyTvGuide(list){
+  const items=(tvGuide&&tvGuide.items)||[]; if(!items.length) return list;
+  for(const m of list){
+    const k=m.kick.getTime()/1000; if(!k) continue;
+    const found=items.filter(p=>p.s>=k-75*60&&p.s<=k+20*60&&p.e>=k+45*60&&titleHas(p.t,m.home)&&(!m.away||titleHas(p.t,m.away)));
+    if(!found.length) continue;
+    const names=[...new Set(found.map(p=>p.c))];
+    const fam=n=>n.toLowerCase().split(" ")[0];
+    m.channels=m.channels.filter(c=>!(c.rule&&names.some(n=>fam(n)===fam(c.name))));
+    const seen=new Set(m.channels.map(c=>c.name.toLowerCase()));
+    m.channels=[...names.filter(n=>!seen.has(n.toLowerCase())).map(n=>({name:n,country:"Middle East",guide:true})),...m.channels];
+  }
+  return list;
+}
+
 /* ---------- Load + render ---------- */
 let loadSeq=0, timer=null;
 async function load(){
@@ -449,7 +478,8 @@ async function load(){
   try{ matches=await loadLive(state.sport,state.date); }
   catch(e){ matches=loadDemo(state.sport,state.date); source="demo"; error=e&&e.name==="AbortError"?"timed out":(e&&e.message)||"blocked"; }
   if(seq!==loadSeq) return;
-  Object.assign(state,{matches:applyRules(matches),source,error,updated:new Date()});
+  await loadTvGuide(); if(seq!==loadSeq) return;
+  Object.assign(state,{matches:applyRules(applyTvGuide(matches)),source,error,updated:new Date()});
   buildCountries(); render();
   clearTimeout(timer);
   if(state.date===ymd(new Date())) timer=setTimeout(load,state.afKey&&state.sport==="Soccer"?AF_REFRESH_MS:REFRESH_MS);
@@ -505,7 +535,7 @@ function row(m){
   const has=m.hs!=null&&m.hs!==""&&m.st!=="ns";
   const hw=has&&+m.hs>+m.as, aw=has&&+m.as>+m.hs;
   const pill=m.st==="live"?`<span class="pill live">${esc(m.label||"Live")}</span>`:m.st==="ft"?`<span class="pill ft">FT</span>`:m.st==="off"?`<span class="pill ft">${esc(m.label)}</span>`:`<span class="pill ns">Kick-off</span>`;
-  const tv=m.shown.length?m.shown.map(c=>`<span class="ch${c.rule?" rule":""}" title="${c.rule?"From your channel rules (usual rights holder)":"Listed by the data feed"}">${TV_ICON}${esc(c.name)}${c.rule?` <small>usually</small>`:c.country&&!state.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
+  const tv=m.shown.length?m.shown.map(c=>`<span class="ch${c.rule?" rule":""}" title="${c.rule?"From your channel rules (usual rights holder)":"Listed by the data feed"}">${TV_ICON}${esc(c.name)}${c.rule?` <small>usually</small>`:c.guide?"":c.country&&!state.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
   return `<article class="match ${m.st} tap" data-mid="${esc(m.id)}" tabindex="0" role="button" aria-label="Match details: ${esc(m.home)} v ${esc(m.away)}">
     <div class="when">${fmtTime(m.kick)}${pill}</div>
     <div class="teams">
@@ -563,7 +593,7 @@ async function afDetails(m){
 function mdShell(m,body){
   const has=m.hs!=null&&m.hs!==""&&m.st!=="ns";
   const status=m.st==="live"?(m.label||"Live"):m.st==="ft"?"Full time":m.st==="off"?(m.label||"Off"):fmtTime(m.kick);
-  const tv=m.channels.length?m.channels.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?" <small>usually</small>":c.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
+  const tv=m.channels.length?m.channels.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?" <small>usually</small>":c.guide?"":c.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
   return `<div class="md-head">
     <div class="md-top"><b>${esc(m.league)}</b><button class="md-x" id="mdClose" aria-label="Close">×</button></div>
     <div class="md-score">

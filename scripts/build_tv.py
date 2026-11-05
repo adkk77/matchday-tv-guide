@@ -8,7 +8,9 @@ import gzip, io, json, re, sys, time, urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
-FILES = ["epg_ripper_BEIN1.xml.gz", "epg_ripper_AE1.xml.gz", "epg_ripper_SA1.xml.gz", "epg_ripper_EG1.xml.gz"]
+# file -> seconds to add. The beIN file labels Doha time (UTC+3) as +0100, so shift it back 2 hours
+# (checked against Europa League kick-offs on 2026-11-05: listings start ~10 minutes before kick-off).
+FILES = {"epg_ripper_BEIN1.xml.gz": -7200, "epg_ripper_AE1.xml.gz": 0, "epg_ripper_SA1.xml.gz": 0, "epg_ripper_EG1.xml.gz": 0}
 BASE = "https://epgshare01.online/epgshare01/"
 SPORT_CH = re.compile(r"(?i)bein|alkass|ktv\.?sport|kuwait\.?sport|ad\.?sports|abu\.?dhabi\.?sports|dubai\.?sports|sharjah\.?sport|ksa\.?sports|ssc|thmanyah|on\.?time\.?sport|oman\.?tv\.?sport|starzplay\.?sports")
 SKIP_CH = re.compile(r"(?i)news|4k|radio|fm\b")
@@ -29,7 +31,8 @@ def pretty(cid, disp):
         if "FTA" in cid: return "beIN SPORTS (free-to-air)"
         if "ENGLISH" in cid or "FRENCH" in cid: return n or cid
     n = re.sub(r"\.(ae|sa|eg|bein)$", "", n or cid)
-    n = re.sub(r"^(en|ar):\.", "", n).replace(".", " ")
+    n = re.sub(r"^(en|ar):\.?\s*", "", n, flags=re.I).replace(".", " ")
+    n = re.sub(r"^(en|ar):\s*", "", n, flags=re.I)
     n = re.sub(r"(?i)\s+HD[R]?$", "", n).strip()
     return n
 
@@ -39,7 +42,7 @@ def ts(v):
 def main():
     now = time.time(); lo, hi = now - 36 * 3600, now + 4 * 86400
     out, names = {}, {}
-    for f in FILES:
+    for f, shift in FILES.items():
         try:
             raw = urllib.request.urlopen(urllib.request.Request(BASE + f, headers={"User-Agent": "Mozilla/5.0"}), timeout=120).read()
             root = ET.parse(io.BytesIO(gzip.decompress(raw))).getroot()
@@ -55,7 +58,7 @@ def main():
             if cid not in names: continue
             title = (p.findtext("title") or "").strip()
             if not title or not VERSUS.search(title) or REPLAY.search(title): continue
-            try: s, e = ts(p.get("start")), ts(p.get("stop"))
+            try: s, e = ts(p.get("start")) + shift, ts(p.get("stop")) + shift
             except Exception: continue
             if e < lo or s > hi or e - s < 40 * 60: continue
             key = (names[cid], s)
