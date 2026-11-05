@@ -248,8 +248,9 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .fig .rt.mini{position:absolute;right:-8%;top:0;font-size:10px;min-width:0;padding:0 3px;line-height:1.4;z-index:2}
 .fig .gl{position:absolute;left:-10%;top:6%;font-size:9px;z-index:2}.fig .rc{position:absolute;left:-4%;top:30%;z-index:2}
 .fig:hover .nm2,.fig:focus-visible .nm2{background:var(--pitch)}
+.fig .fmeta{display:flex;gap:2px;align-items:center;margin-top:-7px;position:relative;z-index:2}.fig .fmeta .fno{margin-top:0}.fig .fmeta .rt.mini{position:static;font-size:10px;line-height:14px;padding:0 3px;border:1.5px solid #fff;border-radius:8px}
 .fig.ov{pointer-events:none}.fig.ov .head,.fig.ov .shadow{visibility:hidden}
-.fig:not(.ov) .nm2,.fig:not(.ov) .fno,.fig:not(.ov) .rt,.fig:not(.ov) .gl,.fig:not(.ov) .rc{visibility:hidden}
+.fig:not(.ov) .nm2,.fig:not(.ov) .fmeta,.fig:not(.ov) .rt,.fig:not(.ov) .gl,.fig:not(.ov) .rc{visibility:hidden}
 @media (prefers-reduced-motion:no-preference){.pitch{animation:tilt .7s ease-out}}@keyframes tilt{from{transform:rotateX(0)}}
 /* Match centre */
 .md-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--line);margin:4px -16px -12px;padding:0 12px}
@@ -852,8 +853,8 @@ function figure(o,team,home,gk){
   const head=p.id?`<img src="https://media.api-sports.io/football/players/${p.id}.png" alt="" loading="lazy" onerror="this.remove()">`:"";
   return `<button class="fig" style="left:${o.x}%;top:${o.y}%" ${p.id?`data-player="${p.id}"`:""} type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
     <span class="fig-in"><span class="head" style="border-color:${prim};background:${prim}">${head||`<i>${esc((last||"?").slice(0,1))}</i>`}</span>
-    ${r?`<span class="rt mini ${rtClass(r)}">${r}</span>`:""}${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
-    <b class="fno" style="background:${prim};color:${num}">${esc(p.number??p.n??"")}</b><span class="nm2">${esc(last)}</span></span><span class="shadow"></span></button>`;
+    ${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
+    <span class="fmeta"><b class="fno" style="background:${prim};color:${num}">${esc(p.number??p.n??"")}</b>${r?`<span class="rt mini ${rtClass(r)}">${r}</span>`:""}</span><span class="nm2">${esc(last)}</span></span><span class="shadow"></span></button>`;
 }
 function outIcon(o){const r=(o.reason||"")+" "+(o.type||"");return /red card|suspen/i.test(r)?'<i class="card r"></i>':/yellow/i.test(r)?'<i class="card"></i>':/questionable|doubt/i.test(r)?'<b class="q">?</b>':'<b class="inj">+</b>'}
 function benchParts(t){
