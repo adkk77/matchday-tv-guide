@@ -1,0 +1,17 @@
+name: probe-bein
+on:
+  push:
+    paths: [".github/workflows/probe.yml"]
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for u in "https://epg.beinsports.com/utctime.php?mins=00&serviceidentity=beinsports.com&cdate=2026-11-05" "https://epg.beinsports.com/utctime_en.php?mins=00&serviceidentity=beinsports.com&cdate=2026-11-05"; do
+            echo "=== $u"; curl -sSL -m 30 -A "Mozilla/5.0" -o out.html -w "HTTP %{http_code} %{size_download}\n" "$u" || true
+            head -c 1500 out.html; echo; echo "--- ids:"; grep -o 'id="channels_[0-9]*"' out.html | head -30; echo "--- alts:"; grep -o 'alt="[^"]*"' out.html | sort | uniq -c | head -40
+            echo "--- sample li:"; grep -n 'class="title"' out.html | head -5; python3 - <<'PY'
+          s=open('out.html',encoding='utf-8',errors='ignore').read(); i=s.find('channels_'); print(s[i:i+2500] if i>=0 else 'no channels_')
+          PY
+          done
