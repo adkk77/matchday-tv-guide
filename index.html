@@ -133,7 +133,7 @@ dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface)
 .md-res{font-family:var(--display);font-weight:700;font-size:40px;font-variant-numeric:tabular-nums;line-height:1}
 .md-res small{display:block;font-size:14px;margin-top:4px;color:var(--muted);font-weight:600;letter-spacing:.04em}
 .md-res.live{color:var(--live)}
-.md-body{padding:12px 16px 18px;display:grid;gap:18px}
+.md-body{padding:12px 16px 12px;display:grid;gap:14px}
 .md-sec h4{margin:0 0 8px;font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:14px;color:var(--muted)}
 .md-tabs{display:flex;gap:6px}
 .ev{display:grid;grid-template-columns:minmax(0,1fr) 46px minmax(0,1fr);gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
@@ -361,7 +361,7 @@ html,body{overflow-x:hidden}
 
 /* Even 3D: gentler tilt, far players scaled up so both teams look the same */
 .pitch3d{perspective:1500px!important;perspective-origin:50% 50%!important}
-.pitch{transform:rotateX(20deg)!important;margin-top:-6%!important}
+.pitch{transform:rotateX(20deg)!important;margin-top:-13%!important}
 .fig{transform:translate(-50%,-36%) rotateX(-20deg) scale(var(--s,1))!important;transform-origin:50% 100%!important}
 .fig.ov{transform:translate(-50%,-36%) rotateX(-20deg) scale(var(--s,1)) translateZ(10px)!important}
 .fig .fmeta{position:absolute!important;top:100%;left:50%;transform:translateX(-50%)}
@@ -1009,11 +1009,10 @@ function vLineups(){
   if(L&&L.af&&L.teams.length){
     const plRow=p=>{const r=p.rating?(+p.rating).toFixed(1):"";const extra=(p.goals?" ⚽".repeat(Math.min(p.goals,3)):"")+(p.assists?" 🅰".repeat(Math.min(p.assists,3)):"")+(p.yellow?' <i class="card"></i>':"")+(p.red?' <i class="card r"></i>':"");
       return `<button class="pl" data-player="${p.id}" type="button">${photo(p.id)}<span class="no">${esc(p.number??"")}</span><span class="pn">${esc(p.name)}${extra}<small>${esc(p.pos||"")}</small></span><span class="rt ${rtClass(r)}">${r||"–"}</span></button>`};
-    return pitchHtml(L.teams)+
-      `<p class="md-note">Ratings from API-Football${m.st==="live"?", refreshed every minute while this tab is open (cached for 2 minutes to save requests)":""}. Tap a player for their profile.</p>`;
+    return pitchHtml(L.teams);
   }
   const el=md.d&&md.d.lineups;
-  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos})),subs:l.subs||[]})))+`<p class="md-note">${state.afKey?"":"Add your API-Football key under Data source to see player photos, live ratings and profiles."}</p>`;
+  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos})),subs:l.subs||[]})));
   return `<p class="md-note">${m.st==="ns"?"Line-ups are usually announced about an hour before kick-off.":"No line-ups available for this match."}${state.afKey?"":" Add your API-Football key under Data source for line-ups with photos and ratings."}</p>`;
 }
 function vTable(){
@@ -1043,11 +1042,20 @@ function vPlayer(){
      <p class="md-note" style="margin-top:8px">${mins} minutes played.</p></section>
    ${st.length?`<section class="md-sec"><h4>By competition</h4><div style="overflow-x:auto"><table class="tbl"><thead><tr><th style="text-align:left">Competition</th><th>Apps</th><th>G</th><th>A</th><th>YC</th><th>Rating</th></tr></thead><tbody>${st.filter(x=>x.games.appearences).map(x=>`<tr><td class="tm"><span>${esc(x.league.name)}</span></td><td>${x.games.appearences||0}</td><td>${x.goals.total||0}</td><td>${x.goals.assists||0}</td><td>${x.cards.yellow||0}</td><td>${x.games.rating?(+x.games.rating).toFixed(1):"–"}</td></tr>`).join("")}</tbody></table></div></section>`:""}`;
 }
+/* Size the pitch so the whole line-up plus the Substitutes button fit on one screen */
+function fitPitch(){
+  const dlg=$("matchDlg"), pitch=dlg.querySelector(".pitch"); if(!pitch) return;
+  const head=dlg.querySelector(".md-head"), btn=dlg.querySelector(".bench-btn"), wrap=dlg.querySelector(".pitch-wrap");
+  const avail=dlg.clientHeight-(head?head.offsetHeight:0)-(btn?btn.offsetHeight:0)-24-14-32+wrap.clientWidth*.13;
+  const maxW=wrap.clientWidth*.92, w=Math.max(180,Math.min(maxW,avail/(125/68)/.95));
+  pitch.style.width=w+"px"; pitch.style.marginLeft=pitch.style.marginRight="auto";
+}
+addEventListener("resize",()=>{ if($("matchDlg").open) fitPitch() });
 function mdPaint(){
   const m=md.m;
   if(!m){ if(md.player) $("matchBody").innerHTML=`<div class="md-body"><div style="display:flex;justify-content:flex-end"><button class="md-x" id="mdClose" aria-label="Close">×</button></div>${vPlayer()}</div>`; return }
   const body=md.player?vPlayer():md.tab==="lineups"?vLineups():md.tab==="stats"?vStats():md.tab==="table"?vTable():md.tab==="news"?vNews():vSummary();
-  const sc=$("matchDlg").scrollTop; $("matchBody").innerHTML=mdShell(m,body); $("matchDlg").scrollTop=sc;
+  const sc=$("matchDlg").scrollTop; $("matchBody").innerHTML=mdShell(m,body); $("matchDlg").scrollTop=sc; fitPitch();
 }
 async function loadLineups(force){
   const m=md.m; if(!m||!m.afId||!state.afKey) return;
