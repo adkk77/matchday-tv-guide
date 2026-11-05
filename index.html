@@ -326,7 +326,7 @@ html,body{overflow-x:hidden}
 .fig .head.nohead i{font-family:var(--body);font-size:15px!important;font-weight:700;color:#fff;text-shadow:none}
 .fig .head img{background:#cfd8d3!important}
 .fig .shadow{display:none}
-.fig .nm2{background:none!important;color:#fff!important;font-size:10.5px!important;font-weight:700;padding:0!important;margin-top:4px!important;max-width:112%!important;text-shadow:0 1px 2px rgb(0 0 0 / .7);display:block!important;text-align:center}
+.fig .nm2{background:none!important;color:#fff!important;font-size:10.5px!important;font-weight:700;padding:0!important;margin-top:4px!important;max-width:165%!important;text-shadow:0 1px 2px rgb(0 0 0 / .7);display:block!important;text-align:center}
 .fig .nm2 em{font-style:normal;color:#9fb3a7;font-weight:600;margin-right:3px}
 .fig .fmeta{margin-top:2px!important}
 .fig .gl{left:4%!important;top:-4%!important;font-size:12px!important}.fig .rc{left:10%!important;top:30%!important}
@@ -348,6 +348,7 @@ html,body{overflow-x:hidden}
 .ftag{background:rgb(10 30 14 / .55)!important;border-radius:8px!important;padding:4px 6px!important}
 .fig .nm2{text-shadow:0 1px 2px rgb(0 0 0 / .9),0 0 4px rgb(0 0 0 / .6)!important}
 .fig .nm2 em{color:#e1efe5!important;opacity:.8}
+.fig .nm2{background:rgb(0 0 0 / .38)!important;border-radius:5px;padding:0 3px!important;font-size:10px!important;width:max-content;margin-left:auto;margin-right:auto}
 
 /* 3D: the pitch tilts back, players stand upright (KY approved preview) */
 .pitch3d{perspective:1100px!important;perspective-origin:50% 30%!important;padding:0 4%!important;overflow:visible}
@@ -356,6 +357,23 @@ html,body{overflow-x:hidden}
 .fig{transform:translate(-50%,-80%) rotateX(-24deg)!important;transform-origin:50% 100%!important}
 .fig.ov{transform:translate(-50%,-80%) rotateX(-24deg) translateZ(3px)!important}
 .fig .head{box-shadow:0 6px 10px rgb(0 0 0 / .55)!important}
+
+/* Even 3D: gentler tilt, far players scaled up so both teams look the same */
+.pitch3d{perspective:1500px!important;perspective-origin:50% 50%!important}
+.pitch{transform:rotateX(20deg)!important;margin-top:-6%!important}
+.fig{transform:translate(-50%,-36%) rotateX(-20deg) scale(var(--s,1))!important;transform-origin:50% 100%!important}
+.fig.ov{transform:translate(-50%,-36%) rotateX(-20deg) scale(var(--s,1)) translateZ(10px)!important}
+.fig .fmeta{position:absolute!important;top:100%;left:50%;transform:translateX(-50%)}
+.pitch{background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.6 1.4' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .6 0 0 0 0 .95 0 0 0 0 .4 0 0 0 1.5 -.8'/%3E%3C/filter%3E%3Crect width='90' height='90' filter='url(%23g)'/%3E%3C/svg%3E"),
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70'%3E%3Cfilter id='d'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.2 1.2' numOctaves='2' seed='19'/%3E%3CfeColorMatrix values='0 0 0 0 .05 0 0 0 0 .3 0 0 0 0 .03 0 0 0 1.5 -.75'/%3E%3C/filter%3E%3Crect width='70' height='70' filter='url(%23d)'/%3E%3C/svg%3E"),
+  repeating-linear-gradient(180deg,#4fb043 0 6.4%,#3e9a35 6.6% 12.9%)!important;
+  background-size:90px 90px,70px 70px,auto!important}
+.pitch>svg g{stroke-width:.6px!important}
+.bench-btn{all:unset;box-sizing:border-box;display:flex;justify-content:center;gap:6px;align-items:center;width:calc(100% + 32px);margin:0 -16px;padding:11px 12px;background:#14201a;color:#e8f3ec;font-weight:700;font-size:14px;cursor:pointer;border-top:1px solid rgb(255 255 255 / .08)}
+.bench-btn span{color:var(--pitch)}
+.fig .nm2 .rt.mini{position:static!important;display:inline-block;font-size:9.5px!important;line-height:13px!important;padding:0 3px!important;border-radius:4px;vertical-align:1px;text-shadow:none;margin-left:2px}
+.bench-btn:focus-visible{outline:2px solid var(--pitch);outline-offset:-2px}
 </style>
 
 <header class="top">
@@ -944,10 +962,10 @@ function figure(o,team,home,gk){
   const shorts=lum(prim)>.55?"#1d2430":"#f2f2f2", skin=["#e8c2a0","#c99b78","#a8754f","#7a4e33"][(+p.id||String(p.name||"").length)%4], boot=["#3ee08a","#ff6b2c","#f2f2f2","#ffd400"][(+p.id||1)%4];
   const r=p.rating?(+p.rating).toFixed(1):"", last=String(p.name||"").split(" ").slice(-1)[0];
   const head=p.id?`<img src="https://media.api-sports.io/football/players/${p.id}.png" alt="" loading="lazy" onerror="this.remove()">`:"";
-  return `<button class="fig" style="left:${o.x}%;top:${o.y}%" ${p.id?`data-player="${p.id}"`:""} type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
+  return `<button class="fig" style="left:${o.x}%;top:${o.y}%;--s:${(1+.2*(1-o.y/100)).toFixed(3)}" ${p.id?`data-player="${p.id}"`:""} type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
     <span class="fig-in"><span class="head${head?"":" nohead"}">${head||`<i>${esc(p.number??p.n??(last||"?").slice(0,1))}</i>`}</span>
     ${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
-    <span class="nm2">${head?`<em>${esc(p.number??p.n??"")}</em>`:""}${esc(shortName(p.name))}</span>${r?`<span class="fmeta"><span class="rt mini ${rtClass(r)}">${r}</span></span>`:""}</span><span class="shadow"></span></button>`;
+    <span class="nm2">${head?`<em>${esc(p.number??p.n??"")}</em>`:""}${esc(shortName(p.name))}${r?` <span class="rt mini ${rtClass(r)}">${r}</span>`:""}</span></span><span class="shadow"></span></button>`;
 }
 function outIcon(o){const r=(o.reason||"")+" "+(o.type||"");return /red card|suspen/i.test(r)?'<i class="card r"></i>':/yellow/i.test(r)?'<i class="card"></i>':/questionable|doubt/i.test(r)?'<b class="q">?</b>':'<b class="inj">+</b>'}
 function benchParts(t){
@@ -975,13 +993,13 @@ function pitchHtml(teams){
   // Every row of both teams gets the same spacing from goal line to goal line, so a 5-row team is as roomy as a 4-row one
   const placed=[[h,true],[a,false]].map(([t,home])=>[t,home,t.xi&&t.xi.length?placeTeam(t.xi,t.formation,home):[]]);
   const rowsOf=l=>l.length?l[0].R:0, total=rowsOf(placed[0][2])+rowsOf(placed[1][2]), gap=total>1?87/(total-1):0;
-  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ const R=o.R, g=R>1?39/(R-1):0; o.y=home?95-o.ri*g:5+o.ri*g; } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
+  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ const R=o.R, g=R>1?36/(R-1):0; o.y=home?93.5-o.ri*g:6+o.ri*g; } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
   if(!figs.length) return "";
   const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:`<small>${esc(t.name)}</small>`}<b>${esc(t.formation||"")}</b></span>`;
   const wm=(t,pos)=>t.logo?`<img class="wm ${pos}" src="${esc(t.logo)}" alt="">`:"";
   return `<div class="pitch-wrap">
     <div class="pitch-grid"><div class="pitch3d"><div class="pitch">${PITCH_SVG}${tag(a,"tl")}${tag(h,"br")}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
-    </div>${outHtml(h,a)}`;
+    </div><button class="bench-btn" type="button" data-bench aria-expanded="${!!md.showBench}">Substitutes &amp; injuries <span>${md.showBench?"▴":"▾"}</span></button>${md.showBench?outHtml(h,a):""}`;
 }
 function vLineups(){
   const {m}=md, L=md.lineups;
@@ -1107,6 +1125,7 @@ async function openMatch(id){
   if(m.st==="live") mdTimer=setInterval(()=>{ if(!$("matchDlg").open) return clearInterval(mdTimer); if(m.espnId) go(); if(md.tab==="lineups"&&!md.player) loadLineups(true); },60000);
 }
 $("matchBody").addEventListener("click",e=>{
+  if(e.target.closest("[data-bench]")){ md.showBench=!md.showBench; mdPaint(); return }
   const t=e.target.closest("[data-tab]"); if(t){ md.tab=t.dataset.tab; md.player=null; mdPaint(); if(md.tab==="lineups") loadLineups(); if(md.tab==="table") loadTable(); if(md.tab==="news") loadNews(); return }
   const p=e.target.closest("[data-player]"); if(p&&state.afKey){ openPlayer(p.dataset.player); return }
   if(e.target.closest("[data-back]")){ md.player=null; mdPaint(); return }
