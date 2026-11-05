@@ -388,14 +388,14 @@ const ESPN = {
 const parseISO=v=>{let t=String(v||"").trim().replace(" ","T");if(/T\d\d:\d\d(Z|[+-]\d\d:?\d\d)?$/.test(t))t=t.replace(/(T\d\d:\d\d)/,"$1:00");if(!/(Z|[+-]\d\d:?\d\d)$/.test(t))t+="Z";return new Date(t)};
 async function loadESPN(sport,date){
   const cfg=ESPN[sport]; if(!cfg) return [];
-  const from=date.replace(/-/g,""), to=addDays(date,1).replace(/-/g,"");
+  const isToday=date===ymd(new Date()); const from=(isToday?addDays(date,-1):date).replace(/-/g,""), to=addDays(date,1).replace(/-/g,"");
   const res=await Promise.allSettled(Object.entries(cfg.leagues).map(([slug,name])=>
     getJSON(`https://site.api.espn.com/apis/site/v2/sports/${cfg.path}/${slug}/scoreboard?dates=${from}-${to}&limit=200`).then(j=>({j,name,slug}))));
   if(!res.some(r=>r.status==="fulfilled")) throw new Error("ESPN unreachable");
   const out=[];
   for(const r of res){ if(r.status!=="fulfilled") continue;
     for(const e of (r.value.j.events||[])){
-      const kick=parseISO(e.date); if(ymd(kick)!==date) continue;
+      const kick=parseISO(e.date); const sameDay=ymd(kick)===date; if(!sameDay&&!(isToday&&ymd(kick)===addDays(date,-1))) continue;
       const c=(e.competitions||[])[0]||{}; const cs=c.competitors||[];
       const H=cs.find(x=>x.homeAway==="home")||cs[0]||{}, A=cs.find(x=>x.homeAway==="away")||cs[1]||{};
       const t=(c.status||e.status||{}).type||{}; const clock=(c.status||e.status||{}).displayClock;
@@ -403,6 +403,7 @@ async function loadESPN(sport,date){
       if(/POSTPONED|CANCELED|CANCELLED|SUSPENDED|ABANDONED/.test(t.name||"")){st="off";label=(t.shortDetail||"Off").slice(0,5)}
       else if(t.state==="in"){st="live";label=t.name==="STATUS_HALFTIME"?"HT":(sport==="Soccer"?(clock||t.shortDetail||"Live"):(t.shortDetail||"Live"))}
       else if(t.state==="post"){st="ft"}
+      if(!sameDay&&st!=="live") continue; // yesterday's games only while still being played
       const names=new Set(); for(const b of (c.broadcasts||[])) for(const n of (b.names||[])) names.add(n);
       out.push({id:"espn"+e.id,league:r.value.name,home:(H.team||{}).displayName||"",away:(A.team||{}).displayName||"",
         hb:(H.team||{}).logo||"",ab:(A.team||{}).logo||"",kick,hs:st==="ns"?null:H.score,as:st==="ns"?null:A.score,st,label,
@@ -415,9 +416,9 @@ const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase(
 const sameTeam=(a,b)=>{a=norm(a);b=norm(b);return !!a&&!!b&&(a===b||a.includes(b)||b.includes(a)||(a.length>4&&b.length>4&&a.slice(0,5)===b.slice(0,5)))};
 /* ---------- API-Football (api-sports.io): full football coverage with a free key ---------- */
 const afCache=new Map(); // date -> {at, list}
-async function loadAF(date){
+async function loadAF(date,fresh){
   const today=date===ymd(new Date()), c=afCache.get(date);
-  if(c && Date.now()-c.at < (today?AF_REFRESH_MS-5000:30*60000)) return c.list;
+  if(c && Date.now()-c.at < (today||fresh?AF_REFRESH_MS-5000:30*60000)) return c.list;
   const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
   const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),12000);
   let r; try{ r=await fetch(`https://v3.football.api-sports.io/fixtures?date=${date}&timezone=${encodeURIComponent(tz)}`,{headers:{"x-apisports-key":state.afKey},signal:ctl.signal}); } finally{clearTimeout(t)}
@@ -451,9 +452,14 @@ function mergeChannels(base,others,addMissing){
   }
   return out;
 }
+async function loadAFWithCarryover(date){
+  const list=await loadAF(date);
+  if(date!==ymd(new Date())||new Date().getHours()>=5) return list;
+  try{ const y=await loadAF(addDays(date,-1),true); return [...list,...y.filter(m=>m.st==="live")] }catch{ return list }
+}
 async function loadLive(sport,date){
   const useAF=sport==="Soccer"&&!!state.afKey;
-  const [f,t,e]=await Promise.allSettled([useAF?loadAF(date):Promise.resolve(null),loadTSDB(sport,date),loadESPN(sport,date)]);
+  const [f,t,e]=await Promise.allSettled([useAF?loadAFWithCarryover(date):Promise.resolve(null),loadTSDB(sport,date),loadESPN(sport,date)]);
   const af=f.status==="fulfilled"?f.value:null; state.afError=f.status==="rejected"?String(f.reason&&f.reason.message||f.reason):"";
   if(!af&&t.status==="rejected"&&e.status==="rejected") throw t.reason;
   const espn=e.status==="fulfilled"?e.value.map(x=>({...x,channels:[...x.channels]})):[], tsdb=t.status==="fulfilled"?t.value:[];
