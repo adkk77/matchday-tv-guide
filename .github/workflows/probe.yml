@@ -8,10 +8,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for u in "https://epg.beinsports.com/utctime.php?mins=00&serviceidentity=beinsports.com&cdate=2026-11-05" "https://epg.beinsports.com/utctime_en.php?mins=00&serviceidentity=beinsports.com&cdate=2026-11-05"; do
-            echo "=== $u"; curl -sSL -m 30 -A "Mozilla/5.0" -o out.html -w "HTTP %{http_code} %{size_download}\n" "$u" || true
-            head -c 1500 out.html; echo; echo "--- ids:"; grep -o 'id="channels_[0-9]*"' out.html | head -30; echo "--- alts:"; grep -o 'alt="[^"]*"' out.html | sort | uniq -c | head -40
-            echo "--- sample li:"; grep -n 'class="title"' out.html | head -5; python3 - <<'PY'
-          s=open('out.html',encoding='utf-8',errors='ignore').read(); i=s.find('channels_'); print(s[i:i+2500] if i>=0 else 'no channels_')
+          set +e
+          echo "=== epgshare01 index"; curl -sSL -m 40 -A "Mozilla/5.0" https://epgshare01.online/epgshare01/ -o idx.html -w "HTTP %{http_code} %{size_download}\n"
+          grep -o 'epg_ripper_[A-Za-z0-9_]*\.xml\.gz' idx.html | sort -u | tr '\n' ' '; echo
+          for f in $(grep -o 'epg_ripper_[A-Za-z0-9_]*\.xml\.gz' idx.html | sort -u | grep -Ei 'BEIN|QA|SA[0-9]|KW|AE[0-9]|ARAB|MENA|ALKASS|SSC'); do
+            echo "=== $f"; curl -sSL -m 60 "https://epgshare01.online/epgshare01/$f" -o x.gz -w "HTTP %{http_code} %{size_download}\n"; gunzip -c x.gz > x.xml 2>/dev/null
+            echo "channels:"; grep -o '<display-name[^>]*>[^<]*' x.xml | sed 's/.*>//' | sort -u | grep -Ei 'bein|kass|ktv|kuwait|thmanyah|ثمانية|ssc|abu dhabi|ad sport|dubai|sharjah|shahid|starzplay|tod|mbc' | head -60
+            echo "sample sport programmes:"; python3 - <<'PY'
+          import re
+          s=open('x.xml',encoding='utf-8',errors='ignore').read()
+          for m in re.finditer(r'<programme start="(\d{14} [+-]\d{4})"[^>]*channel="([^"]*)"[^>]*>\s*<title[^>]*>([^<]*)',s):
+              ch,t=m.group(2),m.group(3)
+              if re.search(r'(?i)bein|kass|ktv|ssc|thmanyah',ch) and re.search(r'(?i) vs?\.? | v |×| - ',t):
+                  print(m.group(1),ch,'|',t)
           PY
-          done
+          done 2>&1 | head -400
+          echo "=== bein site"; curl -sSL -m 30 -A "Mozilla/5.0" -o b.html -w "HTTP %{http_code} %{size_download}\n" "https://www.beinsports.com/en-mena/tv-guide"; head -c 600 b.html
