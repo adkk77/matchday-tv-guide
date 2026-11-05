@@ -1,5 +1,5 @@
 // App-shell cache so the app opens offline; data always comes from the network.
-const C="matchday-v26";const SHELL=["./","index.html","manifest.webmanifest","icon.svg","icon-192.png","icon-180.png"];
+const C="matchday-v27";const SHELL=["./","index.html","manifest.webmanifest","icon.svg","icon-192.png","icon-180.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(SHELL)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))));self.clients.claim()});
 self.addEventListener("fetch",e=>{const u=new URL(e.request.url);if(u.origin!==location.origin)return;
