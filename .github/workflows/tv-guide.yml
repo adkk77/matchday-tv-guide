@@ -1,0 +1,22 @@
+name: Update TV guide
+on:
+  schedule:
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+  push:
+    paths: ["scripts/build_tv.py", ".github/workflows/tv-guide.yml"]
+permissions:
+  contents: write
+concurrency: tv-guide
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/build_tv.py
+      - name: Commit if changed
+        run: |
+          git config user.name "tv-guide-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/tv.json
+          git diff --cached --quiet || (git commit -m "Update TV guide data" && git push)
