@@ -230,14 +230,14 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .outs{margin:6px 10px 0;padding-top:6px;border-top:1px solid rgb(255 255 255 / .12)}
 .outs .bsec2{color:#9cc2aa;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin-bottom:4px}
 .outs-g{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.outs .bench .card{width:8px!important;height:11px!important;flex:0 0 8px}.outs .bench{font-size:11px}.outs .bnm small{font-size:9.5px}
-.pitch{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:68/122;transform:rotateX(16deg);transform-origin:50% 100%;margin-top:-6%;
+.pitch{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:68/138;transform:rotateX(16deg);transform-origin:50% 100%;margin-top:-6%;
   background:radial-gradient(70% 40% at 30% 20%,rgb(255 255 255 / .10),transparent 70%),radial-gradient(70% 40% at 70% 80%,rgb(255 255 255 / .08),transparent 70%),radial-gradient(120% 90% at 50% 50%,transparent 55%,rgb(0 0 0 / .28)),repeating-linear-gradient(180deg,#3a9a52 0 5.4%,#2f8645 5.4% 10.8%);
   border-radius:3px;box-shadow:0 0 0 6px #2b7a40,0 0 0 7px rgb(0 0 0 / .3),0 30px 40px -20px rgb(0 0 0 / .7)}
 .pitch:before{content:"";position:absolute;inset:0;opacity:.35;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 .3 0 0 0 0 0 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
 .pitch>svg{position:absolute;inset:0;width:100%;height:100%}
 .goal{position:absolute;left:44.6%;width:10.8%;height:4%;border:2px solid #fff;border-bottom:0;border-radius:1px 1px 0 0;transform-origin:50% 100%;background:repeating-linear-gradient(90deg,rgb(255 255 255 / .35) 0 1px,transparent 1px 4px),repeating-linear-gradient(0deg,rgb(255 255 255 / .3) 0 1px,transparent 1px 4px);box-shadow:0 0 4px rgb(255 255 255 / .4)}
 .goal.g1{top:-3.5%;transform:translateY(0) rotateX(-70deg)}.goal.g2{bottom:-1.5%;height:4%;border-top:0;border-bottom:1.5px solid #f4f4f4;transform:rotateX(70deg)}
-.fig{all:unset;position:absolute;width:15.5%;max-width:66px;transform:translate(-50%,-50%) rotateX(-16deg);transform-origin:50% 100%;cursor:pointer;display:block}
+.fig{all:unset;position:absolute;width:14.5%;max-width:66px;transform:translate(-50%,-50%) rotateX(-16deg);transform-origin:50% 100%;cursor:pointer;display:block}
 .fig-in{position:relative;display:flex;flex-direction:column;align-items:center}
 .fig .head{width:86%;aspect-ratio:1;border-radius:50%;overflow:hidden;border:2.5px solid #fff;display:grid;place-items:center;position:relative;z-index:1;box-shadow:0 2px 5px rgb(0 0 0 / .5)}
 .fig .fno{position:relative;z-index:2;margin-top:-7px;min-width:16px;text-align:center;border-radius:8px;padding:0 4px;font-size:10px;line-height:14px;font-weight:800;border:1.5px solid #fff;box-shadow:0 1px 2px rgb(0 0 0 / .4)}
@@ -280,6 +280,19 @@ button.pl{cursor:pointer}button.pl:hover{background:var(--chip)}
 .chips{gap:4px}.chip{flex:1 1 auto;min-width:0;justify-content:center;gap:3px;padding:5px 4px;font-size:clamp(11px,3.4vw,14px)}
 .md-tabs{gap:0;padding:0 4px}.md-tab{flex:1 1 0;min-width:0;padding:10px 2px 9px;font-size:clamp(11px,3.4vw,15px);text-align:center;overflow:hidden;text-overflow:ellipsis}
 html,body{overflow-x:hidden}
+
+/* Compact match header so the line-up gets the screen */
+.md-head{padding:8px 12px 0;gap:6px}
+.md-top{font-size:12px}.md-top b{font-size:13px}.md-top .fav{padding:2px 9px;font-size:12px}.md-x{width:28px!important;height:28px!important;font-size:18px!important}
+.md-score{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:6px}
+.md-team{display:flex;align-items:center;gap:5px;justify-content:flex-end;font-size:14px;line-height:1.15}
+.md-team.aw{flex-direction:row-reverse;justify-content:flex-end}
+.md-team img,.md-team .crest{width:26px;height:26px;flex:0 0 26px}
+.md-team span.n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;overflow-wrap:normal}
+.md-team .fav.star{padding:0 5px;font-size:13px;line-height:20px;border-radius:999px;flex:0 0 auto}
+.md-res{font-size:26px!important;line-height:1!important;min-width:64px}.md-res small{font-size:11px!important;margin-top:2px}
+.md-head .tv .ch{font-size:12px;padding:2px 8px}.md-head .tv{gap:4px}
+.md-tab{padding:7px 2px 6px}
 </style>
 
 <header class="top">
@@ -817,11 +830,11 @@ function mdShell(m,body){
   const tv=m.channels.length?m.channels.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?" <small>usually</small>":""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
   const tabs=[["summary","Summary"],["lineups","Line-ups"],["stats","Stats"],["table","Table"],["news","News"]];
   return `<div class="md-head">
-    <div class="md-top"><b>${esc(m.league)}</b><span style="display:flex;gap:8px;align-items:center"><button class="fav ${isTop(m.id)?"on":""}" data-top-md="${esc(m.id)}">${isTop(m.id)?"✓ In top matches":"+ Top matches"}</button><button class="md-x" id="mdClose" aria-label="Close">×</button></span></div>
+    <div class="md-top"><b>${esc(m.league)}</b><span style="display:flex;gap:8px;align-items:center"><button class="fav ${isTop(m.id)?"on":""}" data-top-md="${esc(m.id)}">${isTop(m.id)?"✓ Top":"+ Top"}</button><button class="md-x" id="mdClose" aria-label="Close">×</button></span></div>
     <div class="md-score">
-      <div class="md-team">${crest(m.hb,m.home)}<span class="n">${esc(m.home)}</span><button class="fav ${favHas("teams",m.home)?"on":""}" data-fav-team="${esc(m.home)}" aria-label="Follow ${esc(m.home)}">${favHas("teams",m.home)?"★ Following":"☆ Follow"}</button></div>
+      <div class="md-team">${crest(m.hb,m.home)}<span class="n">${esc(m.home)}</span><button class="fav star ${favHas("teams",m.home)?"on":""}" data-fav-team="${esc(m.home)}" aria-label="Follow ${esc(m.home)}">${favHas("teams",m.home)?"★":"☆"}</button></div>
       <div class="md-res ${m.st==="live"?"live":""}">${has?`${esc(m.hs)} – ${esc(m.as)}`:"vs"}<small>${esc(status)}</small></div>
-      <div class="md-team">${crest(m.ab,m.away)}<span class="n">${esc(m.away)}</span><button class="fav ${favHas("teams",m.away)?"on":""}" data-fav-team="${esc(m.away)}" aria-label="Follow ${esc(m.away)}">${favHas("teams",m.away)?"★ Following":"☆ Follow"}</button></div>
+      <div class="md-team aw">${crest(m.ab,m.away)}<span class="n">${esc(m.away)}</span><button class="fav star ${favHas("teams",m.away)?"on":""}" data-fav-team="${esc(m.away)}" aria-label="Follow ${esc(m.away)}">${favHas("teams",m.away)?"★":"☆"}</button></div>
     </div>
     <div class="tv" style="justify-content:center;margin:0">${tv}</div>
     <div class="md-tabs" role="tablist">${tabs.map(([k,l])=>`<button class="md-tab" role="tab" data-tab="${k}" aria-selected="${md.tab===k}">${l}</button>`).join("")}</div>
@@ -857,7 +870,7 @@ function placeTeam(players,formation,home){
     const ord=[...players].sort((a,b)=>(a.place||99)-(b.place||99)); let i=0; sizes.forEach((n,ri)=>{rows[ri+1]=ord.slice(i,i+n).map((p,c)=>({p,c:c+1}));i+=n}); }
   const keys=Object.keys(rows).map(Number).sort((a,b)=>a-b), R=keys.length||1, out=[];
   keys.forEach((r,ri)=>{const list=rows[r],n=list.length;list.forEach((o,ci)=>{
-    const x=(ci+1)/(n+1)*100, depth=R>1?ri/(R-1):0, y=home?91-depth*38:6+depth*38;
+    const x=(ci+1)/(n+1)*100, d=R>2?(ri-1)/(R-2):1, y=ri===0?(home?94:4):(home?85-d*30:15+d*28); // keeper by the goal, outfield rows spread over the rest of the half
     out.push({p:o.p,x:home?100-x:x,y});});});
   return out;
 }
