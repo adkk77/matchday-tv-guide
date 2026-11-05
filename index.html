@@ -230,7 +230,7 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .outs{margin:6px 10px 0;padding-top:6px;border-top:1px solid rgb(255 255 255 / .12)}
 .outs .bsec2{color:#9cc2aa;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin-bottom:4px}
 .outs-g{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.outs .bench .card{width:8px!important;height:11px!important;flex:0 0 8px}.outs .bench{font-size:11px}.outs .bnm small{font-size:9.5px}
-.pitch{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:68/138;transform:rotateX(16deg);transform-origin:50% 100%;margin-top:-6%;
+.pitch{position:relative;width:100%;max-width:440px;margin:0 auto;aspect-ratio:68/158;transform:rotateX(16deg);transform-origin:50% 100%;margin-top:-6%;
   background:radial-gradient(70% 40% at 30% 20%,rgb(255 255 255 / .10),transparent 70%),radial-gradient(70% 40% at 70% 80%,rgb(255 255 255 / .08),transparent 70%),radial-gradient(120% 90% at 50% 50%,transparent 55%,rgb(0 0 0 / .28)),repeating-linear-gradient(180deg,#3a9a52 0 5.4%,#2f8645 5.4% 10.8%);
   border-radius:3px;box-shadow:0 0 0 6px #2b7a40,0 0 0 7px rgb(0 0 0 / .3),0 30px 40px -20px rgb(0 0 0 / .7)}
 .pitch:before{content:"";position:absolute;inset:0;opacity:.35;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 .3 0 0 0 0 0 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
@@ -882,8 +882,8 @@ function placeTeam(players,formation,home){
     const ord=[...players].sort((a,b)=>(a.place||99)-(b.place||99)); let i=0; sizes.forEach((n,ri)=>{rows[ri+1]=ord.slice(i,i+n).map((p,c)=>({p,c:c+1}));i+=n}); }
   const keys=Object.keys(rows).map(Number).sort((a,b)=>a-b), R=keys.length||1, out=[];
   keys.forEach((r,ri)=>{const list=rows[r],n=list.length;list.forEach((o,ci)=>{
-    const x=(ci+1)/(n+1)*100, d=R>2?(ri-1)/(R-2):1, y=ri===0?(home?93:6):(home?85-d*30:15+d*28); // keeper by the goal, outfield rows spread over the rest of the half
-    out.push({p:o.p,x:home?100-x:x,y});});});
+    const x=(ci+1)/(n+1)*100, d=R>2?(ri-1)/(R-2):1, y=ri===0?(home?95:5):(home?86-d*31:14+d*30); // keeper by the goal, outfield rows spread over the rest of the half
+    out.push({p:o.p,x:home?100-x:x,y,ri,R});});});
   return out;
 }
 function figure(o,team,home,gk){
@@ -920,7 +920,10 @@ function outHtml(h,a){
 function pitchHtml(teams){
   if(!teams||teams.length<2) return "";
   const [h,a]=teams; const figs=[];
-  [[h,true],[a,false]].forEach(([t,home])=>{ if(!t.xi||!t.xi.length) return; placeTeam(t.xi,t.formation,home).forEach(o=>figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK"))) });
+  // Every row of both teams gets the same spacing from goal line to goal line, so a 5-row team is as roomy as a 4-row one
+  const placed=[[h,true],[a,false]].map(([t,home])=>[t,home,t.xi&&t.xi.length?placeTeam(t.xi,t.formation,home):[]]);
+  const rowsOf=l=>l.length?l[0].R:0, total=rowsOf(placed[0][2])+rowsOf(placed[1][2]), gap=total>1?90/(total-1):0;
+  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(total>1&&list.length) o.y=home?95-o.ri*gap:5+o.ri*gap; figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
   if(!figs.length) return "";
   const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:""}<b>${esc(t.formation||"")}</b><small>${esc(t.name)}</small></span>`;
   return `<div class="pitch-wrap">
