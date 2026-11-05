@@ -273,7 +273,6 @@ button.pl{cursor:pointer}button.pl:hover{background:var(--chip)}
       <label class="day pick" title="Pick any date"><b>📅</b><small>Pick</small><input type="date" id="datePick" aria-label="Pick a date"></label>
     </div>
     <div class="row filters">
-      <select id="country" aria-label="TV country"><option value="">All countries</option></select>
       <div class="qwrap"><input type="search" id="q" placeholder="Search country, competition, team or player" aria-label="Search" autocomplete="off"><div class="sugg" id="sugg" hidden></div></div>
     </div>
     <div class="scroller chips">
@@ -360,7 +359,7 @@ const store = { get(k,d){try{const v=localStorage.getItem("mtg:"+k);return v==nu
 const state = {
   sport: store.get("sport","Soccer"),
   date: ymd(new Date()),
-  country: store.get("country",""),
+  country: "",
   q:"", liveOnly:false, tvOnly:false, favOnly:false, hidden:new Set(store.get("hiddenComps",[])), expanded:new Set(store.get("expanded",[])), fav:Object.assign({teams:[],matches:[],players:[],top:[]},store.get("fav",{})),
   key: store.get("key",""), rules: store.get("rules",DEFAULT_RULES), afKey: store.get("afKey",""), afLeft:null, afError:"",
   matches:[], source:"", updated:null, error:""
@@ -621,7 +620,7 @@ async function load(){
 function buildCountries(){
   const set=new Set(); state.matches.forEach(m=>m.channels.forEach(c=>c.country&&set.add(c.country)));
   if(state.country) set.add(state.country);
-  const sel=$("country"); sel.innerHTML=`<option value="">All countries</option>`+[...set].sort().map(c=>`<option>${esc(c)}</option>`).join("");
+  const sel=$("country"); if(!sel) return; sel.innerHTML=`<option value="">All countries</option>`+[...set].sort().map(c=>`<option>${esc(c)}</option>`).join("");
   sel.value=state.country;
 }
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1008,9 +1007,24 @@ document.addEventListener("click",e=>{
   if(e.target.id==="keyBtn"){ $("apiKey").value=state.key; $("afKey").value=state.afKey; $("rulesBox").value=state.rules; $("keyDlg").showModal(); }
 });
 $("datePick").addEventListener("change",e=>{if(e.target.value){state.date=e.target.value;load()}});
-$("country").addEventListener("change",e=>{state.country=e.target.value;store.set("country",state.country);render()});
-$("q").addEventListener("input",e=>{state.q=e.target.value;render();suggest()});
-$("q").addEventListener("focus",suggest);
+$("country")&&$("country").addEventListener("change",e=>{state.country=e.target.value;store.set("country",state.country);render()});
+$("q").addEventListener("input",e=>{state.q=e.target.value;render();suggest();clearTimeout(pTimer);const v=e.target.value.trim();if(v.length>=3)pTimer=setTimeout(()=>findPlayers(v),700)});
+$("q").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();const v=e.target.value.trim();if(v.length>=3){clearTimeout(pTimer);findPlayers(v)}e.target.blur()}});
+let pTimer, pSeq=0;
+const fold=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+/* Player search: API-Football searches last names only, so TheSportsDB (first, last or full names) fills the gap */
+async function findPlayers(q){
+  const seq=++pSeq, box=$("sugg"), slot=()=>box.querySelector("#psr");
+  if(!slot()) return; slot().innerHTML=`<p class="md-note" style="padding:6px 12px">Searching players…</p>`; box.hidden=false;
+  const af=state.afKey?afGet(`players/profiles?search=${encodeURIComponent(fold(q))}`,7*24*3600e3).catch(()=>[]):Promise.resolve([]);
+  const db=getJSON(`https://www.thesportsdb.com/api/v1/json/${encodeURIComponent(state.key||"123")}/searchplayers.php?p=${encodeURIComponent(q)}`).then(j=>j.player||[]).catch(()=>[]);
+  const [a,b]=await Promise.all([af,db]); if(seq!==pSeq||!slot()) return;
+  const seen=new Set(), items=[];
+  (a||[]).slice(0,10).forEach(x=>{const p=x.player;seen.add(fold(p.name));items.push(`<button data-pid="${p.id}">${photo(p.id)} ${esc(p.name)}<small>${esc(p.nationality||"")}${p.age?" · "+p.age:""}</small></button>`)});
+  (b||[]).filter(p=>/soccer/i.test(p.strSport||"")&&!seen.has(fold(p.strPlayer))).slice(0,10).forEach(p=>items.push(`<button data-pname="${esc(p.strPlayer)}">${p.strCutout||p.strThumb?`<img class="ph" src="${esc((p.strCutout||p.strThumb)+"/tiny")}" alt="" onerror="this.remove()">`:""} ${esc(p.strPlayer)}<small>${esc([p.strTeam,p.strNationality].filter(t=>t&&!/^_/.test(t)).join(" · "))}</small></button>`));
+  slot().innerHTML=items.length?`<h5>Players</h5>${items.join("")}`:`<p class="md-note" style="padding:6px 12px">No players found for “${esc(q)}”.</p>`;
+}
+$("q").addEventListener("focus",()=>{suggest();const v=$("q").value.trim();if(v.length>=3)findPlayers(v)});
 document.addEventListener("click",e=>{ if(!e.target.closest(".qwrap")) $("sugg").hidden=true });
 function suggest(){
   const q=$("q").value.trim().toLowerCase(), box=$("sugg"); if(q.length<2){box.hidden=true;return}
@@ -1024,13 +1038,20 @@ function suggest(){
     +sec("Competitions",comps.map(m=>`<button data-sq="${esc(m.league)}">${flagFor(m)} ${esc(m.league)}</button>`))
     +sec("Teams",teams.map(t=>`<button data-sq="${esc(t)}">${esc(t)}<small>${favHas("teams",t)?"★ following":""}</small></button>`))
     +sec("Players",[...players.map(p=>`<button data-pid="${esc(p.id)}">${photo(p.id)} ${esc(p.name)}<small>★ ${esc(p.team||"")}</small></button>`),
-      state.afKey&&q.length>=3?`<button data-psearch="${esc(q)}">🔎 Find players named “${esc(q)}”<small>uses 1 request</small></button>`:""].filter(Boolean));
+].filter(Boolean))+(q.length>=3?`<div id="psr"><p class="md-note" style="padding:6px 12px">Searching players…</p></div>`:"");
   box.hidden=!box.innerHTML;
 }
 $("sugg").addEventListener("click",async e=>{
   const b=e.target.closest("button"); if(!b) return;
   if(b.dataset.sq!=null){ $("q").value=b.dataset.sq; state.q=b.dataset.sq; $("sugg").hidden=true; render(); return }
   if(b.dataset.pid){ $("sugg").hidden=true; openPlayerAlone(b.dataset.pid); return }
+  if(b.dataset.pname){ const full=b.dataset.pname, parts=fold(full).split(/\s+/), lastN=parts[parts.length-1];
+    if(!state.afKey){ b.querySelector("small").textContent="Add your API-Football key under Data source to open profiles"; return }
+    b.querySelector("small").textContent="Opening…";
+    try{ const r=await afGet(`players/profiles?search=${encodeURIComponent(lastN)}`,7*24*3600e3);
+      const hit=(r||[]).find(x=>fold(x.player.firstname+" "+x.player.lastname+" "+x.player.name).includes(parts[0]))||(r||[])[0];
+      if(hit){ $("sugg").hidden=true; openPlayerAlone(hit.player.id) } else b.querySelector("small").textContent="No profile found";
+    }catch(err){ b.querySelector("small").textContent="Couldn't open: "+(err.message||err) } return }
   if(b.dataset.psearch){ b.textContent="Searching…";
     try{ const r=await afGet(`players/profiles?search=${encodeURIComponent(b.dataset.psearch)}`,7*24*3600e3);
       $("sugg").innerHTML=`<h5>Players</h5>`+((r||[]).slice(0,15).map(x=>`<button data-pid="${x.player.id}">${photo(x.player.id)} ${esc(x.player.name)}<small>${esc(x.player.nationality||"")}${x.player.age?" · "+x.player.age:""}</small></button>`).join("")||`<p class="md-note" style="padding:6px 12px">No players found.</p>`);
