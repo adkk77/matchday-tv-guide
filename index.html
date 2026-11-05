@@ -293,6 +293,7 @@ html,body{overflow-x:hidden}
 .md-res{font-size:26px!important;line-height:1!important;min-width:64px}.md-res small{font-size:11px!important;margin-top:2px}
 .md-head .tv .ch{font-size:12px;padding:2px 8px}.md-head .tv{gap:4px}
 .md-tab{padding:7px 2px 6px}
+.md-tabs{margin-left:-12px!important;margin-right:-12px!important}
 
 /* Bigger pitch: edge to edge, formation tags in the corners by each keeper */
 .pitch-wrap{padding:8px 0 8px}
@@ -326,7 +327,7 @@ html,body{overflow-x:hidden}
 .fig .head.nohead i{font-family:var(--body);font-size:15px!important;font-weight:700;color:#fff;text-shadow:none}
 .fig .head img{background:#cfd8d3!important}
 .fig .shadow{display:none}
-.fig .nm2{background:none!important;color:#fff!important;font-size:10.5px!important;font-weight:700;padding:0!important;margin-top:4px!important;max-width:165%!important;text-shadow:0 1px 2px rgb(0 0 0 / .7);display:block!important;text-align:center}
+.fig .nm2{background:none!important;color:#fff!important;font-size:10.5px!important;font-weight:700;padding:0!important;margin-top:4px!important;max-width:122%!important;text-shadow:0 1px 2px rgb(0 0 0 / .7);display:block!important;text-align:center}
 .fig .nm2 em{font-style:normal;color:#9fb3a7;font-weight:600;margin-right:3px}
 .fig .fmeta{margin-top:2px!important}
 .fig .gl{left:4%!important;top:-4%!important;font-size:12px!important}.fig .rc{left:10%!important;top:30%!important}
@@ -372,6 +373,7 @@ html,body{overflow-x:hidden}
 .pitch>svg g{stroke-width:.6px!important}
 .bench-btn{all:unset;box-sizing:border-box;display:flex;justify-content:center;gap:6px;align-items:center;width:calc(100% + 32px);margin:0 -16px;padding:11px 12px;background:#14201a;color:#e8f3ec;font-weight:700;font-size:14px;cursor:pointer;border-top:1px solid rgb(255 255 255 / .08)}
 .bench-btn span{color:var(--pitch)}
+.pitch-wrap{overflow:hidden!important;max-width:calc(100% + 32px)}#matchDlg,.md-body{overflow-x:hidden!important;overscroll-behavior:contain}#matchDlg{touch-action:pan-y}.pitch-wrap,.pitch3d,.pitch{touch-action:pan-y}
 .fig .nm2 .rt.mini{position:static!important;display:inline-block;font-size:9.5px!important;line-height:13px!important;padding:0 3px!important;border-radius:4px;vertical-align:1px;text-shadow:none;margin-left:2px}
 .bench-btn:focus-visible{outline:2px solid var(--pitch);outline-offset:-2px}
 </style>
@@ -955,7 +957,7 @@ function placeTeam(players,formation,home){
     out.push({p:o.p,x:home?100-x:x,y,ri,R});});});
   return out;
 }
-const shortName=n=>{n=String(n||"").trim();const w=n.split(/\s+/);return n.length>13&&w.length>1&&!/\./.test(w[0])?w[0][0]+". "+w.slice(1).join(" "):n};
+const shortName=n=>{n=String(n||"").trim();const w=n.split(/\s+/);return n.length>9&&w.length>1&&!/\./.test(w[0])?w[0][0]+". "+w[w.length-1]:n};
 function figure(o,team,home,gk){
   const p=o.p, col=(gk?team.gkColors:team.colors)||{}, prim="#"+(col.primary||(home?"e0393e":"1f6fd1")).replace("#",""), num="#"+(col.number||"ffffff").replace("#",""), bord="#"+(col.border||col.primary||"222").replace("#","");
   const lum=h=>{h=h.replace("#","");if(h.length<6)return .5;const v=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255);return .3*v[0]+.59*v[1]+.11*v[2]};
