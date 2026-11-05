@@ -149,7 +149,7 @@ dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border
 .btn.primary{background:var(--pitch);border-color:var(--pitch);color:#fff}
 @media (max-width:520px){h1{font-size:24px}.match{grid-template-columns:52px minmax(0,1fr);gap:4px 10px}.when{font-size:18px}}
 /* Compact two-line rows */
-.match{grid-template-columns:50px minmax(0,1fr) 58px minmax(0,1fr);gap:5px 8px;padding:9px 12px;align-items:center}
+.match{grid-template-columns:50px minmax(0,1fr) 58px minmax(0,1fr) 26px;gap:5px 8px;padding:9px 12px;align-items:center}
 .match .when{grid-row:auto;font-size:16px;align-content:center}
 .match .when .t{font-family:var(--display);font-size:16px}
 .match .pill{font-size:12px;padding:1px 5px}
@@ -162,11 +162,11 @@ dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border
 .match .sc{font-family:var(--display);font-weight:700;font-size:19px;text-align:center;font-variant-numeric:tabular-nums;min-width:0;display:flex;justify-content:center;gap:5px}
 .match .sc i{font-style:normal;color:var(--muted);font-weight:500}
 .match.live .sc{color:var(--live)}
-.tv.sm{grid-column:2/-1;margin:0;order:0;gap:4px;justify-content:center}
+.tv.sm{grid-column:2/-2;margin:0;order:0;gap:4px;justify-content:center}
 .tv.sm .ch{font-size:12px;padding:2px 7px;border-radius:5px;gap:4px}
 .tv.sm .ch svg{width:12px!important;height:12px!important}
 .tv.sm .ch.none{font-size:11.5px;padding:2px 0}
-@media (max-width:520px){.match{grid-template-columns:44px minmax(0,1fr) 50px minmax(0,1fr);gap:4px 6px;padding:8px 10px}.hn,.an{font-size:13.5px}.tv.sm{grid-column:1/-1}}
+@media (max-width:520px){.match{grid-template-columns:42px minmax(0,1fr) 46px minmax(0,1fr) 24px;gap:4px 6px;padding:8px 10px}.hn,.an{font-size:13.5px}.tv.sm{grid-column:1/-1}.tick{width:24px;height:24px}}
 .comp-h{all:unset;box-sizing:border-box;width:100%;display:flex;justify-content:space-between;gap:8px;cursor:pointer}
 .comp-h:focus-visible{outline:2px solid var(--pitch)}
 .comp h2 .lv{color:var(--live);font-weight:600}
@@ -189,6 +189,10 @@ img.flag{box-shadow:0 0 0 1px var(--line)}
 .sugg img{width:24px;height:24px;border-radius:50%;object-fit:cover}
 .sugg small{color:var(--muted);margin-left:auto;font-size:12px}
 .qwrap{position:relative;flex:1 1 160px;min-width:0;display:flex}.qwrap input{flex:1;min-width:0}
+.tick{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-weight:700;font-size:15px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.tick.on{background:var(--pitch);border-color:var(--pitch);color:#fff}
+.top-sec{border-color:var(--pitch)}.top-sec h2 .flag{color:var(--pitch);font-size:18px}
+.match .dtag{display:block;font-family:var(--body);font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase}
 /* Match centre */
 .md-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--line);margin:4px -16px -12px;padding:0 12px}
 .md-tab{border:0;background:none;padding:10px 10px 9px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
@@ -303,7 +307,7 @@ const state = {
   sport: store.get("sport","Soccer"),
   date: ymd(new Date()),
   country: store.get("country",""),
-  q:"", liveOnly:false, tvOnly:false, favOnly:false, hidden:new Set(store.get("hiddenComps",[])), expanded:new Set(store.get("expanded",[])), fav:Object.assign({teams:[],matches:[],players:[]},store.get("fav",{})),
+  q:"", liveOnly:false, tvOnly:false, favOnly:false, hidden:new Set(store.get("hiddenComps",[])), expanded:new Set(store.get("expanded",[])), fav:Object.assign({teams:[],matches:[],players:[],top:[]},store.get("fav",{})),
   key: store.get("key",""), rules: store.get("rules",DEFAULT_RULES), afKey: store.get("afKey",""), afLeft:null, afError:"",
   matches:[], source:"", updated:null, error:""
 };
@@ -545,7 +549,7 @@ function applyTvGuide(list){
 }
 
 /* ---------- Load + render ---------- */
-let loadSeq=0, timer=null;
+let loadSeq=0, timer=null, pendingOpen=null;
 async function load(){
   const seq=++loadSeq;
   $("status").innerHTML=`<span class="src"><i></i>Loading…</span>`;
@@ -556,6 +560,7 @@ async function load(){
   await loadTvGuide(); if(seq!==loadSeq) return;
   Object.assign(state,{matches:applyRules(applyTvGuide(matches)),source,error,updated:new Date()});
   buildCountries(); render();
+  if(pendingOpen){ const id=pendingOpen; pendingOpen=null; if(state.matches.some(m=>m.id===id)) openMatch(id); }
   clearTimeout(timer);
   if(state.date===ymd(new Date())) timer=setTimeout(load,state.afKey&&state.sport==="Soccer"?AF_REFRESH_MS:REFRESH_MS);
 }
@@ -602,9 +607,9 @@ function render(){
   const nHT=list.filter(m=>m.st==="live"&&m.label==="HT").length, nPlay=nLive-nHT, nFT=list.filter(m=>m.st==="ft").length, nNS=list.filter(m=>m.st==="ns").length;
   $("summary").innerHTML=[[list.length,"matches"],[nTv,"on TV"],[nPlay,"playing","l"],[nHT,"half-time","h"],[nNS,"to come"],[nFT,"finished"]].filter(([n],i)=>i<2||n).map(([n,l,c])=>`<span class="${c||""}"><b>${n}</b>${l}</span>`).join('<i class="dot">·</i>');
 
+  let emptyHtml="";
   if(!list.length){
-    $("list").innerHTML=`<div class="empty"><b>No matches found</b>${state.liveOnly?"Nothing is live right now. Turn off “Live now” to see the full day.":state.country?"No listings for "+esc(state.country)+" on this day. Try All countries or another date.":"Try another date or sport."}</div>`;
-    return;
+    emptyHtml=`<div class="empty"><b>No matches found</b>${state.liveOnly?"Nothing is live right now. Turn off “Live now” to see the full day.":state.country?"No listings for "+esc(state.country)+" on this day. Try All countries or another date.":"Try another date or sport."}</div>`;
   }
   const groups=new Map(); for(const m of list){(groups.get(m.league)||groups.set(m.league,[]).get(m.league)).push(m)}
   const gs=[...groups].sort((a,b)=>(b[1].some(m=>m.st==="live"&&m.shown.length)-a[1].some(m=>m.st==="live"&&m.shown.length))||(b[1].some(m=>m.shown.length)-a[1].some(m=>m.shown.length)));
@@ -613,7 +618,13 @@ function render(){
   const favOpen=!state.expanded.has("!fav");
   const nFollow=state.fav.teams.length+state.fav.matches.length+state.fav.players.length;
   const favHtml=`<section class="comp fav-sec${favOpen?"":" collapsed"}"><h2><button class="comp-h" data-comp="!fav" aria-expanded="${favOpen}"><em><span class="flag">★</span>My favourites</em><span>${favs.filter(m=>m.st==="live").length?`<b class="lv">${favs.filter(m=>m.st==="live").length} live</b> · `:""}${favs.length} today <i class="chev">▾</i></span></button></h2>${favOpen?(favs.length?favs.map(row).join(""):`<p class="md-note" style="padding:10px 14px;margin:0">${nFollow?"None of your teams play again today.":"Open any match and tap ☆ Follow on a team or player to see their live and upcoming games here."}</p>`):""}</section>`;
-  $("list").innerHTML=favHtml+gs.map(([league,ms])=>{const open=searching||state.expanded.has(league);const nLive=ms.filter(m=>m.st==="live").length;
+  const topOpen=!state.expanded.has("!top");
+  const topRows=state.fav.top.map(t=>{const live=state.matches.find(m=>m.id===t.id);
+      if(live) return {...live,shown:live.channels};
+      const kick=new Date(t.kick); return {...t,kick,st:kick<new Date()?"ft":"ns",hs:null,as:null,shown:t.channels,channels:t.channels,snapshot:true};})
+    .filter(m=>m.st!=="ft"||m.kick>Date.now()-30*3600e3).sort((a,b)=>(a.st==="live"?0:1)-(b.st==="live"?0:1)||a.kick-b.kick);
+  const topHtml=`<section class="comp top-sec${topOpen?"":" collapsed"}"><h2><button class="comp-h" data-comp="!top" aria-expanded="${topOpen}"><em><span class="flag">✓</span>Top matches</em><span>${topRows.filter(m=>m.st==="live").length?`<b class="lv">${topRows.filter(m=>m.st==="live").length} live</b> · `:""}${topRows.length} picked <i class="chev">▾</i></span></button></h2>${topOpen?(topRows.length?topRows.map(m=>row(m,true)).join(""):`<p class="md-note" style="padding:10px 14px;margin:0">Tap + on any game, today or another day, to add it here.</p>`):""}</section>`;
+  $("list").innerHTML=favHtml+topHtml+emptyHtml+gs.map(([league,ms])=>{const open=searching||state.expanded.has(league);const nLive=ms.filter(m=>m.st==="live").length;
     return `<section class="comp${open?"":" collapsed"}"><h2><button class="comp-h" data-comp="${esc(league)}" aria-expanded="${open}"><em>${flagFor(ms[0])}${esc(league)}</em><span>${nLive?`<b class="lv">${nLive} live</b> · `:""}${ms.length} ${ms.length===1?"match":"matches"} <i class="chev">▾</i></span></button></h2>${open?ms.map(row).join(""):""}</section>`}).join("")
     +(nHidden?`<p class="md-note" style="text-align:center">${nHidden} match${nHidden===1?"":"es"} hidden by your competition choice. <button class="linkbtn" id="compBtn2">Change</button></p>`:"");
 }
@@ -627,18 +638,29 @@ function flagFor(m){
   return `<span class="flag">${e}</span>`;
 }
 function isFav(m){const f=state.fav;return f.matches.includes(m.id)||f.teams.some(t=>sameTeam(t,m.home)||sameTeam(t,m.away))}
+/* Top matches: games the user ticks to watch, on any day. A snapshot is kept so they show on other days too. */
+state.fav.top=(state.fav.top||[]).filter(t=>Date.parse(t.kick)>Date.now()-30*3600e3);
+const isTop=id=>state.fav.top.some(t=>t.id===id);
+function toggleTop(m){
+  const i=state.fav.top.findIndex(t=>t.id===m.id);
+  if(i>=0) state.fav.top.splice(i,1);
+  else state.fav.top.push({id:m.id,home:m.home,away:m.away,hb:m.hb,ab:m.ab,league:m.league,flag:m.flag||"",kick:m.kick.toISOString(),channels:m.channels.map(c=>({name:c.name,rule:!!c.rule}))});
+  store.set("fav",state.fav);
+}
 function toggleFav(kind,val){const a=state.fav[kind];const key=kind==="players"?val.id:val;const i=a.findIndex(x=>(kind==="players"?x.id:x)===key);if(i>=0)a.splice(i,1);else a.push(val);store.set("fav",state.fav)}
 const favHas=(kind,key)=>state.fav[kind].some(x=>(kind==="players"?x.id:x)===key||(kind==="teams"&&sameTeam(x,key)));
-function row(m){
+function row(m,withDay){
   const has=m.hs!=null&&m.hs!==""&&m.st!=="ns";
   const hw=has&&+m.hs>+m.as, aw=has&&+m.as>+m.hs;
-  const when=m.st==="live"?`<span class="pill live">${esc(m.label||"Live")}</span>`:m.st==="ft"?`<span class="pill ft">FT</span>`:m.st==="off"?`<span class="pill ft">${esc(m.label)}</span>`:`<span class="t">${fmtTime(m.kick)}</span>`;
+  const dayTag=withDay&&ymd(m.kick)!==ymd(new Date())?`<span class="day">${esc(dayLabel(ymd(m.kick)))}</span>`:"";
+  const when=dayTag+(m.st==="live"?`<span class="pill live">${esc(m.label||"Live")}</span>`:m.st==="ft"?`<span class="pill ft">FT</span>`:m.st==="off"?`<span class="pill ft">${esc(m.label)}</span>`:`<span class="t">${fmtTime(m.kick)}</span>`);
   const tv=m.shown.length?m.shown.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?` <small>usually</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
-  return `<article class="match ${m.st} tap" data-mid="${esc(m.id)}" tabindex="0" role="button" aria-label="Match details: ${esc(m.home)} v ${esc(m.away)}">
+  return `<article class="match ${m.st} tap" data-mid="${esc(m.id)}"${m.snapshot?` data-goto="${ymd(m.kick)}"`:""} tabindex="0" role="button" aria-label="Match details: ${esc(m.home)} v ${esc(m.away)}">
     <div class="when">${when}${isFav(m)?'<span class="star on">★</span>':""}</div>
     <div class="hn ${m.st==="ft"&&aw?"lose":""}"><span class="nm">${esc(m.home)}</span>${crest(m.hb,m.home)}</div>
     <div class="sc">${has?`${esc(m.hs)}<i>–</i>${esc(m.as)}`:`<i>v</i>`}</div>
     <div class="an ${m.st==="ft"&&hw?"lose":""}">${crest(m.ab,m.away)}<span class="nm">${esc(m.away)}</span></div>
+    <button class="tick ${isTop(m.id)?"on":""}" data-top="${esc(m.id)}" aria-label="${isTop(m.id)?"Remove from":"Add to"} top matches" title="Top matches">${isTop(m.id)?"✓":"+"}</button>
     <div class="tv sm">${tv}</div>
   </article>`;
 }
@@ -707,7 +729,7 @@ function mdShell(m,body){
   const tv=m.channels.length?m.channels.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?" <small>usually</small>":""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
   const tabs=[["summary","Summary"],["lineups","Line-ups"],["stats","Stats"],["table","Table"],["news","News"]];
   return `<div class="md-head">
-    <div class="md-top"><b>${esc(m.league)}</b><span style="display:flex;gap:8px;align-items:center"><button class="fav ${favHas("matches",m.id)?"on":""}" data-fav-match="${esc(m.id)}">${favHas("matches",m.id)?"★ Match saved":"☆ Save match"}</button><button class="md-x" id="mdClose" aria-label="Close">×</button></span></div>
+    <div class="md-top"><b>${esc(m.league)}</b><span style="display:flex;gap:8px;align-items:center"><button class="fav ${isTop(m.id)?"on":""}" data-top-md="${esc(m.id)}">${isTop(m.id)?"✓ In top matches":"+ Top matches"}</button><button class="md-x" id="mdClose" aria-label="Close">×</button></span></div>
     <div class="md-score">
       <div class="md-team">${crest(m.hb,m.home)}<span class="n">${esc(m.home)}</span><button class="fav ${favHas("teams",m.home)?"on":""}" data-fav-team="${esc(m.home)}" aria-label="Follow ${esc(m.home)}">${favHas("teams",m.home)?"★ Following":"☆ Follow"}</button></div>
       <div class="md-res ${m.st==="live"?"live":""}">${has?`${esc(m.hs)} – ${esc(m.as)}`:"vs"}<small>${esc(status)}</small></div>
@@ -865,7 +887,7 @@ $("matchBody").addEventListener("click",e=>{
   const p=e.target.closest("[data-player]"); if(p&&state.afKey){ openPlayer(p.dataset.player); return }
   if(e.target.closest("[data-back]")){ md.player=null; mdPaint(); return }
   const ft=e.target.closest("[data-fav-team]"); if(ft){ toggleFav("teams",ft.dataset.favTeam); mdPaint(); render(); return }
-  const fm=e.target.closest("[data-fav-match]"); if(fm){ toggleFav("matches",fm.dataset.favMatch); mdPaint(); render(); return }
+  const fm=e.target.closest("[data-top-md]"); if(fm){ toggleTop(md.m); mdPaint(); render(); return }
   const fp=e.target.closest("[data-fav-player]"); if(fp){ toggleFav("players",{id:fp.dataset.favPlayer,name:fp.dataset.pname,team:fp.dataset.pteam}); if(fp.dataset.pteam&&favHas("players",fp.dataset.favPlayer)&&!favHas("teams",fp.dataset.pteam)) toggleFav("teams",fp.dataset.pteam); mdPaint(); render(); }
 });
 $("matchDlg").addEventListener("close",()=>{clearInterval(mdTimer);mdId=null});
@@ -876,7 +898,8 @@ document.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.ta
 document.addEventListener("click",e=>{
   const s=e.target.closest("[data-sport]"); if(s){state.sport=s.dataset.sport;store.set("sport",state.sport);load();return}
   const d=e.target.closest("[data-date]"); if(d){state.date=d.dataset.date;load();return}
-  const mt=e.target.closest(".match.tap"); if(mt){openMatch(mt.dataset.mid);return}
+  const tk=e.target.closest("[data-top]"); if(tk){ const id=tk.dataset.top; const m=state.matches.find(x=>x.id===id); if(m) toggleTop(m); else { const i=state.fav.top.findIndex(t=>t.id===id); if(i>=0){state.fav.top.splice(i,1);store.set("fav",state.fav)} } render(); return }
+  const mt=e.target.closest(".match.tap"); if(mt){ if(mt.dataset.goto&&!state.matches.some(x=>x.id===mt.dataset.mid)){ state.date=mt.dataset.goto; pendingOpen=mt.dataset.mid; load(); return } openMatch(mt.dataset.mid);return}
   const ch=e.target.closest("[data-comp]"); if(ch){const l=ch.dataset.comp;if(state.expanded.has(l))state.expanded.delete(l);else state.expanded.add(l);store.set("expanded",[...state.expanded]);render();return}
   if(e.target.id==="compBtn"||e.target.id==="compBtn2"){openComps();return}
   if(e.target.id==="refresh") load();
@@ -930,7 +953,7 @@ $("keyDlg").addEventListener("close",()=>{ if($("keyDlg").returnValue==="save"){
 const b64e=str=>btoa(String.fromCharCode(...new TextEncoder().encode(str))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const b64d=str=>new TextDecoder().decode(Uint8Array.from(atob(str.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0)));
 // Query string (not #hash): iPhone home-screen icons keep ?s=… but drop the #part.
-const setupLink=()=>{const r=$("rulesBox").value; const d={a:$("afKey").value.trim(),t:$("apiKey").value.trim()}; if(r.trim()!==DEFAULT_RULES.trim()) d.r=r; if(state.fav.teams.length||state.fav.matches.length||state.fav.players.length) d.f=state.fav; if(state.hidden.size) d.h=[...state.hidden]; return location.origin+location.pathname+"?s="+b64e(JSON.stringify(d));};
+const setupLink=()=>{const r=$("rulesBox").value; const d={a:$("afKey").value.trim(),t:$("apiKey").value.trim()}; if(r.trim()!==DEFAULT_RULES.trim()) d.r=r; if(state.fav.teams.length||state.fav.matches.length||state.fav.players.length||state.fav.top.length) d.f=state.fav; if(state.hidden.size) d.h=[...state.hidden]; return location.origin+location.pathname+"?s="+b64e(JSON.stringify(d));};
 ["afKey","apiKey","rulesBox"].forEach(id=>$(id).addEventListener("input",()=>{$("setupLink").value=setupLink()}));
 document.addEventListener("click",e=>{
   if(e.target.id==="keyBtn") $("setupLink").value=setupLink();
