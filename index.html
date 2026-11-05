@@ -103,6 +103,40 @@ section.comp{display:grid;gap:0;background:var(--surface);border:1px solid var(-
 .empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:28px 16px;text-align:center;color:var(--muted)}
 .empty b{display:block;font-family:var(--display);font-size:22px;text-transform:uppercase;color:var(--ink);margin-bottom:4px}
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);max-width:min(460px,calc(100vw - 32px));padding:18px}
+.match.tap{cursor:pointer}.match.tap:hover{background-color:var(--chip)}
+#matchDlg{max-width:min(560px,calc(100vw - 16px));width:100%;padding:0;max-height:calc(100dvh - 24px)}
+.md-head{padding:16px 16px 12px;border-bottom:1px solid var(--line);display:grid;gap:10px;position:sticky;top:0;background:var(--surface);z-index:1}
+.md-top{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.md-top b{font-family:var(--display);text-transform:uppercase;letter-spacing:.05em;color:var(--ink);font-size:15px}
+.md-x{border:0;background:var(--chip);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:18px;line-height:1}
+.md-score{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;text-align:center}
+.md-team{display:grid;justify-items:center;gap:6px;font-weight:600;min-width:0}
+.md-team img,.md-team .crest{width:44px;height:44px;object-fit:contain}
+.md-team .crest{font-size:14px}
+.md-team span.n{overflow-wrap:anywhere}
+.md-res{font-family:var(--display);font-weight:700;font-size:40px;font-variant-numeric:tabular-nums;line-height:1}
+.md-res small{display:block;font-size:14px;margin-top:4px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.md-res.live{color:var(--live)}
+.md-body{padding:12px 16px 18px;display:grid;gap:18px}
+.md-sec h4{margin:0 0 8px;font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:14px;color:var(--muted)}
+.md-tabs{display:flex;gap:6px}
+.ev{display:grid;grid-template-columns:minmax(0,1fr) 46px minmax(0,1fr);gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.ev:first-of-type{border-top:0}
+.ev .min{text-align:center;font-family:var(--display);font-weight:600;font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ev .h{text-align:right}.ev .who{font-weight:600}.ev .sub{display:block;color:var(--muted);font-size:12.5px}
+.ev .ic{display:inline-block;margin:0 4px}
+.card{display:inline-block;width:10px;height:14px;border-radius:2px;vertical-align:-2px;background:#f2c200}.card.r{background:#d6312b}
+.stat{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:13.5px;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.stat .l{text-align:center;color:var(--muted);grid-column:1/-1;margin-bottom:-4px;font-size:12.5px}
+.stat .v{font-weight:700;text-align:center}
+.bar{display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--chip)}
+.bar i{background:var(--pitch)}.bar i+i{background:var(--muted);opacity:.55}
+.lu{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13.5px}
+.lu ol{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.lu li{display:flex;gap:6px}.lu li b{width:22px;color:var(--muted);font-variant-numeric:tabular-nums;font-weight:600}
+.lu .fm{color:var(--muted);font-size:12.5px;margin-bottom:4px}
+.md-note{color:var(--muted);font-size:13px}
+.md-head .tv{order:0}
 dialog::backdrop{background:rgb(0 0 0 / .45)}
 dialog h3{font-family:var(--display);text-transform:uppercase;font-size:22px;margin:0 0 8px}
 dialog p{margin:0 0 10px;color:var(--muted);font-size:14px}
@@ -137,6 +171,7 @@ dialog input{width:100%;border:1px solid var(--line);background:var(--bg);border
   <div id="list" style="display:grid;gap:18px"></div>
 </div></main>
 
+<dialog id="matchDlg" aria-label="Match details"><div id="matchBody"></div></dialog>
 <dialog id="keyDlg">
   <form method="dialog" id="keyForm">
     <h3>Data source</h3>
@@ -287,7 +322,7 @@ async function loadESPN(sport,date){
   const cfg=ESPN[sport]; if(!cfg) return [];
   const from=date.replace(/-/g,""), to=addDays(date,1).replace(/-/g,"");
   const res=await Promise.allSettled(Object.entries(cfg.leagues).map(([slug,name])=>
-    getJSON(`https://site.api.espn.com/apis/site/v2/sports/${cfg.path}/${slug}/scoreboard?dates=${from}-${to}&limit=200`).then(j=>({j,name}))));
+    getJSON(`https://site.api.espn.com/apis/site/v2/sports/${cfg.path}/${slug}/scoreboard?dates=${from}-${to}&limit=200`).then(j=>({j,name,slug}))));
   if(!res.some(r=>r.status==="fulfilled")) throw new Error("ESPN unreachable");
   const out=[];
   for(const r of res){ if(r.status!=="fulfilled") continue;
@@ -303,7 +338,7 @@ async function loadESPN(sport,date){
       const names=new Set(); for(const b of (c.broadcasts||[])) for(const n of (b.names||[])) names.add(n);
       out.push({id:"espn"+e.id,league:r.value.name,home:(H.team||{}).displayName||"",away:(A.team||{}).displayName||"",
         hb:(H.team||{}).logo||"",ab:(A.team||{}).logo||"",kick,hs:st==="ns"?null:H.score,as:st==="ns"?null:A.score,st,label,
-        channels:[...names].map(n=>({name:n,country:"USA"})),espn:true});
+        channels:[...names].map(n=>({name:n,country:"USA"})),espn:true,espnId:e.id,slug:r.value.slug,path:cfg.path});
     }
   }
   return out;
@@ -330,7 +365,7 @@ async function loadAF(date){
     else if(sh==="HT"){st="live";label="HT"}
     else if(/^(1H|2H|ET|BT|P|LIVE)$/.test(sh)){st="live";label=sh==="P"?"Pens":sh==="BT"?"Break":(el!=null?el+(ex?"+"+ex:"")+"'":"Live")}
     const lg=x.league||{}; const league=(lg.country&&lg.country!=="World"?lg.country+" · ":"")+(lg.name||"Other");
-    return {id:"af"+x.fixture.id,league,home:x.teams.home.name,away:x.teams.away.name,hb:x.teams.home.logo||"",ab:x.teams.away.logo||"",
+    return {id:"af"+x.fixture.id,afId:x.fixture.id,homeId:x.teams.home.id,league,home:x.teams.home.name,away:x.teams.away.name,hb:x.teams.home.logo||"",ab:x.teams.away.logo||"",
       kick:new Date(x.fixture.date),hs:st==="ns"?null:x.goals.home,as:st==="ns"?null:x.goals.away,st,label,channels:[]};
   });
   afCache.set(date,{at:Date.now(),list});
@@ -343,7 +378,7 @@ function mergeChannels(base,others,addMissing){
     if(!hit){ if(addMissing) out.push(m); continue }
     const seen=new Set(hit.channels.map(c=>c.name+"|"+c.country));
     for(const c of m.channels) if(!seen.has(c.name+"|"+c.country)){seen.add(c.name+"|"+c.country);hit.channels.push(c)}
-    hit.hb=hit.hb||m.hb; hit.ab=hit.ab||m.ab;
+    hit.hb=hit.hb||m.hb; hit.ab=hit.ab||m.ab; if(m.espnId&&!hit.espnId){hit.espnId=m.espnId;hit.slug=m.slug;hit.path=m.path}
   }
   return out;
 }
@@ -471,7 +506,7 @@ function row(m){
   const hw=has&&+m.hs>+m.as, aw=has&&+m.as>+m.hs;
   const pill=m.st==="live"?`<span class="pill live">${esc(m.label||"Live")}</span>`:m.st==="ft"?`<span class="pill ft">FT</span>`:m.st==="off"?`<span class="pill ft">${esc(m.label)}</span>`:`<span class="pill ns">Kick-off</span>`;
   const tv=m.shown.length?m.shown.map(c=>`<span class="ch${c.rule?" rule":""}" title="${c.rule?"From your channel rules (usual rights holder)":"Listed by the data feed"}">${TV_ICON}${esc(c.name)}${c.rule?` <small>usually</small>`:c.country&&!state.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
-  return `<article class="match ${m.st}">
+  return `<article class="match ${m.st} tap" data-mid="${esc(m.id)}" tabindex="0" role="button" aria-label="Match details: ${esc(m.home)} v ${esc(m.away)}">
     <div class="when">${fmtTime(m.kick)}${pill}</div>
     <div class="teams">
       <div class="team ${m.st==="ft"&&aw?"lose":""}">${crest(m.hb,m.home)}<span class="nm">${esc(m.home)}</span><span class="sc">${has?esc(m.hs):""}</span></div>
@@ -480,10 +515,105 @@ function row(m){
     </div></article>`;
 }
 
+/* ---------- Match details (365-style): ESPN summary first (free), API-Football only if needed ---------- */
+let mdTimer=null, mdId=null; const afDetailCache=new Map();
+async function espnDetails(m){
+  const j=await getJSON(`https://site.api.espn.com/apis/site/v2/sports/${m.path||"soccer"}/${m.slug}/summary?event=${m.espnId}`);
+  const comp=((j.header||{}).competitions||[])[0]||{};
+  const homeId=String(((comp.competitors||[]).find(c=>c.homeAway==="home")||{}).id||"");
+  const events=(j.keyEvents||[]).filter(k=>k.type).map(k=>{
+    const t=(k.type.text||"").toLowerCase(), ps=(k.participants||[]).map(p=>(p.athlete||{}).displayName).filter(Boolean);
+    let kind="other",main=ps[0]||"",sub="";
+    if(/own goal/.test(t)){kind="goal";sub="Own goal"}
+    else if(/goal|penalty - scored/.test(t)||k.scoringPlay){kind="goal";sub=ps[1]?"Assist: "+ps[1]:(/penalty/.test(t)?"Penalty":"")}
+    else if(/penalty - missed|penalty - saved/.test(t)){kind="miss";sub="Penalty missed"}
+    else if(/red card/.test(t)){kind="red"}
+    else if(/yellow card/.test(t)){kind="yellow"}
+    else if(/substitution/.test(t)){kind="sub";main=ps[0]||"";sub=ps[1]?"Off: "+ps[1]:""}
+    else return null;
+    if(!main&&k.text) main=k.text;
+    return {min:(k.clock||{}).displayValue||"",home:String((k.team||{}).id||"")===homeId,kind,main,sub};
+  }).filter(Boolean);
+  const STAT=[["possessionPct","Possession","%"],["totalShots","Shots"],["shotsOnTarget","Shots on target"],["wonCorners","Corners"],["foulsCommitted","Fouls"],["yellowCards","Yellow cards"],["redCards","Red cards"],["offsides","Offsides"]];
+  const bt=((j.boxscore||{}).teams||[]); const hT=bt.find(t=>String((t.team||{}).id)===homeId)||bt[0], aT=bt.find(t=>t!==hT);
+  const sv=(t,n)=>{const x=((t||{}).statistics||[]).find(s=>s.name===n);return x?x.displayValue:null};
+  const stats=STAT.map(([n,l,u])=>({l,h:sv(hT,n),a:sv(aT,n),u:u||""})).filter(x=>x.h!=null&&x.a!=null);
+  const ros=(j.rosters||[]); const lu=["home","away"].map(side=>{const r=ros.find(x=>x.homeAway===side)||{};return {formation:r.formation||"",players:(r.roster||[]).filter(p=>p.starter).map(p=>({n:p.jersey||"",name:(p.athlete||{}).displayName||""}))}});
+  const tv=new Set(); for(const b of (comp.broadcasts||[])) { const n=(b.media||{}).shortName||(b.names||[])[0]; if(n) tv.add(n) }
+  return {events,stats,lineups:lu[0].players.length?lu:null,tv:[...tv],src:"ESPN"};
+}
+async function afDetails(m){
+  const c=afDetailCache.get(m.afId); if(c&&(m.st!=="live"||Date.now()-c.at<120000)) return c.d;
+  const h={headers:{"x-apisports-key":state.afKey}};
+  const [ev,stt]=await Promise.all([getJSON(`https://v3.football.api-sports.io/fixtures/events?fixture=${m.afId}`,h),getJSON(`https://v3.football.api-sports.io/fixtures/statistics?fixture=${m.afId}`,h).catch(()=>({response:[]}))]);
+  const events=(ev.response||[]).map(x=>{
+    const t=(x.type||"").toLowerCase(), d=(x.detail||"").toLowerCase(); let kind="other",main=(x.player||{}).name||"",sub="";
+    if(t==="goal"){ if(d.includes("missed")){kind="miss";sub="Penalty missed"} else {kind="goal";sub=d.includes("own")?"Own goal":(x.assist||{}).name?"Assist: "+x.assist.name:(d.includes("penalty")?"Penalty":"")} }
+    else if(t==="card"){kind=d.includes("red")?"red":"yellow"}
+    else if(t==="subst"){kind="sub";sub=(x.assist||{}).name?"↔ "+x.assist.name:""}
+    else return null;
+    const tm=x.time||{}; return {min:(tm.elapsed??"")+(tm.extra?"+"+tm.extra:"")+"'",home:(x.team||{}).id===m.homeId,kind,main,sub};
+  }).filter(Boolean);
+  const MAP=[["Ball Possession","Possession"],["Total Shots","Shots"],["Shots on Goal","Shots on target"],["Corner Kicks","Corners"],["Fouls","Fouls"],["Yellow Cards","Yellow cards"],["Red Cards","Red cards"],["Offsides","Offsides"]];
+  const R=stt.response||[]; const hT=R.find(t=>(t.team||{}).id===m.homeId)||R[0], aT=R.find(t=>t!==hT);
+  const sv=(t,n)=>{const x=((t||{}).statistics||[]).find(s=>s.type===n);return x&&x.value!=null?String(x.value):null};
+  const stats=MAP.map(([n,l])=>({l,h:sv(hT,n),a:sv(aT,n),u:""})).filter(x=>x.h!=null&&x.a!=null);
+  const d={events,stats,lineups:null,tv:[],src:"API-Football"}; afDetailCache.set(m.afId,{at:Date.now(),d}); return d;
+}
+function mdShell(m,body){
+  const has=m.hs!=null&&m.hs!==""&&m.st!=="ns";
+  const status=m.st==="live"?(m.label||"Live"):m.st==="ft"?"Full time":m.st==="off"?(m.label||"Off"):fmtTime(m.kick);
+  const tv=m.channels.length?m.channels.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?" <small>usually</small>":c.country?` <small>${esc(c.country)}</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
+  return `<div class="md-head">
+    <div class="md-top"><b>${esc(m.league)}</b><button class="md-x" id="mdClose" aria-label="Close">×</button></div>
+    <div class="md-score">
+      <div class="md-team">${crest(m.hb,m.home)}<span class="n">${esc(m.home)}</span></div>
+      <div class="md-res ${m.st==="live"?"live":""}">${has?`${esc(m.hs)} – ${esc(m.as)}`:"vs"}<small>${esc(status)}</small></div>
+      <div class="md-team">${crest(m.ab,m.away)}<span class="n">${esc(m.away)}</span></div>
+    </div>
+    <div class="tv" style="justify-content:center;margin:0">${tv}</div>
+  </div><div class="md-body">${body}</div>`;
+}
+function mdRender(m,d,err){
+  if(!d){ $("matchBody").innerHTML=mdShell(m, err?`<p class="md-note">${esc(err)}</p>`:`<p class="md-note">Loading match details…</p>`); return }
+  const ico=k=>k==="goal"?"⚽":k==="miss"?"✕":k==="red"?'<i class="card r"></i>':k==="yellow"?'<i class="card"></i>':k==="sub"?"⇄":"";
+  const evs=d.events.length?d.events.map(e=>{const cell=`<span class="who">${e.home?"":`<span class="ic">${ico(e.kind)}</span>`}${esc(e.main)}${e.home?`<span class="ic">${ico(e.kind)}</span>`:""}</span>${e.sub?`<span class="sub">${esc(e.sub)}</span>`:""}`;
+      return `<div class="ev"><div class="h">${e.home?cell:""}</div><div class="min">${esc(e.min)}</div><div>${e.home?"":cell}</div></div>`}).join("")
+    :`<p class="md-note">${m.st==="ns"?"The match hasn't started yet.":"No goals or cards reported yet."}</p>`;
+  const num=v=>parseFloat(String(v).replace("%",""))||0;
+  const sts=d.stats.length?d.stats.map(x=>{const h=num(x.h),a=num(x.a),t=h+a||1;return `<div class="stat"><div class="l">${esc(x.l)}</div><div class="v">${esc(x.h)}${x.u}</div><div class="bar"><i style="width:${h/t*100}%"></i><i style="width:${a/t*100}%"></i></div><div class="v">${esc(x.a)}${x.u}</div></div>`}).join(""):"";
+  const lus=d.lineups?`<div class="lu">${d.lineups.map(l=>`<div><div class="fm">${esc(l.formation)}</div><ol>${l.players.map(p=>`<li><b>${esc(p.n)}</b>${esc(p.name)}</li>`).join("")}</ol></div>`).join("")}</div>`:"";
+  $("matchBody").innerHTML=mdShell(m,`
+    <section class="md-sec"><h4>Goals, cards & subs</h4>${evs}</section>
+    ${sts?`<section class="md-sec"><h4>Match stats</h4>${sts}</section>`:""}
+    ${lus?`<section class="md-sec"><h4>Starting line-ups</h4>${lus}</section>`:""}
+    <p class="md-note">Details from ${esc(d.src)}${m.st==="live"?" · updates every minute while open":""}.</p>`);
+}
+async function openMatch(id){
+  const m=state.matches.find(x=>x.id===id); if(!m) return;
+  mdId=id; mdRender(m,null); if(!$("matchDlg").open) $("matchDlg").showModal();
+  const go=async()=>{
+    const cur=state.matches.find(x=>x.id===mdId)||m; let d=null, err="";
+    try{
+      if(cur.espnId&&cur.slug) d=await espnDetails(cur);
+      else if(cur.afId&&state.afKey) d=await afDetails(cur);
+      else err="Goal scorers and stats aren't available for this match from the free sources.";
+    }catch(e){ try{ if(cur.afId&&state.afKey) d=await afDetails(cur); else throw e }catch(e2){ err="Couldn't load match details. Check your connection and try again." } }
+    if(d&&d.tv.length){const seen=new Set(cur.channels.map(c=>c.name));d.tv.forEach(n=>{if(!seen.has(n))cur.channels.push({name:n,country:"USA"})})}
+    if(mdId===id) mdRender(cur,d,err);
+  };
+  await go(); clearInterval(mdTimer);
+  if(m.st==="live"&&m.espnId) mdTimer=setInterval(()=>{ if($("matchDlg").open) go(); else clearInterval(mdTimer) },60000);
+}
+$("matchDlg").addEventListener("close",()=>{clearInterval(mdTimer);mdId=null});
+$("matchDlg").addEventListener("click",e=>{ if(e.target.id==="mdClose"||e.target===$("matchDlg")) $("matchDlg").close() });
+document.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches(".match.tap")){e.preventDefault();openMatch(e.target.dataset.mid)} });
+
 /* ---------- Events ---------- */
 document.addEventListener("click",e=>{
   const s=e.target.closest("[data-sport]"); if(s){state.sport=s.dataset.sport;store.set("sport",state.sport);load();return}
   const d=e.target.closest("[data-date]"); if(d){state.date=d.dataset.date;load();return}
+  const mt=e.target.closest(".match.tap"); if(mt){openMatch(mt.dataset.mid);return}
   if(e.target.id==="refresh") load();
   if(e.target.id==="rulesReset") $("rulesBox").value=DEFAULT_RULES;
   if(e.target.id==="keyBtn"){ $("apiKey").value=state.key; $("afKey").value=state.afKey; $("rulesBox").value=state.rules; $("keyDlg").showModal(); }
