@@ -652,7 +652,7 @@ const favHas=(kind,key)=>state.fav[kind].some(x=>(kind==="players"?x.id:x)===key
 function row(m,withDay){
   const has=m.hs!=null&&m.hs!==""&&m.st!=="ns";
   const hw=has&&+m.hs>+m.as, aw=has&&+m.as>+m.hs;
-  const dayTag=withDay&&ymd(m.kick)!==ymd(new Date())?`<span class="day">${esc(dayLabel(ymd(m.kick)))}</span>`:"";
+  const dayTag=withDay&&ymd(m.kick)!==ymd(new Date())?`<span class="dtag">${esc(dayLabel(ymd(m.kick)))}</span>`:"";
   const when=dayTag+(m.st==="live"?`<span class="pill live">${esc(m.label||"Live")}</span>`:m.st==="ft"?`<span class="pill ft">FT</span>`:m.st==="off"?`<span class="pill ft">${esc(m.label)}</span>`:`<span class="t">${fmtTime(m.kick)}</span>`);
   const tv=m.shown.length?m.shown.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?` <small>usually</small>`:""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
   return `<article class="match ${m.st} tap" data-mid="${esc(m.id)}"${m.snapshot?` data-goto="${ymd(m.kick)}"`:""} tabindex="0" role="button" aria-label="Match details: ${esc(m.home)} v ${esc(m.away)}">
