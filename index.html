@@ -293,6 +293,18 @@ html,body{overflow-x:hidden}
 .md-res{font-size:26px!important;line-height:1!important;min-width:64px}.md-res small{font-size:11px!important;margin-top:2px}
 .md-head .tv .ch{font-size:12px;padding:2px 8px}.md-head .tv{gap:4px}
 .md-tab{padding:7px 2px 6px}
+
+/* Bigger pitch: edge to edge, formation tags in the corners by each keeper */
+.pitch-wrap{padding:8px 0 8px}
+.pitch3d{padding:0 6px}
+.pitch{max-width:none!important;margin-top:0!important}
+.fig{width:17.5%!important;max-width:86px!important}
+.fig .nm2{font-size:10px!important}
+.ftag{position:absolute;left:2.5%;z-index:3;display:grid;grid-template-columns:auto auto;align-items:center;column-gap:4px;background:rgb(8 20 12 / .72);color:#fff;border-radius:6px;padding:3px 7px;line-height:1.1;max-width:30%}
+.ftag.tl{top:1.2%}.ftag.bl{bottom:1.2%}
+.ftag img{width:18px;height:18px;object-fit:contain;grid-row:span 2}
+.ftag b{font-family:var(--display);font-size:16px;letter-spacing:.04em}
+.ftag small{font-size:9.5px;color:#cfe6d6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 
 <header class="top">
@@ -870,7 +882,7 @@ function placeTeam(players,formation,home){
     const ord=[...players].sort((a,b)=>(a.place||99)-(b.place||99)); let i=0; sizes.forEach((n,ri)=>{rows[ri+1]=ord.slice(i,i+n).map((p,c)=>({p,c:c+1}));i+=n}); }
   const keys=Object.keys(rows).map(Number).sort((a,b)=>a-b), R=keys.length||1, out=[];
   keys.forEach((r,ri)=>{const list=rows[r],n=list.length;list.forEach((o,ci)=>{
-    const x=(ci+1)/(n+1)*100, d=R>2?(ri-1)/(R-2):1, y=ri===0?(home?94:4):(home?85-d*30:15+d*28); // keeper by the goal, outfield rows spread over the rest of the half
+    const x=(ci+1)/(n+1)*100, d=R>2?(ri-1)/(R-2):1, y=ri===0?(home?93:6):(home?85-d*30:15+d*28); // keeper by the goal, outfield rows spread over the rest of the half
     out.push({p:o.p,x:home?100-x:x,y});});});
   return out;
 }
@@ -910,9 +922,10 @@ function pitchHtml(teams){
   const [h,a]=teams; const figs=[];
   [[h,true],[a,false]].forEach(([t,home])=>{ if(!t.xi||!t.xi.length) return; placeTeam(t.xi,t.formation,home).forEach(o=>figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK"))) });
   if(!figs.length) return "";
-  return `<div class="pitch-wrap"><div class="pitch-lbl top">${esc(a.name)} <small>${esc(a.formation||"")}</small></div><div class="boards">KY Matchday · KY Matchday</div>
-    <div class="pitch-grid">${""}<div class="pitch3d"><div class="pitch">${PITCH_SVG}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
-    <div class="pitch-lbl">${esc(h.name)} <small>${esc(h.formation||"")}</small></div>${outHtml(h,a)}</div>`;
+  const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:""}<b>${esc(t.formation||"")}</b><small>${esc(t.name)}</small></span>`;
+  return `<div class="pitch-wrap">
+    <div class="pitch-grid"><div class="pitch3d"><div class="pitch">${PITCH_SVG}${tag(a,"tl")}${tag(h,"bl")}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
+    ${outHtml(h,a)}</div>`;
 }
 function vLineups(){
   const {m}=md, L=md.lineups;
@@ -920,13 +933,11 @@ function vLineups(){
   if(L&&L.af&&L.teams.length){
     const plRow=p=>{const r=p.rating?(+p.rating).toFixed(1):"";const extra=(p.goals?" ⚽".repeat(Math.min(p.goals,3)):"")+(p.assists?" 🅰".repeat(Math.min(p.assists,3)):"")+(p.yellow?' <i class="card"></i>':"")+(p.red?' <i class="card r"></i>':"");
       return `<button class="pl" data-player="${p.id}" type="button">${photo(p.id)}<span class="no">${esc(p.number??"")}</span><span class="pn">${esc(p.name)}${extra}<small>${esc(p.pos||"")}</small></span><span class="rt ${rtClass(r)}">${r||"–"}</span></button>`};
-    return pitchHtml(L.teams)+L.teams.map(t=>`<section class="md-sec"><div class="lu-team">${t.logo?`<img src="${esc(t.logo)}" alt="">`:""}${esc(t.name)} <small>${esc(t.formation||"")}${t.coach?" · Coach: "+esc(t.coach):""}</small></div>
-      ${t.xi.map(plRow).join("")}${t.subs.length?`<h4 style="margin-top:12px">Substitutes</h4>${t.subs.map(plRow).join("")}`:""}</section>`).join("")+
+    return pitchHtml(L.teams)+
       `<p class="md-note">Ratings from API-Football${m.st==="live"?", refreshed every minute while this tab is open (cached for 2 minutes to save requests)":""}. Tap a player for their profile.</p>`;
   }
   const el=md.d&&md.d.lineups;
-  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos})),subs:l.subs||[]})))+`<div class="lu">${el.map(l=>`<div><div class="fm">${esc(l.formation)}</div><ol>${l.players.map(p=>`<li><b>${esc(p.n)}</b>${esc(p.name)}</li>`).join("")}</ol></div>`).join("")}</div>
-    <p class="md-note">${state.afKey?"":"Add your API-Football key under Data source to see player photos, live ratings and profiles."}</p>`;
+  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos})),subs:l.subs||[]})))+`<p class="md-note">${state.afKey?"":"Add your API-Football key under Data source to see player photos, live ratings and profiles."}</p>`;
   return `<p class="md-note">${m.st==="ns"?"Line-ups are usually announced about an hour before kick-off.":"No line-ups available for this match."}${state.afKey?"":" Add your API-Football key under Data source for line-ups with photos and ratings."}</p>`;
 }
 function vTable(){
