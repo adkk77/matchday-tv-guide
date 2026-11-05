@@ -6,10 +6,13 @@ jobs:
     steps:
       - run: |
           for u in \
-            "https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=2026-11-05&s=Soccer" \
-            "https://www.thesportsdb.com/api/v1/json/123/eventstv.php?d=2026-11-05&s=Soccer" \
-            "https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=2026-11-06&s=Soccer" \
-            "https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p=arda" \
             "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261105-20261106&limit=200" \
-            "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.europa/scoreboard?dates=20261104-20261106&limit=200" ; do
-            echo "== $u"; curl -s -o /tmp/o -w "HTTP %{http_code} %{size_download}B %{time_total}s\n" -H "Origin: https://adkk77.github.io" -D /tmp/h "$u"; grep -i 'access-control' /tmp/h; head -c 400 /tmp/o; echo; done
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261105-20261106" \
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261105" \
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20261105&limit=200" \
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard" \
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.europa/scoreboard?dates=20261105" \
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.europa/summary?event=0" \
+            "https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=2026-11-05&s=Soccer" \
+            "https://www.thesportsdb.com/api/v1/json/abc123/eventsday.php?d=2026-11-05&s=Soccer" ; do
+            echo "== $u"; curl -s --compressed -o /tmp/o -w "HTTP %{http_code} %{size_download}B\n" "$u"; head -c 300 /tmp/o; echo; done
