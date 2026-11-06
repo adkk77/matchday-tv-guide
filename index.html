@@ -414,6 +414,14 @@ html,body{overflow-x:hidden}
 .pitch-wrap{overflow:hidden!important;max-width:calc(100% + 32px)}#matchDlg,.md-body{overflow-x:hidden!important;overscroll-behavior:contain}#matchDlg{touch-action:pan-y}.pitch-wrap,.pitch3d,.pitch{touch-action:pan-y}
 .fig .nm2 .rt.mini{position:static!important;display:inline-block;font-size:9.5px!important;line-height:13px!important;padding:0 3px!important;border-radius:4px;vertical-align:1px;text-shadow:none;margin-left:2px}
 .bench-btn:focus-visible{outline:2px solid var(--pitch);outline-offset:-2px}
+
+/* event icons beside the photo: goals/assists left, cards right, fantasy badge top-right */
+.fig .head{position:relative}
+.fig .evl{position:absolute;right:calc(50% + 32% - 2px);top:0;display:flex;flex-direction:column;align-items:flex-end;gap:1px;z-index:3;pointer-events:none}
+.fig .evl i{font-style:normal;display:block;font-size:10px;line-height:12px}
+.fig .evl .ev-a{width:12px;height:12px;border-radius:50%;background:#fff;color:#0b5;font:800 8px/12px system-ui;text-align:center;box-shadow:0 1px 2px rgb(0 0 0 / .5)}
+.fig .rc{left:calc(50% + 32% + 1px)!important;top:28%!important;right:auto!important}
+.fig .fpl{left:calc(50% + 32% - 6px)!important;right:auto!important;top:-8%!important}
 </style>
 
 <header class="top">
@@ -1005,7 +1013,7 @@ function figure(o,team,home,gk){
   const head=p.id?`<img src="https://media.api-sports.io/football/players/${p.id}.png" alt="" loading="lazy" onerror="this.remove()">`:"";
   return `<button class="fig" style="left:${o.x}%;top:${o.y}%;--s:${(1+.2*(1-o.y/100)).toFixed(3)}" ${p.id?`data-player="${p.id}"`:""} data-pn="${esc(p.name)}" type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
     <span class="fig-in"><span class="head${head?"":" nohead"}">${head||`<i>${esc(p.number??p.n??(last||"?").slice(0,1))}</i>`}</span>
-    ${fplMatch(md.m)?(f=>f?`<span class="fpl" title="Fantasy points">${f.gw}</span>`:"")(fplFind(p.name,team.name)):""}${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
+    ${fplMatch(md.m)?(f=>f?`<span class="fpl" title="Fantasy points">${f.gw}</span>`:"")(fplFind(p.name,team.name)):""}${p.goals||p.assists?`<span class="evl">${'<i class="ev-g">⚽</i>'.repeat(Math.min(+p.goals||0,3))}${'<i class="ev-a" title="Assist">A</i>'.repeat(Math.min(+p.assists||0,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
     <span class="nm2">${head?`<em>${esc(p.number??p.n??"")}</em>`:""}${esc(shortName(p.name))}${r?` <span class="rt mini ${rtClass(r)}">${r}</span>`:""}</span></span><span class="shadow"></span></button>`;
 }
 function outIcon(o){const r=(o.reason||"")+" "+(o.type||"");return /red card|suspen/i.test(r)?'<i class="card r"></i>':/yellow/i.test(r)?'<i class="card"></i>':/questionable|doubt/i.test(r)?'<b class="q">?</b>':'<b class="inj">+</b>'}
