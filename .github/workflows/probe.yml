@@ -1,0 +1,9 @@
+name: probe
+on: push
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for t in Sydney_FC Sydney Central_Coast_Mariners Central_Coast; do curl -s "https://www.thesportsdb.com/api/v1/json/123/searchteams.php?t=$t" | python3 -c "import json,sys;d=json.load(sys.stdin);print('$t',[(x['idTeam'],x['strTeam'],x['strSport']) for x in (d.get('teams') or [])][:4])"; done
+          for id in 134473 134474; do curl -s "https://www.thesportsdb.com/api/v1/json/123/lookup_all_players.php?id=$id" | python3 -c "import json,sys;d=json.load(sys.stdin);print('$id',len(d.get('player') or []),[(p['strPlayer'],p['strPosition']) for p in (d.get('player') or []) if not p['strPosition'] or 'anag' in p['strPosition'] or 'oach' in p['strPosition']])"; done
