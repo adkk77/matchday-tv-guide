@@ -494,6 +494,28 @@ dialog::backdrop{background:rgb(0 0 0 / .15)!important}
 .tlink{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:inherit;min-width:0}.tlink .n{text-decoration:underline;text-decoration-color:rgba(127,127,127,.4);text-underline-offset:3px}
 .md-team.aw .tlink{flex-direction:row-reverse}
 .t-head{position:static!important}
+
+/* Team page v2: coloured hero, tabs */
+.t-hero{position:relative;text-align:center;padding:calc(env(safe-area-inset-top) + 10px) 16px 18px;background:linear-gradient(180deg,var(--tc) 0%,color-mix(in srgb,var(--tc) 45%,var(--bg)) 55%,var(--bg) 100%);color:#fff}
+.t-bar{display:flex;justify-content:space-between;align-items:center}
+.t-bar .md-back{background:rgba(0,0,0,.25);color:#fff}
+.t-star{border:0;background:rgba(0,0,0,.25);color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer}.t-star.on{color:#f5a623}
+.t-crest{width:96px;height:96px;margin:4px auto 10px;border-radius:50%;background:#14181c;display:grid;place-items:center;box-shadow:0 0 0 3px color-mix(in srgb,var(--tc) 70%,#ff6b2c),0 8px 24px rgba(0,0,0,.35)}
+.t-crest img{width:62%;height:62%;object-fit:contain}.t-crest b{font-size:36px}
+.t-hero h2{margin:0;font-size:28px;font-weight:800;letter-spacing:.01em;text-shadow:0 1px 3px rgba(0,0,0,.4)}.t-hero p{margin:4px 0 0;opacity:.9;font-size:14px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.t-tabs{display:flex;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:2}
+.t-tabs button{all:unset;flex:1 1 0;text-align:center;padding:12px 2px 10px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent}.t-tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+.t-next{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:14px 8px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.tn-t{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}.tn-t img,.tn-t .pc-dot{width:44px;height:44px;object-fit:contain}.tn-t b{font-size:13px;text-align:center}
+.tn-m{text-align:center}.tn-m b{display:block;font-size:26px;font-weight:800}.tn-m small{color:var(--muted);font-size:12px;letter-spacing:.05em}
+.fds{display:flex;gap:4px}.fd{width:9px;height:9px;border-radius:50%;background:#8a8f98}.fd.W{background:#3ddc84}.fd.L{background:#e5484d}
+.t-l5{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:12px}
+.t-l5h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.t-l5h b{font-size:16px}
+.t-form .tf{width:26px;height:26px;line-height:26px;border-radius:50%;font-size:11px}.tf.W{background:#3ddc84;color:#06331b}
+.t-l5g{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.l5{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:10px;background:var(--bg);min-width:0}.l5 b{font-size:13px}.l5 img{width:22px;height:22px;object-fit:contain}.l5 small{font-size:10px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.l5 .tf{width:18px;height:18px;line-height:18px;font-size:10px}
+.t-tbl tr.me td{background:color-mix(in srgb,var(--pitch) 18%,transparent);font-weight:700}
+.tn-t .pc-dot{display:grid;place-items:center;font-size:18px;line-height:1;border-radius:50%}
 </style>
 
 <header class="top">
@@ -1286,7 +1308,7 @@ const FPL_LBL={minutes:"Minutes played",goals_scored:"Goals",assists:"Assists",c
 let tm=null;
 function moveCard(to){ const c=$("pcard"); if(c.parentElement!==to) to.appendChild(c) }
 async function openTeam(t){
-  const key=t.name+"|"+Date.now(); tm={key,t,loading:true}; teamPaint();
+  const key=t.name+"|"+Date.now(); tm={key,t,loading:true,tab:"overview"}; teamPaint();
   if(!$("teamDlg").open){ $("teamDlg").showModal(); pageOpened() } moveCard($("teamDlg")); $("teamDlg").scrollTop=0;
   const E=`https://site.api.espn.com/apis/site/v2/sports/soccer/${t.slug}/teams/${t.espnId}`;
   const K=encodeURIComponent(state.key&&!tsdbBadKey?state.key:"123"), TS=`https://www.thesportsdb.com/api/v1/json/${K}`;
@@ -1347,22 +1369,42 @@ function teamPaint(){
   const squad=[0,1,2,3,4].map(gi=>{const ps=sq.filter(p=>grp(p)===gi).sort((a,b)=>(+a.num||99)-(+b.num||99)); return ps.length?`<h5 class="sq-h">${GN[gi]}</h5><div class="sq">${ps.map(p=>`<button class="sq-p" type="button" data-sqp="${esc(p.id||"")}" data-sqn="${esc(p.name)}"><span class="sq-ph">${p.photo?`<img src="${esc(p.photo)}" alt="" loading="lazy" onerror="this.remove()">`:""}<i>${esc(p.num)}</i></span><span class="sq-n">${esc(p.name)}</span><small>${[p.age?p.age+" yrs":"",p.nat].filter(Boolean).map(esc).join(" · ")}</small></button>`).join("")}</div>`:""}).join("");
   const links=[["Website",D.strWebsite],["Facebook",D.strFacebook],["X / Twitter",D.strTwitter],["Instagram",D.strInstagram],["YouTube",D.strYoutube]].filter(x=>x[1]).map(([l,u])=>`<a class="tl-a" href="${esc(/^https?:/.test(u)?u:"https://"+u)}" target="_blank" rel="noopener">${l}</a>`).join("");
   const sec=(h,x)=>x?`<section class="md-sec t-sec"><h4>${h}</h4>${x}</section>`:"";
-  b.innerHTML=`<div class="md-head t-head"><div class="md-top"><button class="md-back" data-tclose aria-label="Back">‹</button><b>${esc(t.league||"")}</b><button class="fav ${favHas("teams",t.name)?"on":""}" data-tfav>${favHas("teams",t.name)?"★ Following":"☆ Follow"}</button></div>
-    <div class="t-id">${logo?`<img src="${esc(logo)}" alt="">`:""}<div><h2>${esc(name)}</h2>${I.standingSummary?`<p>${esc(I.standingSummary)}</p>`:""}${rec?`<p class="t-rec">Record ${esc(rec.summary)}</p>`:""}${form?`<div class="t-form">${form}</div>`:""}</div></div></div>
-    <div class="md-body t-body">
-    ${tm.loading?`<p class="md-note">Loading team…</p>`:""}
-    ${info.length?`<div class="pc-info t-info">${info.map(x=>`<div><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join("")}</div>`:""}
-    ${sec("Next matches",next.length?`<ul class="pc-list">${next.map(row).join("")}</ul>`:"")}
-    ${sec("Recent results",past.length?`<ul class="pc-list">${past.map(row).join("")}</ul>`:"")}
-    ${sec(`Squad${sq.length?` · ${sq.length} players`:""}`,squad)}
-    ${D.strEquipment?sec("Kit",`<img class="t-kit" src="${esc(D.strEquipment)}" alt="Team kit" loading="lazy">`):""}
-    ${sec("About",D.strDescriptionEN?`<p class="pc-about t-about">${esc(D.strDescriptionEN.split(/\n/).filter(Boolean).slice(0,3).join("\n\n"))}</p>`:"")}
-    ${links?sec("Links",`<div class="t-links">${links}</div>`):""}
-    ${!tm.loading&&!info.length&&!G.length&&!sq.length?`<p class="md-note">No more details found for this team.</p>`:""}
-    </div>`;
+  const col="#"+String(I.color||"2f7d4a").replace("#","");
+  const nx=next[0], crestI=(u,n)=>u?`<img src="${esc(u)}" alt="" onerror="this.remove()">`:`<i class="pc-dot">${esc((n||"?").slice(0,1))}</i>`;
+  const dots=past.slice(0,5).reverse().map(g=>`<i class="fd ${res(g)}"></i>`).join("");
+  const nextCard=nx?`<div class="t-next"><div class="tn-t">${crestI(nx.home?logo:nx.oppLogo,nx.home?name:nx.opp)}<b>${esc(nx.home?name:nx.opp)}</b>${nx.home?`<span class="fds">${dots}</span>`:""}</div>
+      <div class="tn-m"><b>${nx.live?`<span class="tsc live">${esc(nx.my)}–${esc(nx.their)}</span>`:fmtTime(nx.date)}</b><small>${nx.date.toLocaleDateString(undefined,{day:"numeric",month:"short"}).toUpperCase()}</small></div>
+      <div class="tn-t">${crestI(nx.home?nx.oppLogo:logo,nx.home?nx.opp:name)}<b>${esc(nx.home?nx.opp:name)}</b>${nx.home?"":`<span class="fds">${dots}</span>`}</div></div>`:"";
+  const last5=past.slice(0,5).map(g=>`<div class="l5"><span class="tf ${res(g)}">${res(g)}</span><b>${esc(g.my)}–${esc(g.their)}</b>${g.oppLogo?`<img src="${esc(g.oppLogo)}" alt="" onerror="this.remove()">`:""}<small>${esc(g.opp)}</small></div>`).join("");
+  const T=md.table&&md.m&&md.table.for===md.m.id?md.table:null;
+  const tableHtml=T&&T.rows.length?`<table class="tbl t-tbl"><thead><tr><th>#</th><th style="text-align:left">Team</th><th>P</th><th>GD</th><th>Pts</th></tr></thead><tbody>${T.rows.map(r=>`<tr class="${sameTeam(r.team,t.name)?"me":""}"><td>${esc(r.rank)}</td><td class="tm">${r.logo?`<img src="${esc(r.logo)}" alt="">`:""}<span>${esc(r.team)}</span></td><td>${esc(r.p)}</td><td>${esc(r.gd)}</td><td><b>${esc(r.pts)}</b></td></tr>`).join("")}</tbody></table>`:"";
+  const N=tm.news||[];
+  const newsHtml=N.map(a=>`<a class="news" href="${esc(a.link)}" target="_blank" rel="noopener">${a.img?`<img src="${esc(a.img)}" alt="" loading="lazy">`:""}<span><b>${esc(a.title)}</b><small>${esc(a.desc||"")}</small><small>${esc(a.when)}</small></span></a>`).join("");
+  const tab=tm.tab||"overview", TABS=[["overview","Overview"],["matches","Matches"],["table","Table"],["news","News"],["squad","Squad"]];
+  let body="";
+  if(tab==="overview") body=`${sec("Next match",nextCard)}${sec("Form",last5?`<div class="t-l5"><div class="t-l5h"><b>Last ${Math.min(5,past.length)}</b><span class="t-form">${past.slice(0,5).reverse().map(g=>`<span class="tf ${res(g)}">${res(g)}</span>`).join("")}</span></div><div class="t-l5g">${last5}</div></div>`:"")}
+      ${info.length?sec("Club",`<div class="pc-info t-info">${info.map(x=>`<div><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join("")}</div>`):""}
+      ${sec("About",D.strDescriptionEN?`<p class="pc-about t-about">${esc(D.strDescriptionEN.split(/\n/).filter(Boolean).slice(0,2).join("\n\n"))}</p>`:"")}${D.strEquipment?sec("Kit",`<img class="t-kit" src="${esc(D.strEquipment)}" alt="Team kit" loading="lazy">`):""}${links?sec("Links",`<div class="t-links">${links}</div>`):""}`;
+  else if(tab==="matches") body=`${sec("Next matches",next.length?`<ul class="pc-list">${next.map(row).join("")}</ul>`:"")}${sec("Recent results",past.length?`<ul class="pc-list">${past.map(row).join("")}</ul>`:"")}${!G.length&&!tm.loading?`<p class="md-note">No matches found for this team.</p>`:""}`;
+  else if(tab==="table") body=tableHtml||`<p class="md-note">${md.loading==="table"?"Loading table…":"No league table for this team's competition."}</p>`;
+  else if(tab==="news") body=newsHtml||`<p class="md-note">${tm.newsLoading?"Loading news…":"No news found for this team."}</p>`;
+  else body=squad||`<p class="md-note">${tm.loading?"Loading squad…":"No squad list available."}</p>`;
+  b.innerHTML=`<div class="t-hero" style="--tc:${esc(col)}"><div class="t-bar"><button class="md-back" data-tclose aria-label="Back">‹</button><button class="t-star ${favHas("teams",t.name)?"on":""}" data-tfav aria-label="Follow">${favHas("teams",t.name)?"★":"☆"}</button></div>
+    <div class="t-crest">${logo?`<img src="${esc(logo)}" alt="">`:`<b>${esc(name.slice(0,1))}</b>`}</div><h2>${esc(name)}</h2><p>${esc(D.strCountry||(A&&A.team.country)||t.league||"")}${I.standingSummary?` · ${esc(I.standingSummary)}`:""}</p></div>
+    <nav class="t-tabs">${TABS.map(([k,l])=>`<button class="${tab===k?"on":""}" data-ttab="${k}">${l}</button>`).join("")}</nav>
+    <div class="md-body t-body">${tm.loading&&tab!=="table"&&tab!=="news"?`<p class="md-note">Loading team…</p>`:""}${body}</div>`;
+}
+async function teamNews(){
+  if(!tm||tm.news) return; const t=tm.t, m=md.m||{}; tm.newsLoading=true; teamPaint();
+  let items=[];
+  try{ if(t.slug){ const j=await getJSON(`https://site.api.espn.com/apis/site/v2/sports/soccer/${t.slug}/news?limit=50${t.espnId?`&team=${t.espnId}`:""}`);
+    const all=(j.articles||[]).map(a=>({title:a.headline,desc:a.description,link:((a.links||{}).web||{}).href||"",img:((a.images||[])[0]||{}).url||"",when:a.published?new Date(a.published).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):""})).filter(a=>a.link);
+    const rel=all.filter(a=>titleHas(a.title+" "+(a.desc||""),t.name)); items=(rel.length?rel:all).slice(0,15); } }catch{}
+  if(tm){ tm.news=items; tm.newsLoading=false; teamPaint() }
 }
 $("teamBody").addEventListener("click",e=>{
   if(e.target.closest("[data-tclose]")) return closePage();
+  const tt=e.target.closest("[data-ttab]"); if(tt&&tm){ tm.tab=tt.dataset.ttab; teamPaint(); $("teamDlg").scrollTop=0; if(tm.tab==="news") teamNews(); if(tm.tab==="table"&&md.m){ loadTable().then(()=>{ if(tm&&tm.tab==="table") teamPaint() }) } return }
   if(e.target.closest("[data-tfav]")&&tm){ toggleFav("teams",tm.t.name); teamPaint(); render(); if($("matchDlg").open) mdPaint(); return }
   const sp=e.target.closest("[data-sqp]"); if(sp) openCard(sp.dataset.sqp||"",sp.dataset.sqn,tm&&tm.t.name);
 });
