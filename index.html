@@ -459,6 +459,16 @@ dialog::backdrop{background:rgb(0 0 0 / .15)!important}
 .ftag-coach{max-width:84px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ftag-coach small{display:block!important;margin:0!important}
 .ftag.tl{top:.8%!important;left:1.2%!important}.ftag.br{bottom:.8%!important;right:1.2%!important}
+
+/* Match details = full page (slides in), popups (player/coach) stay see-through */
+#matchDlg{width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;margin:0!important;inset:0!important;border:0!important;border-radius:0!important;background:var(--bg)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important}
+#matchDlg[open]{animation:pgin .22s ease-out!important}
+@keyframes pgin{from{transform:translateX(30%);opacity:.4}}
+#matchDlg::backdrop{background:var(--bg)!important}
+#matchDlg .md-head{padding-top:calc(env(safe-area-inset-top) + 8px)!important;background:var(--bg)!important}
+.md-top{justify-content:flex-start!important}.md-top b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.md-back{border:0;background:var(--chip,rgba(127,127,127,.15));color:var(--ink);width:34px;height:34px;border-radius:50%;font-size:26px;line-height:30px;cursor:pointer;flex:none;padding:0 2px 0 0}
+#matchDlg .md-body,#matchDlg #matchBody{max-width:640px;margin:0 auto}
 </style>
 
 <header class="top">
@@ -997,7 +1007,7 @@ function mdShell(m,body){
   const tv=m.channels.length?m.channels.map(c=>`<span class="ch${c.rule?" rule":""}">${TV_ICON}${esc(c.name)}${c.rule?" <small>usually</small>":""}</span>`).join(""):`<span class="ch none">No channel found</span>`;
   const tabs=[["summary","Summary"],["lineups","Line-ups"],["stats","Stats"],["table","Table"],["news","News"]];
   return `<div class="md-head">
-    <div class="md-top"><b>${esc(m.league)}</b><span style="display:flex;gap:8px;align-items:center"><button class="fav ${isTop(m.id)?"on":""}" data-top-md="${esc(m.id)}">${isTop(m.id)?"✓ Top":"+ Top"}</button><button class="md-x" id="mdClose" aria-label="Close">×</button></span></div>
+    <div class="md-top"><button class="md-back" id="mdClose" aria-label="Back to matches">‹</button><b>${esc(m.league)}</b><button class="fav ${isTop(m.id)?"on":""}" data-top-md="${esc(m.id)}">${isTop(m.id)?"✓ Top":"+ Top"}</button></div>
     <div class="md-score">
       <div class="md-team">${crest(m.hb,m.home)}<span class="n">${esc(m.home)}</span><button class="fav star ${favHas("teams",m.home)?"on":""}" data-fav-team="${esc(m.home)}" aria-label="Follow ${esc(m.home)}">${favHas("teams",m.home)?"★":"☆"}</button></div>
       <div class="md-res ${m.st==="live"?"live":""}">${has?`${esc(m.hs)} – ${esc(m.as)}`:"vs"}<small>${esc(status)}</small></div>
@@ -1131,14 +1141,14 @@ function vPlayer(){
 function fitPitch(){
   const dlg=$("matchDlg"), pitch=dlg.querySelector(".pitch"); if(!pitch) return;
   const head=dlg.querySelector(".md-head"), btn=dlg.querySelector(".bench-btn"), wrap=dlg.querySelector(".pitch-wrap");
-  const avail=dlg.clientHeight-(head?head.offsetHeight:0)-(btn?btn.offsetHeight:0)-24-14-32;
+  const avail=dlg.clientHeight-(head?head.offsetHeight:0)-(btn?btn.offsetHeight:0)-24-14-18;
   const w=wrap.clientWidth, h=Math.max(w*1.25,Math.min(w*125/68*1.15,avail));
   pitch.style.width=w+"px"; pitch.style.height=h+"px"; pitch.style.aspectRatio="auto"; pitch.style.marginLeft=pitch.style.marginRight="0";
 }
 addEventListener("resize",()=>{ if($("matchDlg").open) fitPitch() });
 function mdPaint(){
   const m=md.m;
-  if(!m){ if(md.player) $("matchBody").innerHTML=`<div class="md-body"><div style="display:flex;justify-content:flex-end"><button class="md-x" id="mdClose" aria-label="Close">×</button></div>${vPlayer()}</div>`; return }
+  if(!m){ if(md.player) $("matchBody").innerHTML=`<div class="md-body"><div style="display:flex"><button class="md-back" id="mdClose" aria-label="Back">‹</button></div>${vPlayer()}</div>`; return }
   const body=md.player?vPlayer():md.tab==="lineups"?vLineups():md.tab==="stats"?vStats():md.tab==="table"?vTable():md.tab==="news"?vNews():vSummary();
   const sc=$("matchDlg").scrollTop; $("matchBody").innerHTML=mdShell(m,body); $("matchDlg").scrollTop=sc; fitPitch();
 }
@@ -1450,12 +1460,12 @@ $("pcard").addEventListener("click",e=>{
   if(e.target.id==="pcard"||e.target.closest("[data-pc-close]")) return closeCard();
   if(e.target.closest("[data-pc-fav]")&&pc){ const fid=pc.id||pc.name; const team=pc.hit.team&&pc.hit.team.name||""; toggleFav("players",{id:fid,name:pc.name,team}); pcPaint(); render(); }
 });
-$("matchDlg").addEventListener("close",closeCard);
+$("matchDlg").addEventListener("close",()=>{ closeCard(); if(history.state&&history.state.md) history.back() });
 $("matchDlg").addEventListener("cancel",e=>{ if(pc){ e.preventDefault(); closeCard() } });
 async function openMatch(id){
   const m=state.matches.find(x=>x.id===id); if(!m) return;
   mdId=id; Object.assign(md,{m,d:null,err:"",tab:"summary",lineups:null,table:null,news:null,player:null,loading:""});
-  mdPaint(); if(!$("matchDlg").open) $("matchDlg").showModal(); $("matchDlg").scrollTop=0;
+  mdPaint(); if(!$("matchDlg").open){ $("matchDlg").showModal(); pageOpened() } $("matchDlg").scrollTop=0;
   const go=async()=>{
     const cur=state.matches.find(x=>x.id===mdId)||m; let d=null, err="";
     try{
@@ -1481,7 +1491,11 @@ $("matchBody").addEventListener("click",e=>{
   const fp=e.target.closest("[data-fav-player]"); if(fp){ toggleFav("players",{id:fp.dataset.favPlayer,name:fp.dataset.pname,team:fp.dataset.pteam}); if(fp.dataset.pteam&&favHas("players",fp.dataset.favPlayer)&&!favHas("teams",fp.dataset.pteam)) toggleFav("teams",fp.dataset.pteam); mdPaint(); render(); }
 });
 $("matchDlg").addEventListener("close",()=>{clearInterval(mdTimer);mdId=null});
-$("matchDlg").addEventListener("click",e=>{ if(e.target.id==="mdClose"||e.target===$("matchDlg")) $("matchDlg").close() });
+$("matchDlg").addEventListener("click",e=>{ if(e.target.closest("#mdClose")) closePage() });
+/* The match screen is a full page: the phone's back swipe / back button returns to the list */
+function pageOpened(){ try{ history.pushState({md:1},"") }catch{} }
+function closePage(){ if(history.state&&history.state.md) history.back(); else $("matchDlg").close() }
+addEventListener("popstate",()=>{ if(pc){ closeCard(); if($("matchDlg").open) pageOpened(); return } if($("matchDlg").open) $("matchDlg").close() });
 document.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches(".match.tap")){e.preventDefault();openMatch(e.target.dataset.mid)} });
 
 /* ---------- Events ---------- */
@@ -1552,7 +1566,7 @@ $("sugg").addEventListener("click",async e=>{
       $("sugg").innerHTML=`<h5>Players</h5>`+((r||[]).slice(0,15).map(x=>`<button data-pid="${x.player.id}">${photo(x.player.id)} ${esc(x.player.name)}<small>${esc(x.player.nationality||"")}${x.player.age?" · "+x.player.age:""}</small></button>`).join("")||`<p class="md-note" style="padding:6px 12px">No players found.</p>`);
     }catch(err){ b.textContent="Couldn't search: "+(err.message||err) } }
 });
-function openPlayerAlone(id){ Object.assign(md,{m:null,tab:"summary",player:null}); if(!$("matchDlg").open) $("matchDlg").showModal(); openPlayer(id); }
+function openPlayerAlone(id){ Object.assign(md,{m:null,tab:"summary",player:null}); if(!$("matchDlg").open){ $("matchDlg").showModal(); pageOpened() } openPlayer(id); }
 $("allBtn").addEventListener("click",()=>{state.liveOnly=state.tvOnly=state.favOnly=false;["liveOnly","tvOnly","favOnly"].forEach(id=>$(id).checked=false);render()});
 $("liveOnly").addEventListener("change",e=>{state.liveOnly=e.target.checked;render()});
 $("tvOnly").addEventListener("change",e=>{state.tvOnly=e.target.checked;render()});
