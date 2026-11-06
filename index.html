@@ -1277,6 +1277,30 @@ async function pcTSDB(key){
   const [ft,hn]=await Promise.all([getJSON(`${base}/lookupformerteams.php?id=${P.idPlayer}`).then(j=>j.formerteams||[]).catch(()=>[]),getJSON(`${base}/lookuphonours.php?id=${P.idPlayer}`).then(j=>j.honours||[]).catch(()=>[])]);
   if(pc&&pc.key===key) pc.tsdb={p:P,former:ft,honours:hn};
 }
+/* Free coach lookup from Wikidata (club "head coach" P286), cached 3 days on the device */
+async function wdCoach(name){
+  const ck="mtg:wdc:"+fold(name);
+  try{ const c=JSON.parse(localStorage.getItem(ck)||"null"); if(c&&Date.now()-c.at<3*24*3600e3) return c.v }catch{}
+  const W=p=>getJSON("https://www.wikidata.org/w/api.php?"+new URLSearchParams({...p,format:"json",origin:"*"}));
+  const isClub=x=>/football club|soccer club|association football|football team/i.test(x.description||"");
+  let hit=null;
+  for(const q of [name,name+" FC"]){ const r=(await W({action:"wbsearchentities",search:q,language:"en",limit:"8",type:"item"})).search||[]; hit=r.find(isClub); if(hit) break }
+  let v=null;
+  if(hit){
+    const cl=((await W({action:"wbgetentities",ids:hit.id,props:"claims"})).entities[hit.id].claims||{}).P286||[];
+    const cur=cl.filter(c=>!(c.qualifiers||{}).P582&&c.mainsnak.datavalue), pick=(cur.length?cur:[]).slice(-1)[0];
+    if(pick){ const id=pick.mainsnak.datavalue.value.id;
+      const e=(await W({action:"wbgetentities",ids:id,props:"labels|descriptions|claims",languages:"en"})).entities[id];
+      const val=p=>(((e.claims||{})[p]||[])[0]||{}).mainsnak, dv=p=>{const m=val(p);return m&&m.datavalue&&m.datavalue.value};
+      const born=dv("P569")&&String(dv("P569").time).slice(1,11), natId=dv("P27")&&dv("P27").id, img=dv("P18");
+      let nat=""; if(natId){ try{ nat=(await W({action:"wbgetentities",ids:natId,props:"labels",languages:"en"})).entities[natId].labels.en.value }catch{} }
+      v={strPlayer:(e.labels.en||{}).value||"",dateBorn:born||"",strNationality:nat,strDescriptionEN:(e.descriptions&&e.descriptions.en||{}).value||"",strCutout:img?`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(img)}?width=240`:""};
+      if(!v.strPlayer) v=null;
+    }
+  }
+  try{ localStorage.setItem(ck,JSON.stringify({at:Date.now(),v})) }catch{}
+  return v;
+}
 /* Coaches for ESPN line-ups (ESPN has no coach): API-Football team search + coach, cached for days */
 async function loadCoaches(m){
   md.coachFor=m.id; md.coaches={};
@@ -1292,6 +1316,7 @@ async function loadCoaches(m){
       md.coaches[name]={coach:c.name,coachId:c.id,coachPhoto:c.photo,...(t.logo?{logo:t.logo}:{})};
     }catch{}
     if(md.coaches[name]) return;
+    try{ const c=await wdCoach(name); if(c){ md.coaches[name]={coach:c.strPlayer,coachPhoto:c.strCutout,coachT:c}; return } }catch{}
     /* Free fallback: TheSportsDB team staff list (manager is listed with the players) */
     try{
       const K=encodeURIComponent(state.key&&!tsdbBadKey?state.key:"123"), base=`https://www.thesportsdb.com/api/v1/json/${K}`;
