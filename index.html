@@ -7,7 +7,40 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
-<style>body{margin:0;font:14px system-ui}[hidden]{display:none!important}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<style>body{margin:0;font:14px system-ui}[hidden]{display:none!important}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* see-through player card */
+#pcard{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.12);padding:10px 8px calc(10px + env(safe-area-inset-bottom));animation:pcfade .18s ease}
+#pcard[hidden]{display:none}
+@keyframes pcfade{from{opacity:0}}@keyframes pcup{from{transform:translateY(24px);opacity:0}}
+.pc-card{position:relative;width:100%;max-width:520px;max-height:82dvh;overflow-y:auto;overscroll-behavior:contain;color:#f3f6f4;border-radius:22px;padding:16px 16px 18px;
+ background:linear-gradient(160deg,rgba(24,36,30,.66),rgba(8,12,16,.76));-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);text-shadow:0 1px 2px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.18);box-shadow:0 18px 50px rgba(0,0,0,.45);animation:pcup .22s ease;font-size:13px}
+.pc-x{position:sticky;top:0;float:right;margin:-4px -4px 0 0;width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;font-size:19px;line-height:1;cursor:pointer;z-index:2}
+.pc-top{display:flex;gap:14px;align-items:center}
+.pc-ph{position:relative;flex:none;width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.35);overflow:visible}
+.pc-ph img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.pc-ph i{position:absolute;right:-4px;bottom:-2px;min-width:26px;height:26px;padding:0 5px;border-radius:13px;background:#fff;color:#111;font:700 13px/26px system-ui;text-align:center;font-style:normal}
+.pc-ph i:empty{display:none}
+.pc-id{min-width:0}.pc-id h3{margin:0;font-size:20px;line-height:1.15}.pc-id small{display:block;opacity:.7;font-size:12px;margin-top:1px}
+.pc-tm{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:13px}.pc-tm img{width:18px;height:18px;object-fit:contain}
+.pc-pos{padding:1px 8px;border-radius:9px;background:rgba(255,255,255,.16);font-size:11px;font-weight:600}
+.pc-fol{margin-top:8px;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;border-radius:14px;padding:3px 12px;font-size:12px;cursor:pointer}.pc-fol.on{background:#f5c518;color:#111;border-color:#f5c518}
+.pc-warn{margin:12px 0 0;padding:7px 10px;border-radius:10px;background:rgba(230,60,60,.22);display:flex;gap:6px;align-items:center}
+.pc-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:6px;margin-top:14px}
+.pc-info div{background:rgba(0,0,0,.22);border-radius:12px;padding:7px 6px;text-align:center}.pc-info span{display:block;font-size:10.5px;opacity:.65;text-transform:uppercase;letter-spacing:.04em}.pc-info b{font-size:14px}
+.pc-born{margin:8px 2px 0;opacity:.75;font-size:12px}
+.pc-sec{margin-top:16px}.pc-sec h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;opacity:.7}
+.pc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.pc-st .card{vertical-align:-1px;margin:0 3px 0 2px}
+.pc-st{background:rgba(0,0,0,.22);border-radius:10px;padding:7px 4px;text-align:center}.pc-st b{display:block;font-size:16px}.pc-st b small{font-size:10px;opacity:.7}.pc-st span{font-size:10.5px;opacity:.65}
+.pc-tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}.pc-tbl th{font-weight:500;opacity:.6;text-align:center;padding:3px}.pc-tbl th:first-child,.pc-tbl td:first-child{text-align:left}
+.pc-tbl td{padding:5px 3px;border-top:1px solid rgba(255,255,255,.1);text-align:center}.pc-tbl td img{width:14px;height:14px;object-fit:contain;vertical-align:-2px;margin-right:5px}
+.pc-list{list-style:none;margin:0;padding:0}.pc-list li{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid rgba(255,255,255,.1)}.pc-list li:first-child{border-top:0}
+.pc-d{flex:none;min-width:58px;font-size:11.5px;opacity:.7;font-variant-numeric:tabular-nums}
+.pc-mv{flex:1;min-width:0;display:flex;align-items:center;gap:5px;flex-wrap:wrap}.pc-mv img{width:18px;height:18px;object-fit:contain}.pc-mv b{opacity:.6;font-weight:400}
+.pc-dot{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.2);font:600 10px/18px system-ui;text-align:center;font-style:normal}
+.pc-list em{flex:none;font-style:normal;font-size:11px;padding:1px 7px;border-radius:8px;background:rgba(255,255,255,.12)}.pc-list em:empty{display:none}
+.pc-tro li{flex-wrap:wrap}.pc-tro b{color:#f5c518}.pc-tro small{opacity:.6}.pc-yrs{flex-basis:100%;font-size:11px;opacity:.6;margin-top:-3px}
+.pc-none,.pc-load{opacity:.7}.pc-about{margin:0;line-height:1.45;opacity:.85}
+</style>
 </head><body>
 <title>KY Matchday</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -410,7 +443,7 @@ html,body{overflow-x:hidden}
   <div style="display:flex;gap:12px;margin-bottom:8px"><button class="linkbtn" type="button" id="compAll">Show all</button><button class="linkbtn" type="button" id="compNone">Hide all</button></div>
   <div id="compList" style="display:grid;gap:6px;max-height:50vh;overflow:auto"></div>
   <div class="btns"><button class="btn primary" value="ok" type="submit">Done</button></div></form></dialog>
-<dialog id="matchDlg" aria-label="Match details"><div id="matchBody"></div></dialog>
+<dialog id="matchDlg" aria-label="Match details"><div id="matchBody"></div><div id="pcard" hidden></div></dialog>
 <dialog id="keyDlg">
   <form method="dialog" id="keyForm">
     <h3>Data source</h3>
@@ -871,11 +904,12 @@ async function espnDetails(m){
   const bt=((j.boxscore||{}).teams||[]); const hT=bt.find(t=>String((t.team||{}).id)===homeId)||bt[0], aT=bt.find(t=>t!==hT);
   const sv=(t,n)=>{const x=((t||{}).statistics||[]).find(s=>s.name===n);return x?x.displayValue:null};
   const stats=STAT.map(([n,l,u])=>({l,h:sv(hT,n),a:sv(aT,n),u:u||""})).filter(x=>x.h!=null&&x.a!=null);
-  const ros=(j.rosters||[]); const lu=["home","away"].map(side=>{const r=ros.find(x=>x.homeAway===side)||{};return {formation:r.formation||"",players:(r.roster||[]).filter(p=>p.starter).map(p=>({n:p.jersey||"",name:(p.athlete||{}).displayName||"",place:+p.formationPlace||0,pos:((p.position||{}).abbreviation||"")})),subs:(r.roster||[]).filter(p=>!p.starter).map(p=>({number:p.jersey||"",name:(p.athlete||{}).displayName||"",min:p.subbedIn?1:0})),color:((r.team||{}).color||"")}});
+  const ros=(j.rosters||[]); const lu=["home","away"].map(side=>{const r=ros.find(x=>x.homeAway===side)||{};return {formation:r.formation||"",players:(r.roster||[]).filter(p=>p.starter).map(p=>({n:p.jersey||"",name:(p.athlete||{}).displayName||"",place:+p.formationPlace||0,pos:((p.position||{}).abbreviation||""),es:esStats(p)})),subs:(r.roster||[]).filter(p=>!p.starter).map(p=>({number:p.jersey||"",name:(p.athlete||{}).displayName||"",min:p.subbedIn?1:0,es:esStats(p)})),color:((r.team||{}).color||"")}});
   const tv=new Set(); for(const b of (comp.broadcasts||[])) { const n=(b.media||{}).shortName||(b.names||[])[0]; if(n) tv.add(n) }
   const gi=j.gameInfo||{}; const ofc=(gi.officials||[])[0];
   return {events,stats,lineups:lu[0].players.length?lu:null,tv:[...tv],src:"ESPN",referee:ofc?(ofc.fullName||ofc.displayName||""):"",venue:((gi.venue||{}).fullName||"")+(((gi.venue||{}).address||{}).city?", "+gi.venue.address.city:""),attendance:gi.attendance?Number(gi.attendance).toLocaleString():""};
 }
+function esStats(p){const o={};for(const x of (p.stats||[])) if(x&&x.name) o[x.name]=x.value!=null?x.value:x.displayValue;return o}
 async function afDetails(m){
   const c=afDetailCache.get(m.afId); if(c&&(m.st!=="live"||Date.now()-c.at<120000)) return c.d;
   const h={headers:{"x-apisports-key":state.afKey}};
@@ -964,7 +998,7 @@ function figure(o,team,home,gk){
   const shorts=lum(prim)>.55?"#1d2430":"#f2f2f2", skin=["#e8c2a0","#c99b78","#a8754f","#7a4e33"][(+p.id||String(p.name||"").length)%4], boot=["#3ee08a","#ff6b2c","#f2f2f2","#ffd400"][(+p.id||1)%4];
   const r=p.rating?(+p.rating).toFixed(1):"", last=String(p.name||"").split(" ").slice(-1)[0];
   const head=p.id?`<img src="https://media.api-sports.io/football/players/${p.id}.png" alt="" loading="lazy" onerror="this.remove()">`:"";
-  return `<button class="fig" style="left:${o.x}%;top:${o.y}%;--s:${(1+.2*(1-o.y/100)).toFixed(3)}" ${p.id?`data-player="${p.id}"`:""} type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
+  return `<button class="fig" style="left:${o.x}%;top:${o.y}%;--s:${(1+.2*(1-o.y/100)).toFixed(3)}" ${p.id?`data-player="${p.id}"`:""} data-pn="${esc(p.name)}" type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
     <span class="fig-in"><span class="head${head?"":" nohead"}">${head||`<i>${esc(p.number??p.n??(last||"?").slice(0,1))}</i>`}</span>
     ${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
     <span class="nm2">${head?`<em>${esc(p.number??p.n??"")}</em>`:""}${esc(shortName(p.name))}${r?` <span class="rt mini ${rtClass(r)}">${r}</span>`:""}</span></span><span class="shadow"></span></button>`;
@@ -972,8 +1006,8 @@ function figure(o,team,home,gk){
 function outIcon(o){const r=(o.reason||"")+" "+(o.type||"");return /red card|suspen/i.test(r)?'<i class="card r"></i>':/yellow/i.test(r)?'<i class="card"></i>':/questionable|doubt/i.test(r)?'<b class="q">?</b>':'<b class="inj">+</b>'}
 function benchParts(t){
   const last=n=>String(n||"").split(" ").slice(-1)[0];
-  const subs=(t.subs||[]).map(p=>`<button class="bp${p.min?" on":""}" ${p.id?`data-player="${p.id}"`:""} type="button"><span class="bn">${esc(p.number??"")}</span><span class="bnm">${p.min?'<em>▲</em>':""}${esc(p.name)}</span>${p.rating?`<span class="rt mini ${rtClass(p.rating)}">${(+p.rating).toFixed(1)}</span>`:""}</button>`).join("");
-  return {subs,out:(t.out||[]).map(o=>`<button class="bp out" ${o.id?`data-player="${o.id}"`:""} type="button" title="${esc(o.reason||o.type||"")}">${outIcon(o)}<span class="bnm">${esc(last(o.name))}<small>${esc(o.reason||o.type||"")}</small></span></button>`).join("")};
+  const subs=(t.subs||[]).map(p=>`<button class="bp${p.min?" on":""}" ${p.id?`data-player="${p.id}"`:""} data-pn="${esc(p.name)}" type="button"><span class="bn">${esc(p.number??"")}</span><span class="bnm">${p.min?'<em>▲</em>':""}${esc(p.name)}</span>${p.rating?`<span class="rt mini ${rtClass(p.rating)}">${(+p.rating).toFixed(1)}</span>`:""}</button>`).join("");
+  return {subs,out:(t.out||[]).map(o=>`<button class="bp out" ${o.id?`data-player="${o.id}"`:""} data-pn="${esc(o.name)}" type="button" title="${esc(o.reason||o.type||"")}">${outIcon(o)}<span class="bnm">${esc(last(o.name))}<small>${esc(o.reason||o.type||"")}</small></span></button>`).join("")};
 }
 function bench(t,home){
   const {subs}=benchParts(t), last=n=>String(n||"").split(" ").slice(-1)[0];
@@ -1012,7 +1046,7 @@ function vLineups(){
     return pitchHtml(L.teams);
   }
   const el=md.d&&md.d.lineups;
-  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos})),subs:l.subs||[]})));
+  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos,es:p.es})),subs:l.subs||[]})));
   return `<p class="md-note">${m.st==="ns"?"Line-ups are usually announced about an hour before kick-off.":"No line-ups available for this match."}${state.afKey?"":" Add your API-Football key under Data source for line-ups with photos and ratings."}</p>`;
 }
 function vTable(){
@@ -1064,7 +1098,7 @@ async function loadLineups(force){
   try{
     const live=m.st==="live";
     const [lu,pl,inj]=await Promise.all([afGet(`fixtures/lineups?fixture=${m.afId}`,m.st==="ns"?10*60000:12*3600e3),m.st==="ns"?Promise.resolve([]):afGet(`fixtures/players?fixture=${m.afId}`,live?120000:12*3600e3).catch(()=>[]),afGet(`injuries?fixture=${m.afId}`,m.st==="ft"?24*3600e3:3*3600e3).catch(()=>[])]);
-    const stats={}; for(const t of pl||[]) for(const x of t.players||[]){const g=(x.statistics||[])[0]||{};stats[x.player.id]={rating:(g.games||{}).rating,goals:(g.goals||{}).total,assists:(g.goals||{}).assists,yellow:(g.cards||{}).yellow,red:(g.cards||{}).red,min:(g.games||{}).minutes}}
+    const stats={}; for(const t of pl||[]) for(const x of t.players||[]){const g=(x.statistics||[])[0]||{};stats[x.player.id]={rating:(g.games||{}).rating,goals:(g.goals||{}).total,assists:(g.goals||{}).assists,yellow:(g.cards||{}).yellow,red:(g.cards||{}).red,min:(g.games||{}).minutes,raw:g}}
     const mk=e=>{const p=e.player||{};return {id:p.id,name:p.name,number:p.number,pos:p.pos,grid:p.grid,...(stats[p.id]||{})}};
     md.lineups={af:true,id:m.afId,teams:(lu||[]).map(t=>({name:t.team.name,logo:t.team.logo,colors:(t.team.colors||{}).player||null,gkColors:(t.team.colors||{}).goalkeeper||null,formation:t.formation,coach:(t.coach||{}).name,coachPhoto:(t.coach||{}).photo,out:(inj||[]).filter(x=>(x.team||{}).id===(t.team||{}).id).map(x=>({id:x.player.id,name:x.player.name,type:x.player.type,reason:x.player.reason})),xi:(t.startXI||[]).map(mk),subs:(t.substitutes||[]).map(mk)}))};
   }catch(e){ if(!md.lineups) md.lineups={af:false,teams:[]}; }
@@ -1117,6 +1151,115 @@ async function openPlayer(id){
     md.player={p:r[0],season,id:String(id)}; }catch(e){ md.player={err:String(e.message||e),season} }
   mdPaint();
 }
+/* ---------- See-through player card (tap a player in the line-up) ---------- */
+let pc=null;
+function lineupHit(id,name){
+  const L=md.lineups&&md.lineups.teams&&md.lineups.teams.length?md.lineups.teams:null;
+  const teams=L||((md.d&&md.d.lineups)||[]).map((l,i)=>({name:i?md.m.away:md.m.home,logo:"",xi:l.players.map(p=>({...p,number:p.n})),subs:l.subs||[],out:[]}));
+  for(const t of teams) for(const k of ["xi","subs","out"]) for(const p of (t[k]||[])) if((id&&String(p.id)===String(id))||(!id&&p.name===name)) return {p,team:t,role:k};
+  return {p:{name},team:null,role:""};
+}
+async function openCard(id,name){
+  const hit=lineupHit(id,name); const nowD=new Date(); const season=(md.m&&md.m.season)||(nowD.getMonth()>=6?nowD.getFullYear():nowD.getFullYear()-1);
+  const key=(id||name)+"|"+Date.now(); pc={key,id,name,hit,season,loading:true}; pcPaint();
+  const useAF=id&&state.afKey&&!afOut();
+  if(useAF){
+    const [pr,tr,tp,sd]=await Promise.allSettled([afGet(`players?id=${id}&season=${season}`,24*3600e3),afGet(`transfers?player=${id}`,7*24*3600e3),afGet(`trophies?player=${id}`,7*24*3600e3),afGet(`sidelined?player=${id}`,3*24*3600e3)]);
+    if(!pc||pc.key!==key) return;
+    const v=r=>r.status==="fulfilled"?r.value:null;
+    const P=(v(pr)||[])[0];
+    if(P){ Object.assign(pc,{loading:false,af:{p:P,transfers:((v(tr)||[])[0]||{}).transfers||[],trophies:v(tp)||[],sidelined:v(sd)||[]}}); return pcPaint() }
+  }
+  try{ await pcTSDB(key) }catch(e){ if(pc&&pc.key===key){ pc.loading=false; pc.err="Couldn't load more about this player."; } }
+  if(pc&&pc.key===key){ pc.loading=false; pcPaint() }
+}
+async function pcTSDB(key){
+  const K=encodeURIComponent(state.key&&!tsdbBadKey?state.key:"123"), base=`https://www.thesportsdb.com/api/v1/json/${K}`;
+  const q=fold(pc.name||"").trim(); if(!q) return;
+  const list=(await getJSON(`${base}/searchplayers.php?p=${encodeURIComponent(q.replace(/\s+/g,"_"))}`).catch(()=>({}))).player||[];
+  const soc=list.filter(p=>!p.strSport||p.strSport==="Soccer"); const tn=fold((pc.hit.team||{}).name||"");
+  const P=soc.find(p=>tn&&fold(p.strTeam||"").includes(tn.split(" ")[0]))||soc[0]; if(!P||!pc||pc.key!==key) return;
+  const [ft,hn]=await Promise.all([getJSON(`${base}/lookupformerteams.php?id=${P.idPlayer}`).then(j=>j.formerteams||[]).catch(()=>[]),getJSON(`${base}/lookuphonours.php?id=${P.idPlayer}`).then(j=>j.honours||[]).catch(()=>[])]);
+  if(pc&&pc.key===key) pc.tsdb={p:P,former:ft,honours:hn};
+}
+function closeCard(){ pc=null; const c=$("pcard"); c.hidden=true; c.innerHTML="" }
+const cmFrom=h=>{h=String(h||"");const m=h.match(/(\d{3})\s*cm/i)||h.match(/^(\d{3})$/);if(m)return m[1]+" cm";const f=h.match(/(\d)\s*ft\s*(\d+)?/i)||h.match(/(\d)'\s*(\d+)?/);return f?Math.round((+f[1]*12+(+f[2]||0))*2.54)+" cm":h};
+const kgFrom=w=>{w=String(w||"");const m=w.match(/(\d{2,3})\s*kg/i)||w.match(/^(\d{2,3})$/);if(m)return m[1]+" kg";const l=w.match(/(\d{2,3})\s*lb/i);return l?Math.round(+l[1]*.4536)+" kg":w};
+function pcPaint(){
+  const c=$("pcard"); if(!pc){ c.hidden=true; return }
+  const H=pc.hit, mp=H.p||{}, T=H.team||{}, A=pc.af, D=pc.tsdb;
+  const AP=A&&A.p.player, st=A?A.p.statistics||[]:[], s0=st.find(x=>(x.games||{}).appearences)||st[0]||{};
+  const name=(AP&&AP.name&&AP.name.length>(mp.name||"").length?AP.name:mp.name)||(D&&D.p.strPlayer)||pc.name;
+  const full=AP&&AP.firstname?`${AP.firstname} ${AP.lastname}`:"";
+  const photo=AP?AP.photo:pc.id?`https://media.api-sports.io/football/players/${pc.id}.png`:D&&(D.p.strCutout||D.p.strThumb)||"";
+  const pos=(s0.games||{}).position||(D&&D.p.strPosition)||({G:"Goalkeeper",D:"Defender",M:"Midfielder",F:"Attacker"})[mp.pos]||mp.pos||"";
+  const team=(s0.team||{}).name||(D&&D.p.strTeam)||T.name||"", logo=(s0.team||{}).logo||T.logo||"";
+  const num=mp.number??mp.n??(s0.games||{}).number??(D&&D.p.strNumber)??"";
+  const born=AP?(AP.birth||{}).date:D&&D.p.dateBorn, age=AP&&AP.age||(born?ageFrom(born):"");
+  const place=AP?[(AP.birth||{}).place,(AP.birth||{}).country].filter(Boolean).join(", "):D&&D.p.strBirthLocation||"";
+  const info=[["Age",age?`${age}`:""],["Height",cmFrom(AP?AP.height:D&&D.p.strHeight)],["Weight",kgFrom(AP?AP.weight:D&&D.p.strWeight)],["Nation",AP?AP.nationality:D&&D.p.strNationality],["Shirt",num?"#"+num:""],["Foot",D&&D.p.strSide||""]].filter(x=>x[1]);
+  const cardsV=(y,r)=>`<i class="card"></i>${y} <i class="card r"></i>${r}`; const pill=(v,l)=>`<div class="pc-st"><b>${v}</b><span>${l}</span></div>`;
+  // This match
+  let mt="";
+  const g=mp.raw;
+  if(g){ const n=(a,b)=>a==null?0:a;
+    const rows=[[mp.rating?(+mp.rating).toFixed(1):"–","Rating"],[n((g.games||{}).minutes)+"'","Minutes"],[n((g.goals||{}).total),"Goals"],[n((g.goals||{}).assists),"Assists"],[`${n((g.shots||{}).on)}/${n((g.shots||{}).total)}`,"Shots on/total"],[n((g.passes||{}).total)+((g.passes||{}).accuracy?` <small>${g.passes.accuracy}${String(g.passes.accuracy).includes("%")?"":"%"}</small>`:""),"Passes"],[n((g.passes||{}).key),"Key passes"],[`${n((g.dribbles||{}).success)}/${n((g.dribbles||{}).attempts)}`,"Dribbles"],[n((g.tackles||{}).total),"Tackles"],[`${n((g.duels||{}).won)}/${n((g.duels||{}).total)}`,"Duels won"],[n((g.fouls||{}).committed),"Fouls"],[cardsV(n((g.cards||{}).yellow),n((g.cards||{}).red)),"Cards"]];
+    if(/^G/.test(mp.pos||"")) rows.splice(6,2,[n((g.goals||{}).saves),"Saves"],[n((g.goals||{}).conceded),"Conceded"]);
+    mt=rows.map(r=>pill(r[0],r[1])).join("");
+  } else if(mp.es&&Object.keys(mp.es).length){ const e=mp.es, n=k=>e[k]!=null?Math.round(+e[k]):0;
+    mt=[[n("totalGoals"),"Goals"],[n("goalAssists"),"Assists"],[`${n("shotsOnTarget")}/${n("totalShots")}`,"Shots on/total"],[n("foulsCommitted"),"Fouls"],[n("foulsSuffered"),"Fouled"],[n("offsides"),"Offsides"],[cardsV(n("yellowCards"),n("redCards")),"Cards"]].concat(e.saves!=null?[[n("saves"),"Saves"]]:[]).map(r=>pill(r[0],r[1])).join("");
+  }
+  // Season
+  let ss="", comps="";
+  if(A){ const sum=f=>st.reduce((a,x)=>a+(+f(x)||0),0); const w=x=>(+x.games.appearences||1), rated=st.filter(x=>x.games.rating);
+    const avg=rated.length?(rated.reduce((a,x)=>a+ +x.games.rating*w(x),0)/rated.reduce((a,x)=>a+w(x),0)).toFixed(2):"–";
+    ss=[[sum(x=>x.games.appearences),"Matches"],[sum(x=>x.games.lineups),"Starts"],[sum(x=>x.games.minutes),"Minutes"],[sum(x=>x.goals.total),"Goals"],[sum(x=>x.goals.assists),"Assists"],[avg,"Avg rating"],[cardsV(sum(x=>x.cards.yellow),sum(x=>x.cards.red)),"Cards"],[sum(x=>(x.penalty||{}).scored),"Penalties"]].map(r=>pill(r[0],r[1])).join("");
+    comps=st.filter(x=>x.games.appearences).map(x=>`<tr><td>${x.league.logo?`<img src="${esc(x.league.logo)}" alt="">`:""}${esc(x.league.name)}</td><td>${x.games.appearences||0}</td><td>${x.goals.total||0}</td><td>${x.goals.assists||0}</td><td>${x.cards.yellow||0}/${x.cards.red||0}</td><td>${x.games.rating?(+x.games.rating).toFixed(1):"–"}</td></tr>`).join("");
+  }
+  // Transfers
+  const crest=(l,n)=>l?`<img src="${esc(l)}" alt="" onerror="this.remove()">`:`<i class="pc-dot">${esc((n||"?").slice(0,1))}</i>`;
+  let tr="";
+  if(A&&A.transfers.length) tr=A.transfers.slice().sort((a,b)=>String(b.date).localeCompare(a.date)).map(t=>{const o=(t.teams||{}).out||{},i=(t.teams||{}).in||{};return `<li><span class="pc-d">${esc(String(t.date||"").slice(0,7))}</span><span class="pc-mv">${crest(o.logo,o.name)}<span>${esc(o.name||"")}</span><b>→</b>${crest(i.logo,i.name)}<span>${esc(i.name||"")}</span></span><em>${esc(t.type&&t.type!=="N/A"?t.type:"")}</em></li>`}).join("");
+  else if(D&&D.former.length) tr=D.former.slice().sort((a,b)=>String(b.strJoined).localeCompare(a.strJoined)).map(t=>`<li><span class="pc-d">${esc(t.strJoined||"")}${t.strDeparted?"–"+esc(t.strDeparted):""}</span><span class="pc-mv">${crest(t.strBadge,t.strFormerTeam)}<span>${esc(t.strFormerTeam||"")}</span></span><em>${esc(t.strMoveType||"")}</em></li>`).join("");
+  // Trophies
+  let tp="";
+  if(A&&A.trophies.length){ const won=A.trophies.filter(t=>/winner/i.test(t.place)); const grp={}; won.forEach(t=>{const k=t.league+"|"+(t.country||"");(grp[k]=grp[k]||[]).push(t.season)});
+    tp=Object.entries(grp).sort((a,b)=>b[1].length-a[1].length).map(([k,v])=>`<li><b>${v.length}×</b> ${esc(k.split("|")[0])} <small>${esc(k.split("|")[1])}</small><span class="pc-yrs">${esc(v.join(", "))}</span></li>`).join("");
+    if(!tp) tp=`<li class="pc-none">No titles won yet (${A.trophies.length} finals/runner-up places).</li>`; }
+  else if(D&&D.honours.length){ const grp={}; D.honours.forEach(h=>{(grp[h.strHonour]=grp[h.strHonour]||[]).push(h.strSeason)});
+    tp=Object.entries(grp).sort((a,b)=>b[1].length-a[1].length).map(([k,v])=>`<li><b>${v.length}×</b> ${esc(k)}<span class="pc-yrs">${esc(v.join(", "))}</span></li>`).join(""); }
+  // Injuries
+  let inj="";
+  if(A&&A.sidelined.length) inj=A.sidelined.slice().sort((a,b)=>String(b.start).localeCompare(a.start)).slice(0,8).map(x=>`<li><span class="pc-d">${esc(x.start||"")}${x.end?" → "+esc(x.end):""}</span><span>${esc(x.type||"")}</span></li>`).join("");
+  const now=H.role==="out"?`<p class="pc-warn">${outIcon(mp)} Out for this match${mp.reason?": "+esc(mp.reason):""}</p>`:AP&&AP.injured?`<p class="pc-warn"><b class="inj">+</b> Currently injured</p>`:"";
+  const fid=pc.id||name;
+  const sec=(t,b)=>b?`<section class="pc-sec"><h4>${t}</h4>${b}</section>`:"";
+  c.innerHTML=`<div class="pc-card" role="dialog" aria-label="${esc(name)}">
+    <button class="pc-x" data-pc-close aria-label="Close">×</button>
+    <div class="pc-top"><div class="pc-ph">${photo?`<img src="${esc(photo)}" alt="" onerror="this.remove()">`:""}<i>${esc(num||"")}</i></div>
+      <div class="pc-id"><h3>${esc(name)}</h3>${full&&fold(full)!==fold(name)?`<small>${esc(full)}</small>`:""}
+        <div class="pc-tm">${logo?`<img src="${esc(logo)}" alt="">`:""}<span>${esc(team)}</span>${pos?`<span class="pc-pos">${esc(pos)}</span>`:""}</div>
+        <button class="pc-fol${favHas("players",fid)?" on":""}" data-pc-fav>${favHas("players",fid)?"★ Following":"☆ Follow"}</button></div></div>
+    ${now}
+    ${info.length?`<div class="pc-info">${info.map(x=>`<div><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join("")}</div>`:""}
+    ${born||place?`<p class="pc-born">Born ${born?esc(born):""}${place?(born?" in ":"")+esc(place):""}</p>`:""}
+    ${pc.loading?`<p class="pc-load">Loading career, transfers and trophies…</p>`:""}
+    ${sec("This match",mt?`<div class="pc-grid">${mt}</div>`:"")}
+    ${sec(`Season ${esc(pc.season)}/${String(+pc.season+1).slice(2)} · all competitions`,ss?`<div class="pc-grid">${ss}</div>${comps?`<table class="pc-tbl"><thead><tr><th>Competition</th><th>Apps</th><th>G</th><th>A</th><th>Cards</th><th>Rtg</th></tr></thead><tbody>${comps}</tbody></table>`:""}`:"")}
+    ${sec("Transfer history",tr?`<ul class="pc-list">${tr}</ul>`:"")}
+    ${sec("Trophies",tp?`<ul class="pc-list pc-tro">${tp}</ul>`:"")}
+    ${sec("Injury history",inj?`<ul class="pc-list">${inj}</ul>`:"")}
+    ${D&&D.p.strDescriptionEN?sec("About",`<p class="pc-about">${esc(D.p.strDescriptionEN.split(/\n/)[0].slice(0,420))}${D.p.strDescriptionEN.length>420?"…":""}</p>`):""}
+    ${!pc.loading&&!A&&!D&&!mt?`<p class="pc-load">${esc(pc.err||(pc.id&&state.afKey&&afOut()?"Daily API limit reached, more details after it resets.":"No more details found for this player."))}</p>`:""}
+  </div>`;
+  c.hidden=false; const card=c.querySelector(".pc-card"); if(card) card.scrollTop=0;
+}
+$("pcard").addEventListener("click",e=>{
+  if(e.target.id==="pcard"||e.target.closest("[data-pc-close]")) return closeCard();
+  if(e.target.closest("[data-pc-fav]")&&pc){ const fid=pc.id||pc.name; const team=pc.hit.team&&pc.hit.team.name||""; toggleFav("players",{id:fid,name:pc.name,team}); pcPaint(); render(); }
+});
+$("matchDlg").addEventListener("close",closeCard);
+$("matchDlg").addEventListener("cancel",e=>{ if(pc){ e.preventDefault(); closeCard() } });
 async function openMatch(id){
   const m=state.matches.find(x=>x.id===id); if(!m) return;
   mdId=id; Object.assign(md,{m,d:null,err:"",tab:"summary",lineups:null,table:null,news:null,player:null,loading:""});
@@ -1137,6 +1280,7 @@ async function openMatch(id){
 $("matchBody").addEventListener("click",e=>{
   if(e.target.closest("[data-bench]")){ md.showBench=!md.showBench; mdPaint(); return }
   const t=e.target.closest("[data-tab]"); if(t){ md.tab=t.dataset.tab; md.player=null; mdPaint(); if(md.tab==="lineups") loadLineups(); if(md.tab==="table") loadTable(); if(md.tab==="news") loadNews(); return }
+  const pn=e.target.closest(".pitch-wrap [data-pn],.outs [data-pn]"); if(pn&&md.m){ openCard(pn.dataset.player||"",pn.dataset.pn); return }
   const p=e.target.closest("[data-player]"); if(p&&state.afKey){ openPlayer(p.dataset.player); return }
   if(e.target.closest("[data-back]")){ md.player=null; mdPaint(); return }
   const ft=e.target.closest("[data-fav-team]"); if(ft){ toggleFav("teams",ft.dataset.favTeam); mdPaint(); render(); return }
