@@ -431,6 +431,19 @@ html,body{overflow-x:hidden}
 .ftag-coach{all:unset;cursor:pointer;display:block;grid-column:1/-1;margin-top:3px;padding:2px 6px;border-radius:6px;background:rgb(0 0 0 / .45);color:#fff;font-size:10.5px;font-weight:600;line-height:1.15;text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ftag-coach small{display:block;font-size:8.5px;font-weight:500;opacity:.7;text-transform:uppercase;letter-spacing:.05em}
 .ftag{max-width:40%!important;grid-template-columns:auto auto!important;column-gap:5px!important;row-gap:2px!important;align-items:center!important;padding:3px 5px!important}.ftag img{width:22px!important;height:22px!important}.ftag b{font-size:11.5px!important}.ftag>small{grid-column:1/-1}.ftag-coach{margin-top:1px;padding:1px 5px;font-size:10px}.ftag-coach small{display:inline;font-size:8px;margin-right:4px}
+
+/* See-through popups everywhere (2026-11-06), same look as the player card */
+:root{--glass:rgba(255,255,255,.72);--glass-head:rgba(255,255,255,.55);--glass-line:rgba(0,0,0,.08)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--glass:rgba(16,24,20,.70);--glass-head:rgba(16,24,20,.45);--glass-line:rgba(255,255,255,.14)}}
+:root[data-theme="dark"]{--glass:rgba(16,24,20,.70);--glass-head:rgba(16,24,20,.45);--glass-line:rgba(255,255,255,.14)}
+dialog{background:var(--glass)!important;-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--glass-line)!important;border-radius:22px!important;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+dialog[open]{animation:pcup .22s ease}
+dialog::backdrop{background:rgb(0 0 0 / .15)!important}
+.md-head{background:var(--glass-head)!important;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+/* Pitch fills the whole width; height fills the screen */
+.pitch-wrap{background:none!important}
+.pitch{max-width:none!important;border-radius:0!important}
+.pitch-grid{padding:0!important}
 </style>
 
 <header class="top">
@@ -1051,7 +1064,7 @@ function pitchHtml(teams){
   // Every row of both teams gets the same spacing from goal line to goal line, so a 5-row team is as roomy as a 4-row one
   const placed=[[h,true],[a,false]].map(([t,home])=>[t,home,t.xi&&t.xi.length?placeTeam(t.xi,t.formation,home):[]]);
   const rowsOf=l=>l.length?l[0].R:0, total=rowsOf(placed[0][2])+rowsOf(placed[1][2]), gap=total>1?87/(total-1):0;
-  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ const R=o.R, g=R>1?36/(R-1):0; o.y=home?93.5-o.ri*g:6+o.ri*g; } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
+  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ const R=o.R, g=R>1?(home?35:36)/(R-1):0; o.y=home?91.5-o.ri*g:6+o.ri*g; } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
   if(!figs.length) return "";
   const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:`<small>${esc(t.name)}</small>`}<b>${esc(t.formation||"")}</b>${t.coach?`<button class="ftag-coach" type="button" data-coach="${esc(t.coachId||"")}" data-cn="${esc(t.coach)}" data-ct="${esc(t.name||"")}"><small>Coach</small>${esc(shortName(t.coach))}</button>`:""}</span>`;
   const wm=(t,pos)=>t.logo?`<img class="wm ${pos}" src="${esc(t.logo)}" alt="">`:"";
@@ -1068,7 +1081,8 @@ function vLineups(){
     return pitchHtml(L.teams);
   }
   const el=md.d&&md.d.lineups;
-  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos,es:p.es})),subs:l.subs||[]})));
+  if(el&&md.coachFor!==md.m.id) loadCoaches(md.m);
+  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,...(((md.coaches||{})[i?md.m.away:md.m.home])||{}),formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos,es:p.es})),subs:l.subs||[]})));
   return `<p class="md-note">${m.st==="ns"?"Line-ups are usually announced about an hour before kick-off.":"No line-ups available for this match."}${state.afKey?"":" Add your API-Football key under Data source for line-ups with photos and ratings."}</p>`;
 }
 function vTable(){
@@ -1103,8 +1117,8 @@ function fitPitch(){
   const dlg=$("matchDlg"), pitch=dlg.querySelector(".pitch"); if(!pitch) return;
   const head=dlg.querySelector(".md-head"), btn=dlg.querySelector(".bench-btn"), wrap=dlg.querySelector(".pitch-wrap");
   const avail=dlg.clientHeight-(head?head.offsetHeight:0)-(btn?btn.offsetHeight:0)-24-14-32;
-  const maxW=wrap.clientWidth*.92, w=Math.max(180,Math.min(maxW,avail/(125/68)));
-  pitch.style.width=w+"px"; pitch.style.marginLeft=pitch.style.marginRight="auto";
+  const w=wrap.clientWidth, h=Math.max(w*1.25,Math.min(w*125/68*1.15,avail));
+  pitch.style.width=w+"px"; pitch.style.height=h+"px"; pitch.style.aspectRatio="auto"; pitch.style.marginLeft=pitch.style.marginRight="0";
 }
 addEventListener("resize",()=>{ if($("matchDlg").open) fitPitch() });
 function mdPaint(){
@@ -1248,9 +1262,26 @@ async function pcTSDB(key){
   const [ft,hn]=await Promise.all([getJSON(`${base}/lookupformerteams.php?id=${P.idPlayer}`).then(j=>j.formerteams||[]).catch(()=>[]),getJSON(`${base}/lookuphonours.php?id=${P.idPlayer}`).then(j=>j.honours||[]).catch(()=>[])]);
   if(pc&&pc.key===key) pc.tsdb={p:P,former:ft,honours:hn};
 }
+/* Coaches for ESPN line-ups (ESPN has no coach): API-Football team search + coach, cached for days */
+async function loadCoaches(m){
+  md.coachFor=m.id; md.coaches={};
+  if(!state.afKey||afOut()) return;
+  const clean=n=>fold(n).replace(/\b(fc|afc|sc|cf)\b/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+  await Promise.all([m.home,m.away].map(async name=>{
+    try{
+      const q=clean(name); if(q.length<3) return;
+      const ts=await afGet(`teams?search=${encodeURIComponent(q)}`,30*24*3600e3);
+      const t=(ts||[]).map(x=>x.team).find(t=>clean(t.name)===q)||(ts||[])[0]&&ts[0].team; if(!t) return;
+      const cs=await afGet(`coachs?team=${t.id}`,3*24*3600e3);
+      const c=(cs||[]).find(c=>(c.career||[]).some(k=>(k.team||{}).id===t.id&&!k.end))||(cs||[])[0]; if(!c) return;
+      md.coaches[name]={coach:c.name,coachId:c.id,coachPhoto:c.photo,logo:t.logo};
+    }catch{}
+  }));
+  if(md.m&&md.m.id===m.id&&md.tab==="lineups"&&Object.keys(md.coaches).length) mdPaint();
+}
 /* Coach card: same see-through window as players */
 async function openCoach(id,name,teamName){
-  const T=(md.lineups&&md.lineups.teams||[]).find(t=>t.name===teamName)||{name:teamName};
+  const T=(md.lineups&&md.lineups.teams||[]).find(t=>t.name===teamName)||{name:teamName,...((md.coaches||{})[teamName]||{})};
   const key="c"+(id||name)+"|"+Date.now(); pc={key,coach:true,id,name,team:T,loading:!!(id&&state.afKey&&!afOut())}; pcPaint();
   if(!pc.loading) return;
   const [c,tp]=await Promise.allSettled([afGet(`coachs?id=${id}`,7*24*3600e3),afGet(`trophies?coach=${id}`,7*24*3600e3)]);
