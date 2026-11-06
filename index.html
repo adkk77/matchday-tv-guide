@@ -516,6 +516,8 @@ dialog::backdrop{background:rgb(0 0 0 / .15)!important}
 .l5{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:10px;background:var(--bg);min-width:0}.l5 b{font-size:13px}.l5 img{width:22px;height:22px;object-fit:contain}.l5 small{font-size:10px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.l5 .tf{width:18px;height:18px;line-height:18px;font-size:10px}
 .t-tbl tr.me td{background:color-mix(in srgb,var(--pitch) 18%,transparent);font-weight:700}
 .tn-t .pc-dot{display:grid;place-items:center;font-size:18px;line-height:1;border-radius:50%}
+.pitch.tight .fig{width:11%!important}.pitch.tight .nm2{font-size:9px!important;padding:1px 4px!important}
+.ftag-coach.none{cursor:default;opacity:.75}
 </style>
 
 <header class="top">
@@ -1138,9 +1140,9 @@ function pitchHtml(teams){
   // Every row of both teams gets the same spacing from goal line to goal line, so a 5-row team is as roomy as a 4-row one
   const placed=[[h,true],[a,false]].map(([t,home])=>[t,home,t.xi&&t.xi.length?placeTeam(t.xi,t.formation,home):[]]);
   const rowsOf=l=>l.length?l[0].R:0, total=rowsOf(placed[0][2])+rowsOf(placed[1][2]), gap=total>1?85/(total-1):0; /* one even spacing for every row of both teams */
-  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ const R=o.R, g=R>1?(home?37:33)/(R-1):0; o.y=home?93-o.ri*g:7+o.ri*g; /* each team stays in its own half: forwards clear of the halfway line */ } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
+  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ const R=o.R, g=R>1?(R>=5?(home?38.5:36.5):(home?37:33))/(R-1):0; o.y=home?93-o.ri*g:7+o.ri*g; /* each team stays in its own half: forwards clear of the halfway line */ } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
   if(!figs.length) return "";
-  const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:`<small>${esc(t.name)}</small>`}<b>${esc(t.formation||"")}</b>${t.coach?`<button class="ftag-coach" type="button" data-coach="${esc(t.coachId||"")}" data-cn="${esc(t.coach)}" data-ct="${esc(t.name||"")}"><small>Coach</small>${esc(shortName(t.coach))}</button>`:""}</span>`;
+  const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:`<small>${esc(t.name)}</small>`}<b>${esc(t.formation||"")}</b>${t.coach?`<button class="ftag-coach" type="button" data-coach="${esc(t.coachId||"")}" data-cn="${esc(t.coach)}" data-ct="${esc(t.name||"")}"><small>Coach</small>${esc(shortName(t.coach))}</button>`:`<span class="ftag-coach none"><small>Coach</small>${md.coachFor===(md.m&&md.m.id)&&!md.coachesDone?"…":"Not listed"}</span>`}</span>`;
   const wm=(t,pos)=>t.logo?`<img class="wm ${pos}" src="${esc(t.logo)}" alt="">`:"";
   return `<div class="pitch-wrap">
     <div class="pitch-grid"><div class="pitch3d"><div class="pitch${Math.max(...placed.map(x=>rowsOf(x[2])))>=5?" tight":""}">${PITCH_SVG}${tag(a,"tl")}${tag(h,"br")}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
@@ -1382,7 +1384,7 @@ function teamPaint(){
   const newsHtml=N.map(a=>`<a class="news" href="${esc(a.link)}" target="_blank" rel="noopener">${a.img?`<img src="${esc(a.img)}" alt="" loading="lazy">`:""}<span><b>${esc(a.title)}</b><small>${esc(a.desc||"")}</small><small>${esc(a.when)}</small></span></a>`).join("");
   const tab=tm.tab||"overview", TABS=[["overview","Overview"],["matches","Matches"],["table","Table"],["news","News"],["squad","Squad"]];
   let body="";
-  if(tab==="overview") body=`${sec("Next match",nextCard)}${sec("Form",last5?`<div class="t-l5"><div class="t-l5h"><b>Last ${Math.min(5,past.length)}</b><span class="t-form">${past.slice(0,5).reverse().map(g=>`<span class="tf ${res(g)}">${res(g)}</span>`).join("")}</span></div><div class="t-l5g">${last5}</div></div>`:"")}
+  if(tab==="overview") body=`${sec("Next match",nextCard)}${sec("Next matches",next.length>1?`<ul class="pc-list">${next.map(row).join("")}</ul>`:"")}${sec("Form",last5?`<div class="t-l5"><div class="t-l5h"><b>Last ${Math.min(5,past.length)}</b><span class="t-form">${past.slice(0,5).reverse().map(g=>`<span class="tf ${res(g)}">${res(g)}</span>`).join("")}</span></div><div class="t-l5g">${last5}</div></div>`:"")}
       ${info.length?sec("Club",`<div class="pc-info t-info">${info.map(x=>`<div><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join("")}</div>`):""}
       ${sec("About",D.strDescriptionEN?`<p class="pc-about t-about">${esc(D.strDescriptionEN.split(/\n/).filter(Boolean).slice(0,2).join("\n\n"))}</p>`:"")}${D.strEquipment?sec("Kit",`<img class="t-kit" src="${esc(D.strEquipment)}" alt="Team kit" loading="lazy">`):""}${links?sec("Links",`<div class="t-links">${links}</div>`):""}`;
   else if(tab==="matches") body=`${sec("Next matches",next.length?`<ul class="pc-list">${next.map(row).join("")}</ul>`:"")}${sec("Recent results",past.length?`<ul class="pc-list">${past.map(row).join("")}</ul>`:"")}${!G.length&&!tm.loading?`<p class="md-note">No matches found for this team.</p>`:""}`;
@@ -1444,16 +1446,20 @@ async function pcTSDB(key){
 }
 /* Free coach lookup from Wikidata (club "head coach" P286), cached 3 days on the device */
 async function wdCoach(name){
-  const ck="mtg:wdc:"+fold(name);
+  const ck="mtg:wdc2:"+fold(name);
   try{ const c=JSON.parse(localStorage.getItem(ck)||"null"); if(c&&Date.now()-c.at<3*24*3600e3) return c.v }catch{}
   const W=p=>getJSON("https://www.wikidata.org/w/api.php?"+new URLSearchParams({...p,format:"json",origin:"*"}));
   const isClub=x=>/football club|soccer club|association football|football team/i.test(x.description||"");
   let hit=null;
-  for(const q of [name,name+" FC"]){ const r=(await W({action:"wbsearchentities",search:q,language:"en",limit:"8",type:"item"})).search||[]; hit=r.find(isClub); if(hit) break }
+  /* Search only association football clubs (P31 = Q476028), so "Bahia" finds the club, not the state */
+  try{ const r=((await W({action:"query",list:"search",srsearch:`${name} haswbstatement:P31=Q476028`,srlimit:"5",srnamespace:"0"})).query||{}).search||[]; if(r[0]) hit={id:r[0].title} }catch{}
+  if(!hit) for(const q of [name,name+" FC"]){ const r=(await W({action:"wbsearchentities",search:q,language:"en",limit:"8",type:"item"})).search||[]; hit=r.find(isClub); if(hit) break }
   let v=null;
   if(hit){
     const cl=((await W({action:"wbgetentities",ids:hit.id,props:"claims"})).entities[hit.id].claims||{}).P286||[];
-    const cur=cl.filter(c=>!(c.qualifiers||{}).P582&&c.mainsnak.datavalue), pick=(cur.length?cur:[]).slice(-1)[0];
+    const t0=c=>{const q=((c.qualifiers||{}).P580||[])[0];return q&&q.datavalue?q.datavalue.value.time:""}, endF=c=>{const q=((c.qualifiers||{}).P582||[])[0];return q&&q.datavalue?Date.parse(q.datavalue.value.time.slice(1)):0};
+    const ok=cl.filter(c=>c.mainsnak.datavalue&&c.rank!=="deprecated");
+    const cur=ok.filter(c=>!endF(c)||endF(c)>Date.now()).sort((a,b)=>t0(a).localeCompare(t0(b))), pick=cur.slice(-1)[0];
     if(pick){ const id=pick.mainsnak.datavalue.value.id;
       const e=(await W({action:"wbgetentities",ids:id,props:"labels|descriptions|claims",languages:"en"})).entities[id];
       const val=p=>(((e.claims||{})[p]||[])[0]||{}).mainsnak, dv=p=>{const m=val(p);return m&&m.datavalue&&m.datavalue.value};
@@ -1463,12 +1469,12 @@ async function wdCoach(name){
       if(!v.strPlayer) v=null;
     }
   }
-  try{ localStorage.setItem(ck,JSON.stringify({at:Date.now(),v})) }catch{}
+  try{ localStorage.setItem(ck,JSON.stringify({at:v?Date.now():Date.now()-3*24*3600e3+6*3600e3,v})) }catch{}
   return v;
 }
 /* Coaches for ESPN line-ups (ESPN has no coach): API-Football team search + coach, cached for days */
 async function loadCoaches(m){
-  md.coachFor=m.id; md.coaches={};
+  md.coachFor=m.id; md.coaches={}; md.coachesDone=false;
   const useAF=state.afKey&&!afOut();
   const clean=n=>fold(n).replace(/\b(fc|afc|sc|cf)\b/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
   await Promise.all([m.home,m.away].map(async name=>{
@@ -1492,7 +1498,7 @@ async function loadCoaches(m){
       if(c) md.coaches[name]={coach:c.strPlayer,coachPhoto:c.strCutout||c.strThumb||"",coachT:c,...(t.strBadge?{logo:t.strBadge}:{})};
     }catch{}
   }));
-  if(md.m&&md.m.id===m.id&&md.tab==="lineups"&&Object.keys(md.coaches).length) mdPaint();
+  md.coachesDone=true; if(md.m&&md.m.id===m.id&&md.tab==="lineups") mdPaint();
 }
 /* Coach card: same see-through window as players */
 async function openCoach(id,name,teamName){
