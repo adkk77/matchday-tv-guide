@@ -449,6 +449,16 @@ dialog::backdrop{background:rgb(0 0 0 / .15)!important}
 .ftag img{width:40px!important;height:40px!important;grid-row:span 2!important}
 .ftag-coach{grid-column:2!important}
 .ftag b{font-size:13px!important}
+
+/* white lines run to the very edge (no grass outside the boundary); 5-row formations get smaller figures */
+.pitch{overflow:hidden}
+.pitch.tight .fig{width:12.6%!important}
+
+.ftag{max-width:34%!important;column-gap:4px!important}
+.ftag img{width:34px!important;height:34px!important}
+.ftag-coach{max-width:84px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ftag-coach small{display:block!important;margin:0!important}
+.ftag.tl{top:.8%!important;left:1.2%!important}.ftag.br{bottom:.8%!important;right:1.2%!important}
 </style>
 
 <header class="top">
@@ -1016,7 +1026,7 @@ function vStats(){
   return `<section class="md-sec"><h4>Match stats</h4>${d.stats.map(x=>{const h=num(x.h),a=num(x.a),t=h+a||1;return `<div class="stat"><div class="l">${esc(x.l)}</div><div class="v">${esc(x.h)}${x.u}</div><div class="bar"><i style="width:${h/t*100}%"></i><i style="width:${a/t*100}%"></i></div><div class="v">${esc(x.a)}${x.u}</div></div>`}).join("")}</section>`;
 }
 /* ---------- 3D pitch line-up ---------- */
-const PITCH_SVG=`<svg viewBox="0 0 68 125" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width=".5"><rect x="1.5" y="1.5" width="65" height="122"/><line x1="1.5" y1="62.5" x2="66.5" y2="62.5"/><circle cx="34" cy="62.5" r="9.15"/><rect x="13.85" y="1.5" width="40.3" height="16.5"/><rect x="24.85" y="1.5" width="18.3" height="5.5"/><rect x="13.85" y="107" width="40.3" height="16.5"/><rect x="24.85" y="118" width="18.3" height="5.5"/><path d="M26.69 18a9.15 9.15 0 0 0 14.62 0M26.69 107a9.15 9.15 0 0 1 14.62 0M1.5 2.5a1 1 0 0 0 1-1M65.5 1.5a1 1 0 0 0 1 1M1.5 122.5a1 1 0 0 1 1 1M66.5 122.5a1 1 0 0 0-1 1"/></g><g fill="#fff"><circle cx="34" cy="62.5" r=".55"/><circle cx="34" cy="12.5" r=".45"/><circle cx="34" cy="112.5" r=".45"/></g></svg>`;
+const PITCH_SVG=`<svg viewBox="0 0 68 125" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width=".5"><rect x=".5" y=".5" width="67" height="124"/><line x1="1.5" y1="62.5" x2="66.5" y2="62.5"/><circle cx="34" cy="62.5" r="9.15"/><rect x="13.85" y="1.5" width="40.3" height="16.5"/><rect x="24.85" y="1.5" width="18.3" height="5.5"/><rect x="13.85" y="107" width="40.3" height="16.5"/><rect x="24.85" y="118" width="18.3" height="5.5"/><path d="M26.69 18a9.15 9.15 0 0 0 14.62 0M26.69 107a9.15 9.15 0 0 1 14.62 0M1.5 2.5a1 1 0 0 0 1-1M65.5 1.5a1 1 0 0 0 1 1M1.5 122.5a1 1 0 0 1 1 1M66.5 122.5a1 1 0 0 0-1 1"/></g><g fill="#fff"><circle cx="34" cy="62.5" r=".55"/><circle cx="34" cy="12.5" r=".45"/><circle cx="34" cy="112.5" r=".45"/></g></svg>`;
 function rowsFromFormation(f,n){const r=String(f||"").split("-").map(x=>+x).filter(Boolean);const out=[1,...r];return out.reduce((a,b)=>a+b,0)===n?out:null}
 function placeTeam(players,formation,home){
   // returns [{p,x,y}] in % of the pitch; home attacks upwards (bottom half), away downwards (top half)
@@ -1069,12 +1079,12 @@ function pitchHtml(teams){
   // Every row of both teams gets the same spacing from goal line to goal line, so a 5-row team is as roomy as a 4-row one
   const placed=[[h,true],[a,false]].map(([t,home])=>[t,home,t.xi&&t.xi.length?placeTeam(t.xi,t.formation,home):[]]);
   const rowsOf=l=>l.length?l[0].R:0, total=rowsOf(placed[0][2])+rowsOf(placed[1][2]), gap=total>1?87/(total-1):0;
-  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ const R=o.R, g=R>1?(home?35:36)/(R-1):0; o.y=home?91.5-o.ri*g:6+o.ri*g; } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
+  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ const R=o.R, g=R>1?40/(R-1):0; o.y=home?91.5-o.ri*g:6.5+o.ri*g; } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
   if(!figs.length) return "";
   const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:`<small>${esc(t.name)}</small>`}<b>${esc(t.formation||"")}</b>${t.coach?`<button class="ftag-coach" type="button" data-coach="${esc(t.coachId||"")}" data-cn="${esc(t.coach)}" data-ct="${esc(t.name||"")}"><small>Coach</small>${esc(shortName(t.coach))}</button>`:""}</span>`;
   const wm=(t,pos)=>t.logo?`<img class="wm ${pos}" src="${esc(t.logo)}" alt="">`:"";
   return `<div class="pitch-wrap">
-    <div class="pitch-grid"><div class="pitch3d"><div class="pitch">${PITCH_SVG}${tag(a,"tl")}${tag(h,"br")}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
+    <div class="pitch-grid"><div class="pitch3d"><div class="pitch${Math.max(...placed.map(x=>rowsOf(x[2])))>=5?" tight":""}">${PITCH_SVG}${tag(a,"tl")}${tag(h,"br")}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
     </div><button class="bench-btn" type="button" data-bench aria-expanded="${!!md.showBench}">Substitutes &amp; injuries <span>${md.showBench?"▴":"▾"}</span></button>${md.showBench?outHtml(h,a):""}`;
 }
 function vLineups(){
@@ -1270,16 +1280,26 @@ async function pcTSDB(key){
 /* Coaches for ESPN line-ups (ESPN has no coach): API-Football team search + coach, cached for days */
 async function loadCoaches(m){
   md.coachFor=m.id; md.coaches={};
-  if(!state.afKey||afOut()) return;
+  const useAF=state.afKey&&!afOut();
   const clean=n=>fold(n).replace(/\b(fc|afc|sc|cf)\b/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
   await Promise.all([m.home,m.away].map(async name=>{
-    try{
-      const q=clean(name); if(q.length<3) return;
+    try{ if(!useAF) throw 0;
+      const q=clean(name); if(q.length<3) throw 0;
       const ts=await afGet(`teams?search=${encodeURIComponent(q)}`,30*24*3600e3);
-      const t=(ts||[]).map(x=>x.team).find(t=>clean(t.name)===q)||(ts||[])[0]&&ts[0].team; if(!t) return;
+      const t=(ts||[]).map(x=>x.team).find(t=>clean(t.name)===q)||(ts||[])[0]&&ts[0].team; if(!t) throw 0;
       const cs=await afGet(`coachs?team=${t.id}`,3*24*3600e3);
-      const c=(cs||[]).find(c=>(c.career||[]).some(k=>(k.team||{}).id===t.id&&!k.end))||(cs||[])[0]; if(!c) return;
+      const c=(cs||[]).find(c=>(c.career||[]).some(k=>(k.team||{}).id===t.id&&!k.end))||(cs||[])[0]; if(!c) throw 0;
       md.coaches[name]={coach:c.name,coachId:c.id,coachPhoto:c.photo,...(t.logo?{logo:t.logo}:{})};
+    }catch{}
+    if(md.coaches[name]) return;
+    /* Free fallback: TheSportsDB team staff list (manager is listed with the players) */
+    try{
+      const K=encodeURIComponent(state.key&&!tsdbBadKey?state.key:"123"), base=`https://www.thesportsdb.com/api/v1/json/${K}`;
+      const ts=(await getJSON(`${base}/searchteams.php?t=${encodeURIComponent(name.replace(/\s+/g,"_"))}`)).teams||[];
+      const t=ts.find(t=>t.strSport==="Soccer")||ts[0]; if(!t) return;
+      const ps=(await getJSON(`${base}/lookup_all_players.php?id=${t.idTeam}`)).player||[];
+      const c=ps.find(p=>/^(manager|head coach|coach)$/i.test(p.strPosition||""))||ps.find(p=>/manager|coach/i.test(p.strPosition||"")&&!/assist|goalkeep|fitness|analyst/i.test(p.strPosition||""));
+      if(c) md.coaches[name]={coach:c.strPlayer,coachPhoto:c.strCutout||c.strThumb||"",coachT:c,...(t.strBadge?{logo:t.strBadge}:{})};
     }catch{}
   }));
   if(md.m&&md.m.id===m.id&&md.tab==="lineups"&&Object.keys(md.coaches).length) mdPaint();
@@ -1294,12 +1314,12 @@ async function openCoach(id,name,teamName){
   pc.loading=false; pc.af={c:c.status==="fulfilled"?(c.value||[])[0]:null,trophies:tp.status==="fulfilled"?tp.value||[]:[]}; pcPaint();
 }
 function coachPaint(c){
-  const A=pc.af&&pc.af.c, T=pc.team||{};
+  const A=pc.af&&pc.af.c, T=pc.team||{}, CT=T.coachT;
   const photo=A&&A.photo||T.coachPhoto||(pc.id?`https://media.api-sports.io/football/coachs/${pc.id}.png`:"");
   const name=A&&A.name||pc.name, full=A&&A.firstname?`${A.firstname} ${A.lastname}`:"";
-  const born=A&&(A.birth||{}).date, place=A?[(A.birth||{}).place,(A.birth||{}).country].filter(Boolean).join(", "):"";
+  const born=A?(A.birth||{}).date:CT&&CT.dateBorn, place=A?[(A.birth||{}).place,(A.birth||{}).country].filter(Boolean).join(", "):CT&&CT.strBirthLocation||"";
   const team=A&&A.team&&A.team.name||T.name||"", logo=A&&A.team&&A.team.logo||T.logo||"";
-  const info=[["Age",A&&(A.age||ageFrom(born))||""],["Nation",A&&A.nationality||""],["Height",cmFrom(A&&A.height)],["Weight",kgFrom(A&&A.weight)],["Formation",T.formation||""]].filter(x=>x[1]);
+  const info=[["Age",A&&A.age||(born?ageFrom(born):"")],["Nation",A?A.nationality:CT&&CT.strNationality||""],["Height",cmFrom(A&&A.height)],["Weight",kgFrom(A&&A.weight)],["Formation",T.formation||""]].filter(x=>x[1]);
   const crest=(l,n)=>l?`<img src="${esc(l)}" alt="" onerror="this.remove()">`:`<i class="pc-dot">${esc((n||"?").slice(0,1))}</i>`;
   const yrs=(a,b)=>{const y=d=>d?String(d).slice(0,4):"";return y(a)+(b?"–"+y(b):"–now")};
   const career=A&&(A.career||[]).length?A.career.map(x=>`<li><span class="pc-d">${esc(yrs(x.start,x.end))}</span><span class="pc-mv">${crest((x.team||{}).logo,(x.team||{}).name)}<span>${esc((x.team||{}).name||"")}</span></span></li>`).join(""):"";
@@ -1317,7 +1337,8 @@ function coachPaint(c){
     ${pc.loading?`<p class="pc-load">Loading career and trophies…</p>`:""}
     ${sec("Coaching career",career?`<ul class="pc-list">${career}</ul>`:"")}
     ${sec("Trophies as coach",tp?`<ul class="pc-list pc-tro">${tp}</ul>`:"")}
-    ${!pc.loading&&!A?`<p class="pc-load">${esc(pc.id&&state.afKey&&afOut()?"Daily API limit reached, more details after it resets.":"No more details found for this coach.")}</p>`:""}
+    ${CT&&CT.strDescriptionEN?sec("About",`<p class="pc-about">${esc(CT.strDescriptionEN.split(/\n/)[0].slice(0,420))}${CT.strDescriptionEN.length>420?"…":""}</p>`):""}
+    ${!pc.loading&&!A&&!CT?`<p class="pc-load">${esc(pc.id&&state.afKey&&afOut()?"Daily API limit reached, more details after it resets.":"No more details found for this coach.")}</p>`:""}
   </div>`;
   c.hidden=false;
 }
