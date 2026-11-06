@@ -1078,8 +1078,8 @@ function pitchHtml(teams){
   const [h,a]=teams; const figs=[];
   // Every row of both teams gets the same spacing from goal line to goal line, so a 5-row team is as roomy as a 4-row one
   const placed=[[h,true],[a,false]].map(([t,home])=>[t,home,t.xi&&t.xi.length?placeTeam(t.xi,t.formation,home):[]]);
-  const rowsOf=l=>l.length?l[0].R:0, total=rowsOf(placed[0][2])+rowsOf(placed[1][2]), gap=total>1?87/(total-1):0;
-  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ const R=o.R, g=R>1?40/(R-1):0; o.y=home?91.5-o.ri*g:6.5+o.ri*g; } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
+  const rowsOf=l=>l.length?l[0].R:0, total=rowsOf(placed[0][2])+rowsOf(placed[1][2]), gap=total>1?85/(total-1):0; /* one even spacing for every row of both teams */
+  placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ o.y=home?92-o.ri*gap:7+o.ri*gap; } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
   if(!figs.length) return "";
   const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:`<small>${esc(t.name)}</small>`}<b>${esc(t.formation||"")}</b>${t.coach?`<button class="ftag-coach" type="button" data-coach="${esc(t.coachId||"")}" data-cn="${esc(t.coach)}" data-ct="${esc(t.name||"")}"><small>Coach</small>${esc(shortName(t.coach))}</button>`:""}</span>`;
   const wm=(t,pos)=>t.logo?`<img class="wm ${pos}" src="${esc(t.logo)}" alt="">`:"";
@@ -1286,7 +1286,7 @@ async function loadCoaches(m){
     try{ if(!useAF) throw 0;
       const q=clean(name); if(q.length<3) throw 0;
       const ts=await afGet(`teams?search=${encodeURIComponent(q)}`,30*24*3600e3);
-      const t=(ts||[]).map(x=>x.team).find(t=>clean(t.name)===q)||(ts||[])[0]&&ts[0].team; if(!t) throw 0;
+      const all=(ts||[]).map(x=>x.team).filter(t=>!t.national), t=all.find(t=>clean(t.name)===q)||all.filter(t=>clean(t.name).includes(q)).sort((a,b)=>a.name.length-b.name.length)[0]||all[0]; if(!t) throw 0;
       const cs=await afGet(`coachs?team=${t.id}`,3*24*3600e3);
       const c=(cs||[]).find(c=>(c.career||[]).some(k=>(k.team||{}).id===t.id&&!k.end))||(cs||[])[0]; if(!c) throw 0;
       md.coaches[name]={coach:c.name,coachId:c.id,coachPhoto:c.photo,...(t.logo?{logo:t.logo}:{})};
