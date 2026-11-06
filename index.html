@@ -444,6 +444,11 @@ dialog::backdrop{background:rgb(0 0 0 / .15)!important}
 .pitch-wrap{background:none!important}
 .pitch{max-width:none!important;border-radius:0!important}
 .pitch-grid{padding:0!important}
+
+/* bigger team crest in the formation tag: crest left, formation + coach stacked right */
+.ftag img{width:40px!important;height:40px!important;grid-row:span 2!important}
+.ftag-coach{grid-column:2!important}
+.ftag b{font-size:13px!important}
 </style>
 
 <header class="top">
@@ -1082,7 +1087,7 @@ function vLineups(){
   }
   const el=md.d&&md.d.lineups;
   if(el&&md.coachFor!==md.m.id) loadCoaches(md.m);
-  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,...(((md.coaches||{})[i?md.m.away:md.m.home])||{}),formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos,es:p.es})),subs:l.subs||[]})));
+  if(el) return pitchHtml(el.map((l,i)=>({name:i?md.m.away:md.m.home,logo:(i?md.m.ab:md.m.hb)||"",...(((md.coaches||{})[i?md.m.away:md.m.home])||{}),formation:l.formation,colors:l.color?{primary:l.color,number:"ffffff"}:null,xi:l.players.map(p=>({name:p.name,number:p.n,place:p.place,pos:p.pos==="G"?"G":p.pos,es:p.es})),subs:l.subs||[]})));
   return `<p class="md-note">${m.st==="ns"?"Line-ups are usually announced about an hour before kick-off.":"No line-ups available for this match."}${state.afKey?"":" Add your API-Football key under Data source for line-ups with photos and ratings."}</p>`;
 }
 function vTable(){
@@ -1274,7 +1279,7 @@ async function loadCoaches(m){
       const t=(ts||[]).map(x=>x.team).find(t=>clean(t.name)===q)||(ts||[])[0]&&ts[0].team; if(!t) return;
       const cs=await afGet(`coachs?team=${t.id}`,3*24*3600e3);
       const c=(cs||[]).find(c=>(c.career||[]).some(k=>(k.team||{}).id===t.id&&!k.end))||(cs||[])[0]; if(!c) return;
-      md.coaches[name]={coach:c.name,coachId:c.id,coachPhoto:c.photo,logo:t.logo};
+      md.coaches[name]={coach:c.name,coachId:c.id,coachPhoto:c.photo,...(t.logo?{logo:t.logo}:{})};
     }catch{}
   }));
   if(md.m&&md.m.id===m.id&&md.tab==="lineups"&&Object.keys(md.coaches).length) mdPaint();
