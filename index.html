@@ -422,6 +422,15 @@ html,body{overflow-x:hidden}
 .fig .evl .ev-a{width:12px;height:12px;border-radius:50%;background:#fff;color:#0b5;font:800 8px/12px system-ui;text-align:center;box-shadow:0 1px 2px rgb(0 0 0 / .5)}
 .fig .rc{left:calc(50% + 32% + 1px)!important;top:28%!important;right:auto!important}
 .fig .fpl{left:calc(50% + 32% - 6px)!important;right:auto!important;top:-8%!important}
+
+/* flat pitch (2026-11-06): no 3D tilt */
+.pitch3d{perspective:none!important;padding:0!important}
+.pitch{transform:none!important;margin-top:0!important;animation:none!important;box-shadow:0 6px 18px rgb(0 0 0 / .45)!important}
+.fig{transform:translate(-50%,-36%)!important;--s:1!important}.fig.ov{transform:translate(-50%,-36%)!important}
+.goal{display:none!important}
+.ftag-coach{all:unset;cursor:pointer;display:block;grid-column:1/-1;margin-top:3px;padding:2px 6px;border-radius:6px;background:rgb(0 0 0 / .45);color:#fff;font-size:10.5px;font-weight:600;line-height:1.15;text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ftag-coach small{display:block;font-size:8.5px;font-weight:500;opacity:.7;text-transform:uppercase;letter-spacing:.05em}
+.ftag{max-width:40%!important;grid-template-columns:auto auto!important;column-gap:5px!important;row-gap:2px!important;align-items:center!important;padding:3px 5px!important}.ftag img{width:22px!important;height:22px!important}.ftag b{font-size:11.5px!important}.ftag>small{grid-column:1/-1}.ftag-coach{margin-top:1px;padding:1px 5px;font-size:10px}.ftag-coach small{display:inline;font-size:8px;margin-right:4px}
 </style>
 
 <header class="top">
@@ -850,8 +859,8 @@ function render(){
   const topOpen=!state.expanded.has("!top");
   const topRows=state.fav.top.map(t=>{const live=state.matches.find(m=>m.id===t.id);
       if(live) return {...live,shown:live.channels};
-      const kick=new Date(t.kick); return {...t,kick,st:kick<new Date()?"ft":"ns",hs:null,as:null,shown:t.channels,channels:t.channels,snapshot:true};})
-    .filter(m=>m.st!=="ft"||m.kick>Date.now()-30*3600e3).sort((a,b)=>(a.st==="live"?0:1)-(b.st==="live"?0:1)||a.kick-b.kick);
+      const kick=new Date(t.kick); return {...t,kick,st:kick<Date.now()-150*60000?"ft":kick<new Date()?"live":"ns",hs:null,as:null,shown:t.channels,channels:t.channels,snapshot:true};})
+    .filter(m=>m.st!=="ft").sort((a,b)=>(a.st==="live"?0:1)-(b.st==="live"?0:1)||a.kick-b.kick);
   const topHtml=`<section class="comp top-sec${topOpen?"":" collapsed"}"><h2><button class="comp-h" data-comp="!top" aria-expanded="${topOpen}"><em><span class="flag">✓</span>Top matches</em><span>${topRows.filter(m=>m.st==="live").length?`<b class="lv">${topRows.filter(m=>m.st==="live").length} live</b> · `:""}${topRows.length} picked <i class="chev">▾</i></span></button></h2>${topOpen?(topRows.length?topRows.map(m=>row(m,true)).join(""):`<p class="md-note" style="padding:10px 14px;margin:0">Tap + on any game, today or another day, to add it here.</p>`):""}</section>`;
   $("list").innerHTML=favHtml+topHtml+emptyHtml+gs.map(([league,ms])=>{const open=searching||state.expanded.has(league);const nLive=ms.filter(m=>m.st==="live").length;
     return `<section class="comp${open?"":" collapsed"}"><h2><button class="comp-h" data-comp="${esc(league)}" aria-expanded="${open}"><em>${flagFor(ms[0])}${esc(league)}</em><span>${nLive?`<b class="lv">${nLive} live</b> · `:""}${ms.length} ${ms.length===1?"match":"matches"} <i class="chev">▾</i></span></button></h2>${open?ms.map(row).join(""):""}</section>`}).join("")
@@ -1044,7 +1053,7 @@ function pitchHtml(teams){
   const rowsOf=l=>l.length?l[0].R:0, total=rowsOf(placed[0][2])+rowsOf(placed[1][2]), gap=total>1?87/(total-1):0;
   placed.forEach(([t,home,list])=>list.forEach(o=>{ if(list.length){ const R=o.R, g=R>1?36/(R-1):0; o.y=home?93.5-o.ri*g:6+o.ri*g; } /* keeper at the goal, striker just inside the centre circle */ figs.push(figure(o,t,home,(o.p.pos||"")==="G"||(o.p.pos||"")==="GK")) }));
   if(!figs.length) return "";
-  const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:`<small>${esc(t.name)}</small>`}<b>${esc(t.formation||"")}</b></span>`;
+  const tag=(t,pos)=>`<span class="ftag ${pos}">${t.logo?`<img src="${esc(t.logo)}" alt="">`:`<small>${esc(t.name)}</small>`}<b>${esc(t.formation||"")}</b>${t.coach?`<button class="ftag-coach" type="button" data-coach="${esc(t.coachId||"")}" data-cn="${esc(t.coach)}" data-ct="${esc(t.name||"")}"><small>Coach</small>${esc(shortName(t.coach))}</button>`:""}</span>`;
   const wm=(t,pos)=>t.logo?`<img class="wm ${pos}" src="${esc(t.logo)}" alt="">`:"";
   return `<div class="pitch-wrap">
     <div class="pitch-grid"><div class="pitch3d"><div class="pitch">${PITCH_SVG}${tag(a,"tl")}${tag(h,"br")}<span class="goal g1"></span><span class="goal g2"></span>${(()=>{const f=figs.sort((x,y)=>parseFloat(x.match(/top:([\d.]+)%/)[1])-parseFloat(y.match(/top:([\d.]+)%/)[1]));return f.join("")+f.map(h=>h.replace('<button class="fig"','<button class="fig ov" tabindex="-1" aria-hidden="true"')).join("")})()}</div></div></div>
@@ -1093,8 +1102,8 @@ function vPlayer(){
 function fitPitch(){
   const dlg=$("matchDlg"), pitch=dlg.querySelector(".pitch"); if(!pitch) return;
   const head=dlg.querySelector(".md-head"), btn=dlg.querySelector(".bench-btn"), wrap=dlg.querySelector(".pitch-wrap");
-  const avail=dlg.clientHeight-(head?head.offsetHeight:0)-(btn?btn.offsetHeight:0)-24-14-32+wrap.clientWidth*.13;
-  const maxW=wrap.clientWidth*.92, w=Math.max(180,Math.min(maxW,avail/(125/68)/.95));
+  const avail=dlg.clientHeight-(head?head.offsetHeight:0)-(btn?btn.offsetHeight:0)-24-14-32;
+  const maxW=wrap.clientWidth*.92, w=Math.max(180,Math.min(maxW,avail/(125/68)));
   pitch.style.width=w+"px"; pitch.style.marginLeft=pitch.style.marginRight="auto";
 }
 addEventListener("resize",()=>{ if($("matchDlg").open) fitPitch() });
@@ -1114,7 +1123,7 @@ async function loadLineups(force){
     const [lu,pl,inj]=await Promise.all([afGet(`fixtures/lineups?fixture=${m.afId}`,m.st==="ns"?10*60000:12*3600e3),m.st==="ns"?Promise.resolve([]):afGet(`fixtures/players?fixture=${m.afId}`,live?120000:12*3600e3).catch(()=>[]),afGet(`injuries?fixture=${m.afId}`,m.st==="ft"?24*3600e3:3*3600e3).catch(()=>[])]);
     const stats={}; for(const t of pl||[]) for(const x of t.players||[]){const g=(x.statistics||[])[0]||{};stats[x.player.id]={rating:(g.games||{}).rating,goals:(g.goals||{}).total,assists:(g.goals||{}).assists,yellow:(g.cards||{}).yellow,red:(g.cards||{}).red,min:(g.games||{}).minutes,raw:g}}
     const mk=e=>{const p=e.player||{};return {id:p.id,name:p.name,number:p.number,pos:p.pos,grid:p.grid,...(stats[p.id]||{})}};
-    md.lineups={af:true,id:m.afId,teams:(lu||[]).map(t=>({name:t.team.name,logo:t.team.logo,colors:(t.team.colors||{}).player||null,gkColors:(t.team.colors||{}).goalkeeper||null,formation:t.formation,coach:(t.coach||{}).name,coachPhoto:(t.coach||{}).photo,out:(inj||[]).filter(x=>(x.team||{}).id===(t.team||{}).id).map(x=>({id:x.player.id,name:x.player.name,type:x.player.type,reason:x.player.reason})),xi:(t.startXI||[]).map(mk),subs:(t.substitutes||[]).map(mk)}))};
+    md.lineups={af:true,id:m.afId,teams:(lu||[]).map(t=>({name:t.team.name,logo:t.team.logo,colors:(t.team.colors||{}).player||null,gkColors:(t.team.colors||{}).goalkeeper||null,formation:t.formation,coach:(t.coach||{}).name,coachId:(t.coach||{}).id,coachPhoto:(t.coach||{}).photo,out:(inj||[]).filter(x=>(x.team||{}).id===(t.team||{}).id).map(x=>({id:x.player.id,name:x.player.name,type:x.player.type,reason:x.player.reason})),xi:(t.startXI||[]).map(mk),subs:(t.substitutes||[]).map(mk)}))};
   }catch(e){ if(!md.lineups) md.lineups={af:false,teams:[]}; }
   md.loading=""; if(md.tab==="lineups"&&!md.player) mdPaint();
 }
@@ -1232,11 +1241,49 @@ async function pcTSDB(key){
   const [ft,hn]=await Promise.all([getJSON(`${base}/lookupformerteams.php?id=${P.idPlayer}`).then(j=>j.formerteams||[]).catch(()=>[]),getJSON(`${base}/lookuphonours.php?id=${P.idPlayer}`).then(j=>j.honours||[]).catch(()=>[])]);
   if(pc&&pc.key===key) pc.tsdb={p:P,former:ft,honours:hn};
 }
+/* Coach card: same see-through window as players */
+async function openCoach(id,name,teamName){
+  const T=(md.lineups&&md.lineups.teams||[]).find(t=>t.name===teamName)||{name:teamName};
+  const key="c"+(id||name)+"|"+Date.now(); pc={key,coach:true,id,name,team:T,loading:!!(id&&state.afKey&&!afOut())}; pcPaint();
+  if(!pc.loading) return;
+  const [c,tp]=await Promise.allSettled([afGet(`coachs?id=${id}`,7*24*3600e3),afGet(`trophies?coach=${id}`,7*24*3600e3)]);
+  if(!pc||pc.key!==key) return;
+  pc.loading=false; pc.af={c:c.status==="fulfilled"?(c.value||[])[0]:null,trophies:tp.status==="fulfilled"?tp.value||[]:[]}; pcPaint();
+}
+function coachPaint(c){
+  const A=pc.af&&pc.af.c, T=pc.team||{};
+  const photo=A&&A.photo||T.coachPhoto||(pc.id?`https://media.api-sports.io/football/coachs/${pc.id}.png`:"");
+  const name=A&&A.name||pc.name, full=A&&A.firstname?`${A.firstname} ${A.lastname}`:"";
+  const born=A&&(A.birth||{}).date, place=A?[(A.birth||{}).place,(A.birth||{}).country].filter(Boolean).join(", "):"";
+  const team=A&&A.team&&A.team.name||T.name||"", logo=A&&A.team&&A.team.logo||T.logo||"";
+  const info=[["Age",A&&(A.age||ageFrom(born))||""],["Nation",A&&A.nationality||""],["Height",cmFrom(A&&A.height)],["Weight",kgFrom(A&&A.weight)],["Formation",T.formation||""]].filter(x=>x[1]);
+  const crest=(l,n)=>l?`<img src="${esc(l)}" alt="" onerror="this.remove()">`:`<i class="pc-dot">${esc((n||"?").slice(0,1))}</i>`;
+  const yrs=(a,b)=>{const y=d=>d?String(d).slice(0,4):"";return y(a)+(b?"–"+y(b):"–now")};
+  const career=A&&(A.career||[]).length?A.career.map(x=>`<li><span class="pc-d">${esc(yrs(x.start,x.end))}</span><span class="pc-mv">${crest((x.team||{}).logo,(x.team||{}).name)}<span>${esc((x.team||{}).name||"")}</span></span></li>`).join(""):"";
+  let tp=""; const tr=pc.af&&pc.af.trophies||[];
+  if(tr.length){ const grp={}; tr.filter(t=>/winner/i.test(t.place)).forEach(t=>{const k=t.league+"|"+(t.country||"");(grp[k]=grp[k]||[]).push(t.season)});
+    tp=Object.entries(grp).sort((a,b)=>b[1].length-a[1].length).map(([k,v])=>`<li><b>${v.length}×</b> ${esc(k.split("|")[0])} <small>${esc(k.split("|")[1])}</small><span class="pc-yrs">${esc(v.join(", "))}</span></li>`).join("")||`<li class="pc-none">No titles won yet.</li>`; }
+  const sec=(t,b)=>b?`<section class="pc-sec"><h4>${t}</h4>${b}</section>`:"";
+  c.innerHTML=`<div class="pc-card" role="dialog" aria-label="${esc(name)}">
+    <button class="pc-x" data-pc-close aria-label="Close">×</button>
+    <div class="pc-top"><div class="pc-ph">${photo?`<img src="${esc(photo)}" alt="" onerror="this.remove()">`:""}</div>
+      <div class="pc-id"><h3>${esc(name)}</h3>${full&&fold(full)!==fold(name)?`<small>${esc(full)}</small>`:""}
+        <div class="pc-tm">${logo?`<img src="${esc(logo)}" alt="">`:""}<span>${esc(team)}</span><span class="pc-pos">Head coach</span></div></div></div>
+    ${info.length?`<div class="pc-info">${info.map(x=>`<div><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join("")}</div>`:""}
+    ${born||place?`<p class="pc-born">Born ${born?esc(born):""}${place?(born?" in ":"")+esc(place):""}</p>`:""}
+    ${pc.loading?`<p class="pc-load">Loading career and trophies…</p>`:""}
+    ${sec("Coaching career",career?`<ul class="pc-list">${career}</ul>`:"")}
+    ${sec("Trophies as coach",tp?`<ul class="pc-list pc-tro">${tp}</ul>`:"")}
+    ${!pc.loading&&!A?`<p class="pc-load">${esc(pc.id&&state.afKey&&afOut()?"Daily API limit reached, more details after it resets.":"No more details found for this coach.")}</p>`:""}
+  </div>`;
+  c.hidden=false;
+}
 function closeCard(){ pc=null; const c=$("pcard"); c.hidden=true; c.innerHTML="" }
 const cmFrom=h=>{h=String(h||"");const m=h.match(/(\d{3})\s*cm/i)||h.match(/^(\d{3})$/);if(m)return m[1]+" cm";const f=h.match(/(\d)\s*ft\s*(\d+)?/i)||h.match(/(\d)'\s*(\d+)?/);return f?Math.round((+f[1]*12+(+f[2]||0))*2.54)+" cm":h};
 const kgFrom=w=>{w=String(w||"");const m=w.match(/(\d{2,3})\s*kg/i)||w.match(/^(\d{2,3})$/);if(m)return m[1]+" kg";const l=w.match(/(\d{2,3})\s*lb/i);return l?Math.round(+l[1]*.4536)+" kg":w};
 function pcPaint(){
   const c=$("pcard"); if(!pc){ c.hidden=true; return }
+  if(pc.coach) return coachPaint(c);
   const H=pc.hit, mp=H.p||{}, T=H.team||{}, A=pc.af, D=pc.tsdb;
   const AP=A&&A.p.player, st=A?A.p.statistics||[]:[], s0=st.find(x=>(x.games||{}).appearences)||st[0]||{};
   const name=(AP&&AP.name&&AP.name.length>(mp.name||"").length?AP.name:mp.name)||(D&&D.p.strPlayer)||pc.name;
@@ -1336,6 +1383,7 @@ async function openMatch(id){
 $("matchBody").addEventListener("click",e=>{
   if(e.target.closest("[data-bench]")){ md.showBench=!md.showBench; mdPaint(); return }
   const t=e.target.closest("[data-tab]"); if(t){ md.tab=t.dataset.tab; md.player=null; mdPaint(); if(md.tab==="lineups"){ loadLineups(); if(!fpl) loadFpl().then(()=>{ if(md.tab==="lineups"&&fpl) mdPaint() }) } if(md.tab==="table") loadTable(); if(md.tab==="news") loadNews(); return }
+  const co=e.target.closest("[data-coach]"); if(co&&md.m){ openCoach(co.dataset.coach,co.dataset.cn,co.dataset.ct); return }
   const pn=e.target.closest(".pitch-wrap [data-pn],.outs [data-pn]"); if(pn&&md.m){ openCard(pn.dataset.player||"",pn.dataset.pn); return }
   const p=e.target.closest("[data-player]"); if(p&&state.afKey){ openPlayer(p.dataset.player); return }
   if(e.target.closest("[data-back]")){ md.player=null; mdPaint(); return }
