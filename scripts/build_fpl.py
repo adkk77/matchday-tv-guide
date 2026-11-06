@@ -46,7 +46,9 @@ def main():
             "ppg": p.get("points_per_game", ""), "goals": p.get("goals_scored", 0), "assists": p.get("assists", 0),
             "cs": p.get("clean_sheets", 0), "bonusTotal": p.get("bonus", 0), "code": p.get("code"),
         })
-    out = {"updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    nxt = next((e for e in events if gw and e["id"] == gw + 1), None)
+    out = {"gwStart": cur.get("deadline_time") if cur else None, "gwEnd": nxt.get("deadline_time") if nxt else None,
+           "updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
            "gw": gw, "gwName": cur["name"] if cur else "", "gwFinished": bool(cur and cur.get("finished")),
            "teams": sorted(teams.values()), "players": players}
     os.makedirs("data", exist_ok=True)

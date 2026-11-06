@@ -40,6 +40,11 @@
 .pc-list em{flex:none;font-style:normal;font-size:11px;padding:1px 7px;border-radius:8px;background:rgba(255,255,255,.12)}.pc-list em:empty{display:none}
 .pc-tro li{flex-wrap:wrap}.pc-tro b{color:#f5c518}.pc-tro small{opacity:.6}.pc-yrs{flex-basis:100%;font-size:11px;opacity:.6;margin-top:-3px}
 .pc-none,.pc-load{opacity:.7}.pc-about{margin:0;line-height:1.45;opacity:.85}
+
+.fig .fpl{position:absolute;right:2%;top:-6%;z-index:3;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#3d0a49;color:#05f293;font:800 10.5px/17px system-ui;text-align:center;box-shadow:0 1px 3px rgb(0 0 0 / .5);border:1px solid #05f29366}
+.pc-fpl{background:linear-gradient(135deg,rgba(61,10,73,.75),rgba(30,6,40,.6));border-radius:14px;padding:10px;border:1px solid rgba(5,242,147,.25)}
+.pc-fpl-gw{display:flex;align-items:baseline;gap:8px;margin:0 2px 8px}.pc-fpl-gw b{font-size:30px;color:#05f293;line-height:1}.pc-fpl-gw span{opacity:.8}
+.pc-fpl .pc-st{background:rgba(0,0,0,.25)}.pc-bd{margin-top:8px}.pc-bd li{justify-content:space-between;padding:5px 2px}.pc-bd b{color:#05f293}.pc-bd b.neg{color:#ff6b6b}.pc-bd small{opacity:.6}
 </style>
 </head><body>
 <title>KY Matchday</title>
@@ -1000,7 +1005,7 @@ function figure(o,team,home,gk){
   const head=p.id?`<img src="https://media.api-sports.io/football/players/${p.id}.png" alt="" loading="lazy" onerror="this.remove()">`:"";
   return `<button class="fig" style="left:${o.x}%;top:${o.y}%;--s:${(1+.2*(1-o.y/100)).toFixed(3)}" ${p.id?`data-player="${p.id}"`:""} data-pn="${esc(p.name)}" type="button" aria-label="${esc(p.name)}, number ${esc(p.number??p.n??"")}">
     <span class="fig-in"><span class="head${head?"":" nohead"}">${head||`<i>${esc(p.number??p.n??(last||"?").slice(0,1))}</i>`}</span>
-    ${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
+    ${fplMatch(md.m)?(f=>f?`<span class="fpl" title="Fantasy points">${f.gw}</span>`:"")(fplFind(p.name,team.name)):""}${p.goals?`<span class="gl">${"⚽".repeat(Math.min(p.goals,3))}</span>`:""}${p.red?'<span class="rc"><i class="card r"></i></span>':p.yellow?'<span class="rc"><i class="card"></i></span>':""}
     <span class="nm2">${head?`<em>${esc(p.number??p.n??"")}</em>`:""}${esc(shortName(p.name))}${r?` <span class="rt mini ${rtClass(r)}">${r}</span>`:""}</span></span><span class="shadow"></span></button>`;
 }
 function outIcon(o){const r=(o.reason||"")+" "+(o.type||"");return /red card|suspen/i.test(r)?'<i class="card r"></i>':/yellow/i.test(r)?'<i class="card"></i>':/questionable|doubt/i.test(r)?'<b class="q">?</b>':'<b class="inj">+</b>'}
@@ -1095,6 +1100,7 @@ async function loadLineups(force){
   const m=md.m; if(!m||!m.afId||!state.afKey) return;
   if(md.lineups&&!force&&md.lineups.id===m.afId) return;
   if(!md.lineups) { md.loading="lineups"; mdPaint(); }
+  try{ await loadFpl() }catch{}
   try{
     const live=m.st==="live";
     const [lu,pl,inj]=await Promise.all([afGet(`fixtures/lineups?fixture=${m.afId}`,m.st==="ns"?10*60000:12*3600e3),m.st==="ns"?Promise.resolve([]):afGet(`fixtures/players?fixture=${m.afId}`,live?120000:12*3600e3).catch(()=>[]),afGet(`injuries?fixture=${m.afId}`,m.st==="ft"?24*3600e3:3*3600e3).catch(()=>[])]);
@@ -1151,6 +1157,41 @@ async function openPlayer(id){
     md.player={p:r[0],season,id:String(id)}; }catch(e){ md.player={err:String(e.message||e),season} }
   mdPaint();
 }
+/* ---------- Fantasy Premier League points (data/fpl.json, built by a GitHub Action every 20 min) ---------- */
+let fpl=null, fplAt=0, fplMemo=new Map();
+async function loadFpl(){
+  if(fpl&&Date.now()-fplAt<5*60000) return fpl;
+  try{ const r=await fetch("data/fpl.json",{cache:"no-cache"}); if(r.ok){ fpl=await r.json(); fplAt=Date.now(); fplMemo=new Map() } }catch{}
+  return fpl;
+}
+const FPL_ALIAS={"man city":"manchester city","man utd":"manchester united","spurs":"tottenham","nott'm forest":"nottingham forest","wolves":"wolverhampton","sheffield utd":"sheffield united","luton":"luton town"};
+function fplTeam(name){
+  if(!fpl||!name) return ""; const f=fold(name).replace(/[.']/g,"");
+  for(const t of fpl.teams){ const a=fold(FPL_ALIAS[fold(t)]||t).replace(/[.']/g,""), r=fold(t).replace(/[.']/g,""); if(f===r||f.includes(a)||a.includes(f)) return t }
+  return "";
+}
+/* Is this a Premier League match in the current fantasy gameweek? */
+function fplMatch(m){
+  if(!fpl||!m||m.st==="ns") return false;
+  if(!fplTeam(m.home)||!fplTeam(m.away)) return false;
+  const k=+new Date(m.kick); return (!fpl.gwStart||k>=Date.parse(fpl.gwStart))&&(!fpl.gwEnd||k<Date.parse(fpl.gwEnd));
+}
+function fplFind(name,teamName){
+  if(!fpl||!name) return null; const key=name+"|"+teamName; if(fplMemo.has(key)) return fplMemo.get(key);
+  const T=fplTeam(teamName); const pool=fpl.players.filter(p=>p.pos!=="MGR"&&(!T||p.team===T));
+  const n=fold(name).replace(/[.\-']/g," ").replace(/\s+/g," ").trim(), tk=n.split(" "), lt=tk[tk.length-1], ini=tk.length>1?tk[0][0]:"";
+  let best=null,bs=0,tie=false;
+  for(const p of pool){
+    const web=fold(p.web).replace(/[.\-']/g," ").trim(), full=fold(p.first+" "+p.last).replace(/[.\-']/g," "), lst=fold(p.last).replace(/[.\-']/g," ").split(" ");
+    let sc=0;
+    if(full===n) sc=100; else if(web===n) sc=90;
+    else if(lst[lst.length-1]===lt||web===lt||web.split(" ").pop()===lt) sc=60+(ini&&fold(p.first)[0]===ini?15:0);
+    else if(tk.length>1&&tk.includes(web)) sc=55;
+    if(sc>bs){best=p;bs=sc;tie=false} else if(sc&&sc===bs) tie=true;
+  }
+  const r=bs>=55&&!tie?best:null; fplMemo.set(key,r); return r;
+}
+const FPL_LBL={minutes:"Minutes played",goals_scored:"Goals",assists:"Assists",clean_sheets:"Clean sheet",goals_conceded:"Goals conceded",own_goals:"Own goals",penalties_saved:"Penalties saved",penalties_missed:"Penalties missed",yellow_cards:"Yellow card",red_cards:"Red card",saves:"Saves",bonus:"Bonus",defensive_contribution:"Defensive contribution"};
 /* ---------- See-through player card (tap a player in the line-up) ---------- */
 let pc=null;
 function lineupHit(id,name){
@@ -1162,6 +1203,7 @@ function lineupHit(id,name){
 async function openCard(id,name){
   const hit=lineupHit(id,name); const nowD=new Date(); const season=(md.m&&md.m.season)||(nowD.getMonth()>=6?nowD.getFullYear():nowD.getFullYear()-1);
   const key=(id||name)+"|"+Date.now(); pc={key,id,name,hit,season,loading:true}; pcPaint();
+  loadFpl().then(()=>{ if(pc&&pc.key===key) pcPaint() });
   const useAF=id&&state.afKey&&!afOut();
   if(useAF){
     const [pr,tr,tp,sd]=await Promise.allSettled([afGet(`players?id=${id}&season=${season}`,24*3600e3),afGet(`transfers?player=${id}`,7*24*3600e3),afGet(`trophies?player=${id}`,7*24*3600e3),afGet(`sidelined?player=${id}`,3*24*3600e3)]);
@@ -1232,6 +1274,11 @@ function pcPaint(){
   let inj="";
   if(A&&A.sidelined.length) inj=A.sidelined.slice().sort((a,b)=>String(b.start).localeCompare(a.start)).slice(0,8).map(x=>`<li><span class="pc-d">${esc(x.start||"")}${x.end?" → "+esc(x.end):""}</span><span>${esc(x.type||"")}</span></li>`).join("");
   const now=H.role==="out"?`<p class="pc-warn">${outIcon(mp)} Out for this match${mp.reason?": "+esc(mp.reason):""}</p>`:AP&&AP.injured?`<p class="pc-warn"><b class="inj">+</b> Currently injured</p>`:"";
+  let fp="";
+  const F=fplFind(mp.name||name,T.name||team);
+  if(F){ const inGw=fplMatch(md.m);
+    fp=`<div class="pc-fpl"><div class="pc-fpl-gw"><b>${F.gw}</b><span>${esc(fpl.gwName||"Gameweek")} pts${fpl.gwFinished?"":" (live)"}</span></div><div class="pc-grid">${[[F.total,"Total pts"],["£"+F.cost.toFixed(1)+"m","Price"],[F.sel+"%","Selected by"],[F.form,"Form"],[F.ppg,"Pts / match"],[F.bonusTotal,"Bonus pts"],[F.goals+"/"+F.assists,"Goals/assists"],[F.cs,"Clean sheets"]].map(r=>pill(esc(r[0]),r[1])).join("")}</div>
+      ${F.bd&&F.bd.length?`<ul class="pc-list pc-bd">${F.bd.map(x=>`<li><span>${esc(FPL_LBL[x[0]]||x[0].replace(/_/g," "))}${x[0]==="minutes"?` <small>${x[1]}'</small>`:x[1]>1?` <small>×${x[1]}</small>`:""}</span><b class="${x[2]<0?"neg":""}">${x[2]>0?"+":""}${x[2]}</b></li>`).join("")}${!fpl.gwFinished&&F.bps?`<li><span>Bonus points system <small>${F.bps} BPS</small></span><b>–</b></li>`:""}</ul>`:inGw?"":`<p class="pc-load">Points shown are for the current gameweek.</p>`}</div>`; }
   const fid=pc.id||name;
   const sec=(t,b)=>b?`<section class="pc-sec"><h4>${t}</h4>${b}</section>`:"";
   c.innerHTML=`<div class="pc-card" role="dialog" aria-label="${esc(name)}">
@@ -1246,6 +1293,7 @@ function pcPaint(){
     ${pc.loading?`<p class="pc-load">Loading career, transfers and trophies…</p>`:""}
     ${sec("This match",mt?`<div class="pc-grid">${mt}</div>`:"")}
     ${sec(`Season ${esc(pc.season)}/${String(+pc.season+1).slice(2)} · all competitions`,ss?`<div class="pc-grid">${ss}</div>${comps?`<table class="pc-tbl"><thead><tr><th>Competition</th><th>Apps</th><th>G</th><th>A</th><th>Cards</th><th>Rtg</th></tr></thead><tbody>${comps}</tbody></table>`:""}`:"")}
+    ${sec("Fantasy Premier League",fp)}
     ${sec("Transfer history",tr?`<ul class="pc-list">${tr}</ul>`:"")}
     ${sec("Trophies",tp?`<ul class="pc-list pc-tro">${tp}</ul>`:"")}
     ${sec("Injury history",inj?`<ul class="pc-list">${inj}</ul>`:"")}
@@ -1279,7 +1327,7 @@ async function openMatch(id){
 }
 $("matchBody").addEventListener("click",e=>{
   if(e.target.closest("[data-bench]")){ md.showBench=!md.showBench; mdPaint(); return }
-  const t=e.target.closest("[data-tab]"); if(t){ md.tab=t.dataset.tab; md.player=null; mdPaint(); if(md.tab==="lineups") loadLineups(); if(md.tab==="table") loadTable(); if(md.tab==="news") loadNews(); return }
+  const t=e.target.closest("[data-tab]"); if(t){ md.tab=t.dataset.tab; md.player=null; mdPaint(); if(md.tab==="lineups"){ loadLineups(); if(!fpl) loadFpl().then(()=>{ if(md.tab==="lineups"&&fpl) mdPaint() }) } if(md.tab==="table") loadTable(); if(md.tab==="news") loadNews(); return }
   const pn=e.target.closest(".pitch-wrap [data-pn],.outs [data-pn]"); if(pn&&md.m){ openCard(pn.dataset.player||"",pn.dataset.pn); return }
   const p=e.target.closest("[data-player]"); if(p&&state.afKey){ openPlayer(p.dataset.player); return }
   if(e.target.closest("[data-back]")){ md.player=null; mdPaint(); return }
